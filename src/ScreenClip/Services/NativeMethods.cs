@@ -206,6 +206,9 @@ internal static class NativeMethods
     public static extern bool EnumWindows(EnumWindowsProc callback, IntPtr data);
 
     [DllImport("user32.dll")]
+    public static extern bool EnumChildWindows(IntPtr parent, EnumWindowsProc callback, IntPtr data);
+
+    [DllImport("user32.dll")]
     public static extern bool IsWindowVisible(IntPtr hwnd);
 
     [DllImport("user32.dll")]

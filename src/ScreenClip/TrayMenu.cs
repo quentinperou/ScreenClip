@@ -102,7 +102,7 @@ internal static class TrayMenu
         {
             Header = header,
             Icon = icon,
-            InputGestureText = ShortcutText.Format(shortcut),
+            InputGestureText = App.Settings.ShortcutsEnabled ? ShortcutText.Format(shortcut) : "",
         };
         item.Click += (_, _) => action();
         return item;

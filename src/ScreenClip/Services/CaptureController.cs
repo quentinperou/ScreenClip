@@ -138,11 +138,8 @@ internal sealed class CaptureController
     {
         var settings = App.Settings;
         var clip = new Clip(image, DateTime.Now, monitor);
-        if (TakeEditorRequest() is { } editor)
-        {
-            editor(clip);
-            return;
-        }
+        // Copy and save follow the settings for every capture, the ones made from the editor too: only the thumbnail
+        // gives way to the editor.
         if (settings.CopyToClipboard)
             ClipActions.Copy(image);
         if (settings.SaveAutomatically)
@@ -156,7 +153,9 @@ internal sealed class CaptureController
                 MessageBox.Show(Strings.Format("ErrorSave", ex.Message), "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
-        if (settings.ShowThumbnail)
+        if (TakeEditorRequest() is { } editor)
+            editor(clip);
+        else if (settings.ShowThumbnail)
             ClipThumbnail.Show(clip);
     }
 

@@ -9,6 +9,9 @@ namespace ScreenClip.Services;
 /// <summary>A monitor, in physical pixels of the virtual screen (the app is per-monitor DPI aware).</summary>
 internal sealed record MonitorInfo(PixelRect Bounds, PixelRect WorkArea, bool IsPrimary);
 
+/// <summary>A top-level window of another app, by its handle and its visible bounds.</summary>
+internal sealed record VisibleWindow(IntPtr Handle, PixelRect Bounds);
+
 /// <summary>Reads the screen: monitors, visible windows, and the pixels themselves (GDI, the fastest for a still).</summary>
 internal static class ScreenGrabber
 {
@@ -83,10 +86,10 @@ internal static class ScreenGrabber
     /// The visible top-level windows of the other apps, from front to back, by their visible bounds (without the
     /// invisible resize borders of Windows 10/11). The desktop and the windows hidden by Windows are left out.
     /// </summary>
-    public static IReadOnlyList<PixelRect> VisibleWindows()
+    public static IReadOnlyList<VisibleWindow> VisibleWindows()
     {
         int ownProcess = Environment.ProcessId;
-        var windows = new List<PixelRect>();
+        var windows = new List<VisibleWindow>();
         var className = new char[64];
         EnumWindows((hwnd, _) =>
         {
@@ -109,7 +112,7 @@ internal static class ScreenGrabber
                 GetWindowRect(hwnd, out bounds);
             var rect = ToPixelRect(bounds);
             if (rect.Width >= 8 && rect.Height >= 8)
-                windows.Add(rect);
+                windows.Add(new VisibleWindow(hwnd, rect));
             return true;
         }, IntPtr.Zero);
         return windows;

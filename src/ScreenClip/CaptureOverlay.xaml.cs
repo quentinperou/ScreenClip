@@ -42,6 +42,13 @@ public partial class CaptureOverlay : Window
     private bool _pointerInside;
     private bool _syncingMode;
 
+    // Area mode, before dragging: the UI elements under the pointer, from the smallest to the window, and the one a
+    // click takes (the mouse wheel moves along them). Looked up in the background (CaptureSession.FindElements).
+    private VisibleWindow? _hoveredWindow;
+    private IReadOnlyList<PixelRect> _elements = [];
+    private int _elementLevel;
+    private int _lookupX = int.MinValue, _lookupY = int.MinValue;
+
     internal CaptureOverlay(CaptureSession session, MonitorInfo monitor, BitmapSource image, bool showBars)
     {
         _session = session;
@@ -74,6 +81,9 @@ public partial class CaptureOverlay : Window
         Root.MouseLeftButtonDown += Root_MouseLeftButtonDown;
         Root.MouseLeftButtonUp += Root_MouseLeftButtonUp;
         Root.MouseRightButtonUp += Root_MouseRightButtonUp;
+        Root.MouseWheel += Root_MouseWheel;
+        _session.ElementsFound += Session_ElementsFound;
+        Closed += (_, _) => _session.ElementsFound -= Session_ElementsFound;
         Root.MouseLeave += (_, _) =>
         {
             _pointerInside = false;
@@ -93,6 +103,11 @@ public partial class CaptureOverlay : Window
     {
         var hwnd = new WindowInteropHelper(this).Handle;
         HwndSource.FromHwnd(hwnd)?.AddHook(WndProc);
+        // A tool window: Chrome and Edge do not count those when they check whether something covers them. Covered by
+        // an ordinary window this size, a browser takes its page for hidden and stops preparing what the element
+        // detection reads. Also kept out of Alt+Tab.
+        long style = (long)GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+        SetWindowLongPtr(hwnd, GWL_EXSTYLE, new IntPtr(style | WS_EX_TOOLWINDOW));
         var b = _monitor.Bounds;
         SetWindowPos(hwnd, HWND_TOPMOST, b.X, b.Y, b.Width, b.Height, 0);
     }
@@ -138,7 +153,8 @@ public partial class CaptureOverlay : Window
         {
             case CaptureMode.Area:
                 AddHint(null, Strings.Get("HintDrag"));
-                AddHint(null, Strings.Get("HintClickWindow"));
+                AddHint(null, Strings.Get("HintClickElement"));
+                AddHint(null, Strings.Get("HintWheel"));
                 AddHint(Strings.Find("KeyShift") ?? "Shift", Strings.Get("HintSquare"));
                 AddHint(Strings.Find("KeySpace") ?? "Space", Strings.Get("HintMove"));
                 break;
@@ -198,8 +214,64 @@ public partial class CaptureOverlay : Window
                     UpdateSelection();
             }
         }
+        if (_session.Mode == CaptureMode.Area && !_dragging && _pointerInside)
+            UpdateHover();
         Refresh();
     }
+
+    // ---------------------------------------------------------------- Elements under the pointer
+
+    // A new lookup when the pointer leaves the smallest element found, or moves on a window where none was found.
+    private void UpdateHover()
+    {
+        var window = _session.WindowUnder(_pointerX, _pointerY);
+        if (window != _hoveredWindow)
+        {
+            _hoveredWindow = window;
+            _elements = [];
+            _elementLevel = 0;
+        }
+        if (window is null)
+            return; // the desktop: a click takes the screen
+        bool outside = _elements.Count == 0 || !_elements[0].Contains(_pointerX, _pointerY);
+        bool onlyWindow = _elements.Count <= 1 && Math.Abs(_pointerX - _lookupX) + Math.Abs(_pointerY - _lookupY) > 24;
+        if (outside || onlyWindow)
+        {
+            (_lookupX, _lookupY) = (_pointerX, _pointerY);
+            _session.FindElements(window, _pointerX, _pointerY);
+        }
+    }
+
+    private void Session_ElementsFound(VisibleWindow window, int x, int y, IReadOnlyList<PixelRect> elements, IReadOnlyList<PixelRect> boxes)
+    {
+        if (window != _hoveredWindow || !_monitor.Bounds.Contains(x, y))
+            return;
+        var chain = ElementChain.Build(elements, boxes, window.Bounds, _monitor.Bounds);
+        if (chain.Count == 0)
+            return;
+        // The same smallest element: keep the level chosen with the wheel; another one: start from the smallest.
+        if (_elements.Count == 0 || _elements[0] != chain[0])
+            _elementLevel = 0;
+        _elements = chain;
+        _elementLevel = ElementChain.Clamp(_elements, _elementLevel);
+        Refresh();
+    }
+
+    // Wheel up: the larger element around; down: back to the smaller one.
+    private void Root_MouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (_session.Mode != CaptureMode.Area || _dragging || _elements.Count < 2)
+            return;
+        _elementLevel = ElementChain.Clamp(_elements, _elementLevel + (e.Delta > 0 ? 1 : -1));
+        e.Handled = true;
+        Refresh();
+    }
+
+    /// <summary>What a click takes in Area mode: the element shown, else the window under the pointer, else nothing (the screen).</summary>
+    private PixelRect? HoverTarget() =>
+        _elements.Count > 0 && _hoveredWindow is not null
+            ? _elements[ElementChain.Clamp(_elements, _elementLevel)]
+            : Selection.WindowAt(_session.WindowBounds, _pointerX, _pointerY, _monitor.Bounds);
 
     private void UpdateSelection() =>
         _selection = Selection.FromDrag(_anchorX, _anchorY, _pointerX, _pointerY, Keyboard.Modifiers.HasFlag(ModifierKeys.Shift), _monitor.Bounds);
@@ -229,8 +301,13 @@ public partial class CaptureOverlay : Window
             _session.Finish(new CaptureResult(_selection, _monitor, IsDraggedArea: true));
             return;
         }
-        // A click: the window under the pointer (Area and Window), or the screen.
-        var target = _session.Mode == CaptureMode.Screen ? null : Selection.WindowAt(_session.Windows, _pointerX, _pointerY, _monitor.Bounds);
+        // A click: the element under the pointer (Area), the window (Window), or the screen.
+        var target = _session.Mode switch
+        {
+            CaptureMode.Area => HoverTarget(),
+            CaptureMode.Window => Selection.WindowAt(_session.WindowBounds, _pointerX, _pointerY, _monitor.Bounds),
+            _ => null,
+        };
         _session.Finish(new CaptureResult(target ?? _monitor.Bounds, _monitor, IsDraggedArea: false));
     }
 
@@ -314,17 +391,15 @@ public partial class CaptureOverlay : Window
 
         var mode = _session.Mode;
         PixelRect? hole = null, outline = null;
-        bool dashed = false;
         if (mode == CaptureMode.Area && _dragging)
             hole = outline = _selection;
         else if (_pointerInside && mode == CaptureMode.Area)
         {
-            // Before dragging, the window a click would take is outlined, the screen stays dimmed.
-            outline = Selection.WindowAt(_session.Windows, _pointerX, _pointerY, _monitor.Bounds);
-            dashed = true;
+            // Before dragging, what a click would take: the element under the pointer (or its window).
+            hole = outline = HoverTarget();
         }
         else if (_pointerInside && mode == CaptureMode.Window)
-            hole = outline = Selection.WindowAt(_session.Windows, _pointerX, _pointerY, _monitor.Bounds) ?? _monitor.Bounds;
+            hole = outline = Selection.WindowAt(_session.WindowBounds, _pointerX, _pointerY, _monitor.Bounds) ?? _monitor.Bounds;
         else if (_pointerInside && mode == CaptureMode.Screen)
             hole = outline = _monitor.Bounds;
 
@@ -338,9 +413,10 @@ public partial class CaptureOverlay : Window
             Outline.Height = r.Height;
             Canvas.SetLeft(Outline, r.X);
             Canvas.SetTop(Outline, r.Y);
-            Outline.StrokeDashArray = dashed ? new DoubleCollection { 4, 3 } : null;
-            Outline.StrokeThickness = mode == CaptureMode.Area ? 1 : 2;
-            if (mode == CaptureMode.Area)
+            // White and thin around an area being dragged; the accent color around what a click takes.
+            bool dragged = mode == CaptureMode.Area && _dragging;
+            Outline.StrokeThickness = dragged ? 1 : 2;
+            if (dragged)
                 Outline.Stroke = Brushes.White;
             else
                 Outline.SetResourceReference(Shape.StrokeProperty, "AccentFillColorDefaultBrush");

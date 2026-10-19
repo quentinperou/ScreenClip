@@ -15,14 +15,16 @@ internal sealed class CaptureSession
 {
     private readonly List<CaptureOverlay> _overlays = [];
     private bool _finished;
+    private ElementFinder? _finder;
 
     public CaptureSession(BitmapSource image, PixelRect screen, IReadOnlyList<MonitorInfo> monitors,
-        IReadOnlyList<PixelRect> windows, CaptureMode mode)
+        IReadOnlyList<VisibleWindow> windows, CaptureMode mode)
     {
         Image = image;
         Screen = screen;
         Monitors = monitors;
         Windows = windows;
+        WindowBounds = windows.Select(w => w.Bounds).ToList();
         Mode = mode;
     }
 
@@ -35,7 +37,33 @@ internal sealed class CaptureSession
     public IReadOnlyList<MonitorInfo> Monitors { get; }
 
     /// <summary>The windows of the other apps, front to back, as they were when the screen was frozen.</summary>
-    public IReadOnlyList<PixelRect> Windows { get; }
+    public IReadOnlyList<VisibleWindow> Windows { get; }
+
+    public IReadOnlyList<PixelRect> WindowBounds { get; }
+
+    /// <summary>The front window under the point, if any (the desktop has none).</summary>
+    public VisibleWindow? WindowUnder(int x, int y) => Windows.FirstOrDefault(w => w.Bounds.Contains(x, y));
+
+    /// <summary>
+    /// What was found under a point: the window, the screen point, the UI elements the app exposes (outermost first)
+    /// and the blocks seen on the frozen screen.
+    /// </summary>
+    public event Action<VisibleWindow, int, int, IReadOnlyList<PixelRect>, IReadOnlyList<PixelRect>>? ElementsFound;
+
+    /// <summary>
+    /// Looks for the UI elements and the blocks under the point in <paramref name="window"/>, in the background; the
+    /// answer comes back through <see cref="ElementsFound"/>, on the UI thread. Only the latest request counts.
+    /// </summary>
+    public void FindElements(VisibleWindow window, int x, int y)
+    {
+        // The blocks are read on the part of the window on the monitor of the point (a block cannot span two).
+        var monitor = Monitors.FirstOrDefault(m => m.Bounds.Contains(x, y));
+        if (monitor is null)
+            return;
+        _finder ??= new ElementFinder(Image, Screen,
+            (request, elements, boxes) => ElementsFound?.Invoke(request.Window, request.X, request.Y, elements, boxes));
+        _finder.Ask(new ElementFinder.Request(window, window.Bounds.Intersect(monitor.Bounds), x, y));
+    }
 
     public CaptureMode Mode { get; private set; }
 
@@ -60,6 +88,11 @@ internal sealed class CaptureSession
                 active = overlay;
         }
         (active ?? _overlays.FirstOrDefault())?.Activate();
+
+        // Area: a first look under the pointer at once, so that the apps that build their tree on demand (Chrome, Edge,
+        // Electron apps) start building it, and the blocks of that window are read, by the time the pointer moves.
+        if (Mode == CaptureMode.Area && NativeMethods.GetCursorPos(out var pointer) && WindowUnder(pointer.X, pointer.Y) is { } window)
+            FindElements(window, pointer.X, pointer.Y);
     }
 
     public void SetMode(CaptureMode mode)
@@ -74,6 +107,7 @@ internal sealed class CaptureSession
         if (_finished)
             return;
         _finished = true;
+        _finder?.Dispose();
         foreach (var overlay in _overlays)
             overlay.Close();
         _overlays.Clear();

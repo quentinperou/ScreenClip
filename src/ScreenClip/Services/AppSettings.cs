@@ -13,6 +13,16 @@ public enum AppTheme
     Dark,
 }
 
+/// <summary>The screen where the thumbnail appears after a capture.</summary>
+public enum ThumbnailScreen
+{
+    /// <summary>The screen the capture was made on.</summary>
+    Capture,
+    Primary,
+    /// <summary>The screen under the pointer when the thumbnail appears.</summary>
+    Pointer,
+}
+
 /// <summary>A capture shortcut of the settings, in the order of the Settings page and of the tray menu.</summary>
 public enum ShortcutAction
 {
@@ -57,6 +67,10 @@ public sealed class AppSettings
     /// <summary>A thumbnail in the bottom left corner of the screen: copy, save, drag to an app.</summary>
     public bool ShowThumbnail { get; set; } = true;
 
+    /// <summary>Which screen shows it (asked by the author: the capture's one, or always the same).</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<ThumbnailScreen>))]
+    public ThumbnailScreen ThumbnailScreen { get; set; } = ThumbnailScreen.Capture;
+
     /// <summary>The capture goes to the clipboard at once.</summary>
     public bool CopyToClipboard { get; set; } = true;
 
@@ -64,6 +78,12 @@ public sealed class AppSettings
     public bool SaveAutomatically { get; set; }
 
     // ---------------------------------------------------------------- Shortcuts
+
+    /// <summary>
+    /// The global shortcuts are on. Off, ScreenClip takes no key at all; captures stay possible from its notification
+    /// menu (asked by the author).
+    /// </summary>
+    public bool ShortcutsEnabled { get; set; } = true;
 
     /// <summary>The shortcuts as text ("Alt+PrintScreen", "" for none); missing ones take the default.</summary>
     public Dictionary<ShortcutAction, string> Shortcuts { get; set; } = [];

@@ -27,13 +27,17 @@
 ### Capture
 
 - **Impr. écran** capture une zone, **Alt + Impr. écran** une fenêtre, **Ctrl + Impr. écran** l'écran entier,
-  **Maj + Impr. écran** refait la dernière zone. Chaque raccourci se modifie dans **Paramètres → Capture**.
+  **Maj + Impr. écran** refait la dernière zone. Chaque raccourci se modifie dans **Paramètres → Capture**, ou tous
+  se désactivent (le menu de la zone de notification capture toujours).
 - ScreenClip attend dans la **zone de notification** (son menu propose les mêmes captures, le dossier des captures et
   les paramètres). Au repos il ne consomme presque rien : aucune fenêtre, aucun minuteur, environ 5 Mo de mémoire
   utilisée.
 - L'écran est **figé** à l'instant où la touche est pressée : menus et info-bulles restent sur l'image.
-- **Zone** : glissez un rectangle ; un **clic** sans glisser prend la fenêtre sous le pointeur. Une **loupe** montre
-  les pixels sous le pointeur (avec leur position et leur couleur), et la taille s'affiche pendant le tracé.
+- **Zone** : la partie de la fenêtre sous le pointeur est **encadrée** au survol (un lecteur vidéo, une carte d'une
+  page web, un panneau, la fenêtre entière), d'après ce que l'application indique à Windows et les blocs dessinés à
+  l'écran : un **clic** la prend, la **molette** passe à une partie plus grande ou plus petite. Ou glissez un
+  rectangle. Une **loupe** montre les pixels sous le pointeur (avec leur position et leur couleur), et la taille
+  s'affiche pendant le tracé.
   **Maj** fait un carré, **Espace** déplace la zone, **clic droit** ou **Échap** recommence ou annule.
 - **Fenêtre** : la fenêtre sous le pointeur est mise en évidence, un clic la prend.
 - **Plein écran** : un clic prend l'écran sous le pointeur.
@@ -51,7 +55,8 @@ pages de présentation d'applications et des posts de réseaux sociaux.
 - **Cadre** : aucun, un **navigateur façon macOS** (feux tricolores et une adresse que vous tapez), une **fenêtre
   macOS**, une **fenêtre Windows 11** (avec un titre que vous tapez), clair ou sombre ; ou un appareil, un
   **ordinateur portable** ou un **téléphone**, argent ou graphite (le téléphone se met à l'horizontale pour une capture
-  large). Sans aucune marque.
+  large). Sans aucune marque. Leur écran garde la forme d'un vrai : une capture d'une autre forme est recadrée (une
+  longue page garde son haut).
 - **Marge**, **coins arrondis** et **ombre** (curseurs), une **inclinaison 3D** (à gauche ou à droite en un clic, ou
   à la main : gauche–droite et haut–bas), et le **format** : auto, 16:9, 4:3, 1:1, 4:5 ou 9:16.
 - La capture garde ses propres pixels : l'image grandit autour d'elle, rien n'est redimensionné. Les grandes captures
@@ -70,10 +75,10 @@ parfois le changement qu'à la prochaine ouverture de session.
 
 ### Après une capture
 
-- Une **vignette** dans le coin en bas à gauche de l'écran (les notifications de Windows sont à droite) : **Copier**,
-  **Enregistrer**, **Mettre en forme** (l'ouvre dans l'éditeur), l'**épingler** pour qu'elle reste, ou la **glisser**
-  dans une application (mail,
-  messagerie, Word, un dossier…), qui reçoit le fichier image. Elle disparaît d'elle-même après quelques secondes, ne
+- Une **vignette** dans le coin en bas à gauche de l'écran de la capture, de l'écran principal ou de celui du pointeur
+  (au choix dans **Paramètres → Capture** ; les notifications de Windows sont à droite) : **Copier**, **Enregistrer**,
+  **Mettre en forme** (l'ouvre dans l'éditeur), l'**épingler** pour qu'elle reste, ou la **glisser** dans une
+  application (mail, messagerie, Word, un dossier…), qui reçoit le fichier image. Elle disparaît d'elle-même après quelques secondes, ne
   prend jamais le clavier à l'application en cours et n'apparaît jamais dans les captures suivantes.
 - La capture est **copiée** dans le presse-papiers (image et PNG), et peut être **enregistrée automatiquement** :
   fichiers PNG dans `Images\ScreenClip`, nommés `Capture 2026-10-19 à 18.12.05.png` (dossier et nom modifiables).
@@ -170,7 +175,7 @@ dotnet run --project src\ScreenClip       # lance l'application (elle ouvre l'é
 Définissez `SCREENCLIP_LANG` à `en` ou `fr`, ou `SCREENCLIP_THEME` à `Light` ou `Dark`, avant de lancer l'application
 pour voir l'autre langue ou l'autre thème sans changer de réglage. `SCREENCLIP_CAPTURABLE=1` laisse les vignettes
 apparaître dans les captures d'écran (elles en sont normalement exclues, pour ne jamais se retrouver dans la capture
-suivante). ScreenClip ne tourne qu'une fois par session : quittez-le depuis son menu de notification avant d'en
+suivante). `SCREENCLIP_TRACE=1` écrit ce que le mode Zone trouve sous le pointeur dans `%TEMP%\ScreenClip-trace.txt`. ScreenClip ne tourne qu'une fois par session : quittez-le depuis son menu de notification avant d'en
 lancer une autre version.
 
 ### Organisation du code
@@ -182,8 +187,8 @@ src/
                       mise en forme d'une capture (styles, fonds, tailles, inclinaison 3D) dessinée avec SkiaSharp,
                       export PNG / JPG / WebP
   ScreenClip/         Application WPF : icône de notification et raccourcis globaux (TrayHost), capture de l'écran
-                      (GDI), écran de sélection, vignette, éditeur de mise en forme, paramètres, mises à jour, textes
-                      de l'interface
+                      (GDI), écran de sélection (avec les éléments sous le pointeur, par UI Automation), vignette,
+                      éditeur de mise en forme, paramètres, mises à jour, textes de l'interface
 installer/            Script Inno Setup de l'installeur
 scripts/              build.ps1 (compilation complète), make-icons.ps1 (régénère les icônes)
 tests/                Tests unitaires (xUnit)

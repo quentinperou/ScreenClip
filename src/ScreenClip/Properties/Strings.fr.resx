@@ -247,20 +247,23 @@
   <data name="HintClickAWindow" xml:space="preserve">
     <value>Cliquer sur une fenêtre</value>
   </data>
+  <data name="HintClickElement" xml:space="preserve">
+    <value>Clic : ce qui est encadré</value>
+  </data>
   <data name="HintClickScreen" xml:space="preserve">
     <value>Cliquer sur un écran</value>
   </data>
-  <data name="HintClickWindow" xml:space="preserve">
-    <value>Clic : la fenêtre sous le pointeur</value>
-  </data>
   <data name="HintDrag" xml:space="preserve">
-    <value>Glisser pour sélectionner</value>
+    <value>Glisser : une zone libre</value>
   </data>
   <data name="HintMove" xml:space="preserve">
     <value>déplacer</value>
   </data>
   <data name="HintSquare" xml:space="preserve">
     <value>carré</value>
+  </data>
+  <data name="HintWheel" xml:space="preserve">
+    <value>Molette : plus grand ou plus petit</value>
   </data>
   <data name="KeyAlt" xml:space="preserve">
     <value>Alt</value>
@@ -457,6 +460,12 @@
   <data name="SettingsShortcuts" xml:space="preserve">
     <value>Raccourcis</value>
   </data>
+  <data name="SettingsShortcutsEnabled" xml:space="preserve">
+    <value>Raccourcis clavier</value>
+  </data>
+  <data name="SettingsShortcutsEnabledDescription" xml:space="preserve">
+    <value>Désactivés, ScreenClip ne prend aucune touche : les captures restent possibles depuis son icône dans la zone de notification.</value>
+  </data>
   <data name="SettingsShowThumbnail" xml:space="preserve">
     <value>Afficher une vignette</value>
   </data>
@@ -474,6 +483,12 @@
   </data>
   <data name="SettingsThemeDescription" xml:space="preserve">
     <value>Apparence claire ou sombre. Le mode automatique suit celui de Windows.</value>
+  </data>
+  <data name="SettingsThumbnailScreen" xml:space="preserve">
+    <value>Écran de la vignette</value>
+  </data>
+  <data name="SettingsThumbnailScreenDescription" xml:space="preserve">
+    <value>Où la vignette apparaît, dans le coin en bas à gauche.</value>
   </data>
   <data name="SettingsTitle" xml:space="preserve">
     <value>Paramètres de ScreenClip</value>
@@ -546,6 +561,15 @@
   </data>
   <data name="ThumbnailPin" xml:space="preserve">
     <value>Garder à l'écran</value>
+  </data>
+  <data name="ThumbnailScreenCapture" xml:space="preserve">
+    <value>L'écran de la capture</value>
+  </data>
+  <data name="ThumbnailScreenPointer" xml:space="preserve">
+    <value>L'écran du pointeur</value>
+  </data>
+  <data name="ThumbnailScreenPrimary" xml:space="preserve">
+    <value>L'écran principal</value>
   </data>
   <data name="ThumbnailUnpin" xml:space="preserve">
     <value>Laisser disparaître</value>

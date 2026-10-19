@@ -247,20 +247,23 @@
   <data name="HintClickAWindow" xml:space="preserve">
     <value>Click a window</value>
   </data>
+  <data name="HintClickElement" xml:space="preserve">
+    <value>Click: what is outlined</value>
+  </data>
   <data name="HintClickScreen" xml:space="preserve">
     <value>Click a screen</value>
   </data>
-  <data name="HintClickWindow" xml:space="preserve">
-    <value>Click: the window under the pointer</value>
-  </data>
   <data name="HintDrag" xml:space="preserve">
-    <value>Drag to select</value>
+    <value>Drag: a free area</value>
   </data>
   <data name="HintMove" xml:space="preserve">
     <value>move</value>
   </data>
   <data name="HintSquare" xml:space="preserve">
     <value>square</value>
+  </data>
+  <data name="HintWheel" xml:space="preserve">
+    <value>Wheel: larger or smaller</value>
   </data>
   <data name="KeyAlt" xml:space="preserve">
     <value>Alt</value>
@@ -457,6 +460,12 @@
   <data name="SettingsShortcuts" xml:space="preserve">
     <value>Shortcuts</value>
   </data>
+  <data name="SettingsShortcutsEnabled" xml:space="preserve">
+    <value>Keyboard shortcuts</value>
+  </data>
+  <data name="SettingsShortcutsEnabledDescription" xml:space="preserve">
+    <value>Off, ScreenClip takes no key: captures stay possible from its icon in the notification area.</value>
+  </data>
   <data name="SettingsShowThumbnail" xml:space="preserve">
     <value>Show a thumbnail</value>
   </data>
@@ -474,6 +483,12 @@
   </data>
   <data name="SettingsThemeDescription" xml:space="preserve">
     <value>Light or dark appearance. Automatic follows Windows.</value>
+  </data>
+  <data name="SettingsThumbnailScreen" xml:space="preserve">
+    <value>Thumbnail screen</value>
+  </data>
+  <data name="SettingsThumbnailScreenDescription" xml:space="preserve">
+    <value>Where the thumbnail appears, in the bottom left corner.</value>
   </data>
   <data name="SettingsTitle" xml:space="preserve">
     <value>ScreenClip settings</value>
@@ -546,6 +561,15 @@
   </data>
   <data name="ThumbnailPin" xml:space="preserve">
     <value>Keep on screen</value>
+  </data>
+  <data name="ThumbnailScreenCapture" xml:space="preserve">
+    <value>The screen of the capture</value>
+  </data>
+  <data name="ThumbnailScreenPointer" xml:space="preserve">
+    <value>The screen of the pointer</value>
+  </data>
+  <data name="ThumbnailScreenPrimary" xml:space="preserve">
+    <value>The main screen</value>
   </data>
   <data name="ThumbnailUnpin" xml:space="preserve">
     <value>Let it go away</value>

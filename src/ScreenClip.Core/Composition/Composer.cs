@@ -128,7 +128,8 @@ public static class Composer
         var tilt = style.IsTurned
             ? Perspective.RectToQuad(window, Perspective.TiltedCorners(window, style.TurnDegrees, style.TiltDegrees))
             : SKMatrix.Identity;
-        var content = SKRect.Create(layout.CaptureX, layout.CaptureY, capture.Width, capture.Height);
+        var content = SKRect.Create(layout.CaptureX, layout.CaptureY, layout.Shown.Width, layout.Shown.Height);
+        var shown = SKRect.Create(layout.Shown.X, layout.Shown.Y, layout.Shown.Width, layout.Shown.Height);
         var sampling = pixelExact ? new SKSamplingOptions(SKFilterMode.Nearest) : new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
         float strength = Math.Clamp(style.Shadow, 0, 100) / 100f;
 
@@ -145,9 +146,9 @@ public static class Composer
                 }
             }
             if (style.Frame == FrameKind.Laptop)
-                DrawLaptop(canvas, content, layout.Bezel, style.DarkFrame, capture, sampling);
+                DrawLaptop(canvas, content, layout.Bezel, style.DarkFrame, capture, shown, sampling);
             else
-                DrawPhone(canvas, content, layout.Bezel, style.DarkFrame, capture, sampling);
+                DrawPhone(canvas, content, layout.Bezel, style.DarkFrame, capture, shown, sampling);
             canvas.Restore();
             return;
         }
@@ -231,7 +232,7 @@ public static class Composer
         return shape;
     }
 
-    private static void DrawLaptop(SKCanvas canvas, SKRect screen, int bezel, bool dark, SKImage capture, SKSamplingOptions sampling)
+    private static void DrawLaptop(SKCanvas canvas, SKRect screen, int bezel, bool dark, SKImage capture, SKRect shown, SKSamplingOptions sampling)
     {
         var (lid, baseRect) = LaptopParts(screen, bezel);
         float b = bezel;
@@ -246,7 +247,7 @@ public static class Composer
         using (var camera = new SKPaint { IsAntialias = true, Color = new SKColor(0x2C, 0x2C, 0x31) })
             canvas.DrawCircle(screen.MidX, (lid.Rect.Top + screen.Top) / 2, Math.Max(1.5f, b * 0.12f), camera);
 
-        canvas.DrawImage(capture, screen, sampling);
+        canvas.DrawImage(capture, shown, screen, sampling);
 
         // The base: metal, lighter on top, with the notch where the lid opens.
         var baseShape = BaseShape(baseRect);
@@ -308,7 +309,7 @@ public static class Composer
         return path;
     }
 
-    private static void DrawPhone(SKCanvas canvas, SKRect screen, int bezel, bool dark, SKImage capture, SKSamplingOptions sampling)
+    private static void DrawPhone(SKCanvas canvas, SKRect screen, int bezel, bool dark, SKImage capture, SKRect shown, SKSamplingOptions sampling)
     {
         var (body, border, screenShape) = PhoneParts(screen, bezel);
         var light = dark ? new SKColor(0x55, 0x58, 0x5F) : new SKColor(0xEC, 0xEE, 0xF2);
@@ -326,7 +327,7 @@ public static class Composer
 
         canvas.Save();
         canvas.ClipRoundRect(screenShape, SKClipOperation.Intersect, antialias: true);
-        canvas.DrawImage(capture, screen, sampling);
+        canvas.DrawImage(capture, shown, screen, sampling);
         canvas.Restore();
 
         // The camera: a hole near the top of the screen (on the left when sideways).

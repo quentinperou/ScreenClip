@@ -1,3 +1,4 @@
+using ScreenClip.Core;
 using ScreenClip.Core.Composition;
 using SkiaSharp;
 
@@ -61,6 +62,37 @@ public class ClipLayoutTests
         Assert.True(layout.WindowX > 0 && layout.WindowX + layout.WindowWidth < layout.Width);
         if (frame == FrameKind.Laptop)
             Assert.True(layout.WindowY + layout.WindowHeight - (layout.CaptureY + height) > layout.Bezel, "the base below the screen");
+    }
+
+    [Theory]
+    // Laptop: a tall page keeps its top, a panorama its middle; a 16:10 capture stays whole.
+    [InlineData(FrameKind.Laptop, 1000, 2000, 0, 0, 1000, 667)]
+    [InlineData(FrameKind.Laptop, 3000, 1000, 611, 0, 1778, 1000)]
+    [InlineData(FrameKind.Laptop, 1600, 1000, 0, 0, 1600, 1000)]
+    // Phone: upright for a tall capture, sideways for a wide one.
+    [InlineData(FrameKind.Phone, 400, 2000, 0, 0, 400, 889)]
+    [InlineData(FrameKind.Phone, 1600, 1600, 350, 0, 900, 1600)]
+    [InlineData(FrameKind.Phone, 1200, 900, 0, 0, 1200, 675)]
+    // Windows show the whole capture, whatever its shape.
+    [InlineData(FrameKind.Browser, 300, 3000, 0, 0, 300, 3000)]
+    public void Devices_KeepTheShapeOfARealScreen(FrameKind frame, int width, int height, int x, int y, int shownWidth, int shownHeight)
+    {
+        Assert.Equal(new PixelRect(x, y, shownWidth, shownHeight), DeviceShape.Screen(frame, width, height));
+        var layout = ClipLayout.Measure(width, height, new ClipStyle { Frame = frame });
+        Assert.Equal(new PixelRect(x, y, shownWidth, shownHeight), layout.Shown);
+    }
+
+    [Fact]
+    public void Devices_DrawOnlyTheShownPart()
+    {
+        using var surface = SKSurface.Create(new SKImageInfo(400, 2000));
+        surface.Canvas.Clear(SKColors.Red);
+        using var capture = surface.Snapshot();
+        var style = new ClipStyle { Frame = FrameKind.Phone, Padding = 0, Shadow = 0, Background = "transparent" };
+        using var picture = Composer.Render(capture, style);
+        var layout = ClipLayout.Measure(400, 2000, style);
+        Assert.Equal(layout.Width, picture.Width);
+        Assert.True(picture.Height < 1100, "a phone, not a 2000 px tall strip");
     }
 
     [Fact]

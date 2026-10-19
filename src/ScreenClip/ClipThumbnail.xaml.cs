@@ -21,6 +21,7 @@ public partial class ClipThumbnail : Window
     private static readonly List<ClipThumbnail> s_stack = []; // oldest first
 
     private readonly Clip _clip;
+    private MonitorInfo _monitor;
     private readonly DispatcherTimer _timer;
     private bool _pinned;
     private bool _closing;
@@ -29,6 +30,7 @@ public partial class ClipThumbnail : Window
     private ClipThumbnail(Clip clip)
     {
         _clip = clip;
+        _monitor = clip.Monitor;
         InitializeComponent();
 
         PictureBrush.ImageSource = clip.Image;
@@ -78,6 +80,13 @@ public partial class ClipThumbnail : Window
     {
         App.EnsureTheme();
         var thumbnail = new ClipThumbnail(clip) { Opacity = 0 };
+        var monitors = ScreenGrabber.Monitors();
+        thumbnail._monitor = App.Settings.ThumbnailScreen switch
+        {
+            ThumbnailScreen.Primary => monitors.FirstOrDefault(m => m.IsPrimary) ?? clip.Monitor,
+            ThumbnailScreen.Pointer => ScreenGrabber.MonitorAtCursor(monitors),
+            _ => clip.Monitor,
+        };
         s_stack.Add(thumbnail);
         while (s_stack.Count > MaxThumbnails)
             s_stack[0].Close();
@@ -87,11 +96,11 @@ public partial class ClipThumbnail : Window
         thumbnail.RestartTimer();
     }
 
-    // Bottom left of the work area of each thumbnail's monitor, the newest at the bottom. Positions are set in
+    // Bottom left of the work area of each thumbnail's monitor (Settings › Capture), the newest at the bottom. Positions are set in
     // physical pixels: a window first moved onto a monitor takes that monitor's DPI, then its real height is known.
     private static void Arrange()
     {
-        foreach (var group in s_stack.Where(t => t.IsVisible).GroupBy(t => t._clip.Monitor))
+        foreach (var group in s_stack.Where(t => t.IsVisible).GroupBy(t => t._monitor))
         {
             var work = group.Key.WorkArea;
             int bottom = work.Bottom;

@@ -14,6 +14,8 @@
       <Setter Property="Height" Value="28" />
       <Setter Property="Margin" Value="8" />
       <Setter Property="Cursor" Value="Hand" />
+      <!-- Not based on the theme's button: without this, WPF's default black text, black on the dark theme. -->
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">

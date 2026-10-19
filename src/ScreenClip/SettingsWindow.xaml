@@ -168,6 +168,16 @@
             </DockPanel>
             <Rectangle Style="{StaticResource CardDivider}" />
             <DockPanel Style="{StaticResource CardSubRow}">
+              <ComboBox x:Name="ThumbnailScreenBox" DockPanel.Dock="Right" MinWidth="220" VerticalAlignment="Center"
+                        Margin="16,0,0,0" SelectionChanged="ThumbnailScreenBox_SelectionChanged"
+                        AutomationProperties.Name="{local:Tr SettingsThumbnailScreen}" />
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{local:Tr SettingsThumbnailScreen}" />
+                <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsThumbnailScreenDescription}" />
+              </StackPanel>
+            </DockPanel>
+            <Rectangle Style="{StaticResource CardDivider}" />
+            <DockPanel Style="{StaticResource CardSubRow}">
               <CheckBox x:Name="CopyBox" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
                         VerticalAlignment="Center" Margin="16,0,0,0" Checked="AfterCapture_Changed" Unchecked="AfterCapture_Changed"
                         AutomationProperties.Name="{local:Tr SettingsCopy}" />
@@ -190,8 +200,22 @@
         </Border>
 
         <TextBlock Style="{StaticResource SectionTitle}" Text="{local:Tr SettingsShortcuts}" />
+        <!-- All the shortcuts on or off; off, ScreenClip takes no key (the notification menu still captures). -->
+        <Border Style="{StaticResource Card}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xE765;" />
+            <CheckBox x:Name="ShortcutsEnabledBox" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
+                      VerticalAlignment="Center" Margin="16,0,0,0"
+                      Checked="ShortcutsEnabled_Changed" Unchecked="ShortcutsEnabled_Changed"
+                      AutomationProperties.Name="{local:Tr SettingsShortcutsEnabled}" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{local:Tr SettingsShortcutsEnabled}" />
+              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsShortcutsEnabledDescription}" />
+            </StackPanel>
+          </DockPanel>
+        </Border>
         <!-- One row per capture action, filled by the code. -->
-        <Border Style="{StaticResource Card}" Padding="0">
+        <Border x:Name="ShortcutCard" Style="{StaticResource Card}" Padding="0">
           <StackPanel x:Name="ShortcutRows" />
         </Border>
 

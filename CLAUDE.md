@@ -75,14 +75,22 @@ blurred), the frame rows hidden when they do not apply, a tilt by hand (two slid
 right of the bar (as in Crop PDF), “Save” without “…”, “Presets” instead of “Styles” (as in PageCompose), corners up
 to 80 px, the app icon in the empty editor, and a laptop and a phone among the frames: all done, 116 tests.
 
-**Next** (asked by the author, “go”): **element detection in Area mode**: on hover, the UI element under the pointer
-(a YouTube player, a card of a page, a button…) is outlined and a click captures it; the mouse wheel goes to the
-larger / smaller element; dragging still makes a free area; apps that expose nothing fall back to the window. Plan:
-walk the UI Automation tree from the window under the pointer (its handle, kept with the window list) down to the
-deepest element containing the point, on a background thread, latest request only. First probe on Chrome: the
-window's tree only showed the browser frame (`BrowserRootView` › `BrowserView` › `MultiContentsView`…), web content
-not reached yet (Chrome builds its page tree only once an accessibility client asks for it: to look into). Then: his
-own saved presets, annotations later.
+Then **element detection in Area mode** (asked by the author, “go”): on hover, the UI element under the pointer (a
+YouTube player, a card of a page, a panel…) is outlined and a click captures it; the mouse wheel goes to the larger /
+smaller element; dragging still makes a free area; apps that expose nothing fall back to the window (see Technical
+choices › Elements under the pointer). Probed on Chrome without input (YouTube player and a page card found, ~130–150
+ms a lookup); the hover itself is for the author to try. Also asked by the author: a **Keyboard shortcuts** switch in
+Settings › Capture (off, ScreenClip registers no key at all; the notification menu still captures), and device
+screens that keep **real proportions** (an odd capture gave an odd device). 129 tests.
+
+The author's tries: still only the whole page outlined in Chrome, and “even if the picture has to be analysed,
+find a solution”: the page window walk, the tool-window overlays and the blocks seen on the picture (see Technical
+choices › Elements under the pointer); captures made from the editor are now copied and saved as the settings say
+(only the thumbnail gives way to the editor). Then: the thumbnail's corner buttons were black on the dark theme
+(their style is not based on the theme's button: `Foreground` set), and a setting for the thumbnail's screen. 137
+tests.
+
+**Next**: the author tries the element detection again; then his own saved presets, annotations later.
 
 ## Commands
 
@@ -95,7 +103,7 @@ powershell -File scripts\make-icons.ps1   # regenerate the icons (Windows PowerS
 ```
 
 Environment variables: `SCREENCLIP_LANG=en|fr`, `SCREENCLIP_THEME=Light|Dark`, `SCREENCLIP_CAPTURABLE=1` (thumbnails
-stay in screenshots). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
+stay in screenshots), `SCREENCLIP_TRACE=1` (each element lookup written to `%TEMP%\ScreenClip-trace.txt`). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
 again (and the `HKCU\Software\ScreenClip` key).
 
 ## Working on the project
@@ -134,8 +142,8 @@ The test `settings.json` of the script also holds the demo style; it is removed 
 
 | Folder | Role |
 |--------|------|
-| `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). |
-| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow`, `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `NativeMethods`. |
+| `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `BoxDetector` (blocks drawn on a picture), `ElementChain` (elements and blocks under the pointer as wheel levels), `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). |
+| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow`, `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `NativeMethods`. |
 | `installer/ScreenClip.iss` | Inno Setup (English/French): Program Files, Start menu, .NET 10 runtime check, closes the running app, gives Print Screen back, cleans HKCU and temp on uninstall. |
 | `scripts/` | `build.ps1`, `make-icons.ps1` (icon; generated files are committed). |
 | `.github/workflows/build.yml` | CI: build + tests on every push; on a `v*` tag, publishes the installer in a Release (pre-release when the tag has a `-`). |
@@ -168,19 +176,24 @@ The test `settings.json` of the script also holds the demo style; it is removed 
   `DeviceShape` gives their bezel and the room they take around the capture (`ClipLayout.CaptureX/Y` place the capture
   inside the device's box): laptop = black lid (camera dot) with a metal rim, a base 14 % wider with a thumb notch;
   phone = metal edge, black border, screen corners 8.5 % of the short side (they clip the capture), a camera hole,
-  side buttons; upright or sideways from the capture's shape. Light = silver, dark = graphite. With a device, the
+  side buttons; upright or sideways from the capture's shape. Light = silver, dark = graphite. Their screen keeps
+  real proportions (`DeviceShape.Screen`, asked by the author: an odd capture gave an odd device): laptop 3:2 to 16:9,
+  phone 16:9 to 20:9; outside, the capture is cropped (`ClipLayout.Shown`), a tall one keeping its top (where a page
+  starts), a wide one its middle. Still never resized. With a device, the
   title row and the corner slider are hidden. Export: copy =
   PNG stream (transparency kept) + a bitmap flattened on white; save = a save dialog in the capture folder, the format
   of the extension chosen becoming the style's; drag = a temp file in the export format + the bitmap. “New capture”
   hides the editor and goes through `CaptureController.RunForEditor` (the capture comes back to the editor instead of
-  the thumbnail, copy and save).
+  the thumbnail; it is still copied and saved as the settings say).
 - **TFM `net10.0-windows`** without the Windows SDK projection (a large assembly, nothing uses WinRT yet). The video
   capture will need `net10.0-windows10.0.19041.0` (Windows.Graphics.Capture).
 - **Resident part**: `TrayHost` is an `HwndSource` that is never shown (top-level `WS_POPUP` + `WS_EX_TOOLWINDOW`, not
   message-only, so that the Restart Manager's `WM_CLOSE` and the end-of-session messages reach it). Notification icon
   through `Shell_NotifyIcon` (`NOTIFYICON_VERSION_4`, re-added on `TaskbarCreated`), no WinForms. The app icon comes
   from the exe resources (id 32512) at the small-icon size. Hotkeys with `MOD_NOREPEAT`; the id is
-  `ShortcutAction + 1`. `ShutdownMode=OnExplicitShutdown`.
+  `ShortcutAction + 1`. `ShutdownMode=OnExplicitShutdown`. `AppSettings.ShortcutsEnabled` off (Settings › Capture,
+  asked by the author) registers none: the shortcut rows are greyed, the Print Screen card hidden, the menu shows no
+  keys, and the Print Screen question is not asked.
 - **Lazy theme**: `App.xaml` sets no `ThemeMode`; `App.EnsureTheme()` applies it before the first window or menu.
   Styles that use `BasedOn="{StaticResource {x:Type Button}}"` or `AccentButtonStyle` need it applied first.
 - **Tray menu**: a WPF `ContextMenu` built on each opening. A WPF menu of an app with no active window loses the
@@ -196,9 +209,39 @@ The test `settings.json` of the script also holds the demo style; it is removed 
   `WM_DPICHANGED` the suggested rectangle is replaced by the monitor's own before WPF applies it. Pointer positions
   are turned into pixels with monitor size / window size. The chosen pixels are copied out of the frozen screen
   (`Crop`) so that it can be freed.
+- **Elements under the pointer** (Area mode, asked by the author): two sources, merged.
+  - **UI Automation** (`ElementFinder`): the tree of the window under the pointer, from its handle
+    (`ScreenGrabber.VisibleWindow` keeps it; `ElementFromPoint` would find the overlay, which is on top), down to the
+    deepest element holding the point; then the same from the two smallest child windows there, because Chrome's page
+    lives in `Chrome_RenderWidgetHostHWND`, whose tree is not always linked to the window's (seen: from the top
+    window the walk stops at an empty `View`, from the page window it reaches the document and its blocks). Several
+    children can hold the point (Chrome's empty “Intermediate D3D Window” layer): the smallest first, then up to two
+    more if that branch ends at once. Raw view, `BoundingRectangle` cached, depth 60, 600 ms at most. Chrome exposes
+    its pages only once it believes an assistive tool is there; what decides it was not found (a fresh Chrome stayed
+    empty after UIA, MSAA, IAccessible2, focus listening; `--force-renderer-accessibility` fills it), and the author's
+    Chrome was sometimes full, sometimes not. When it builds, it is a little after the first request (depth 9, then
+    41 a second later), so the session looks under the pointer as soon as it opens, and for 3 s after the first
+    lookup into a window the finder looks at the last point again every 250 ms. The overlays are `WS_EX_TOOLWINDOW`:
+    Chrome's occlusion check skips tool windows; covered by an ordinary full-screen window it takes its page for hidden.
+  - **Blocks seen on the frozen screen** (`BoxDetector`, Core, tested; the author's idea: “even by analysing the
+    picture”): lines where two neighbouring pixels differ by 10 or more on a channel, kept when 20 px long or more
+    (gaps of 3 allowed), per row and per column (read row by row); a block = a left and a right side passing the
+    pointer's row that start and end together (±24 px), and lines across near where they start and end, which reach
+    the sides but for the corners (as round as the sides say: square cards side by side stay two). Built once per
+    window and monitor in a capture (~15 ms for 1920 × 912, Release), ~1–10 ms a query. It finds panels, cards,
+    thumbnails, fields; not what has no visible edge (YouTube's dark player on a dark video: 15 against 8 to 13;
+    a contrast of 6 found it no better and filled pictures with blocks), nor pill buttons (no straight side).
+  - `ElementChain` (Core, tested) merges them into the levels the wheel goes through: clipped to the window and the
+    monitor, a block that crosses an element or another block dropped (a wrong guess), sorted by size, each inside the
+    next (±4 px), under 12 px dropped, same edges (±4 px) merged, the window itself as the largest. A new lookup is
+    asked when the pointer leaves the smallest one (or moves 24 px while only the window is known); the level is kept
+    when the smallest did not change. `SCREENCLIP_TRACE=1` writes every lookup to `%TEMP%\ScreenClip-trace.txt`
+    (measured in the author's Chrome: 37 elements and 7 blocks, 144 ms the first lookup, ~30 ms the next ones).
 - **Thumbnail**: layered window (`AllowsTransparency`) with `WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW` (never takes the
   focus) and `WDA_EXCLUDEFROMCAPTURE` (not in the next captures). Placed in physical pixels at the bottom left of the
-  work area of the capture's monitor, the newest at the bottom, at most 4. Drag and drop gives a file
+  work area of a monitor, one stack per monitor, the newest at the bottom, at most 4. Which monitor:
+  `AppSettings.ThumbnailScreen` (Settings › Capture, asked by the author): the capture's (default), the primary one, or
+  the one under the pointer when it appears. Drag and drop gives a file
   (`%TEMP%\ScreenClip`, emptied at each start, or the saved file) and the bitmap, **Copy effect only** (a Move onto a
   folder of the same drive would take the saved file away).
 - **Clipboard**: bitmap (`SetImage`) and `"PNG"` stream, retried while another app holds the clipboard.

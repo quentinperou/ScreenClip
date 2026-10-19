@@ -46,8 +46,14 @@ public partial class SettingsWindow : Window
         ThemeBox.SelectedItem = ThemeBox.Items.Cast<Option<AppTheme>>().First(o => o.Value == _settings.Theme);
 
         ShowThumbnailBox.IsChecked = _settings.ShowThumbnail;
+        ThumbnailScreenBox.Items.Add(new Option<ThumbnailScreen>(ThumbnailScreen.Capture, Strings.Get("ThumbnailScreenCapture")));
+        ThumbnailScreenBox.Items.Add(new Option<ThumbnailScreen>(ThumbnailScreen.Primary, Strings.Get("ThumbnailScreenPrimary")));
+        ThumbnailScreenBox.Items.Add(new Option<ThumbnailScreen>(ThumbnailScreen.Pointer, Strings.Get("ThumbnailScreenPointer")));
+        ThumbnailScreenBox.SelectedItem = ThumbnailScreenBox.Items.Cast<Option<ThumbnailScreen>>().First(o => o.Value == _settings.ThumbnailScreen);
+        ThumbnailScreenBox.IsEnabled = _settings.ShowThumbnail;
         CopyBox.IsChecked = _settings.CopyToClipboard;
         SaveBox.IsChecked = _settings.SaveAutomatically;
+        ShortcutsEnabledBox.IsChecked = _settings.ShortcutsEnabled;
         FillShortcuts();
         ShowPrintScreenState();
         // Back from Windows Settings (Print Screen switch): show what changed.
@@ -132,11 +138,34 @@ public partial class SettingsWindow : Window
         _settings.CopyToClipboard = CopyBox.IsChecked == true;
         _settings.SaveAutomatically = SaveBox.IsChecked == true;
         _settings.Save();
+        ThumbnailScreenBox.IsEnabled = _settings.ShowThumbnail;
+    }
+
+    private void ThumbnailScreenBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_initialized || ThumbnailScreenBox.SelectedItem is not Option<ThumbnailScreen> option)
+            return;
+        _settings.ThumbnailScreen = option.Value;
+        _settings.Save();
+    }
+
+    private void ShortcutsEnabled_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_initialized)
+            return;
+        _settings.ShortcutsEnabled = ShortcutsEnabledBox.IsChecked == true;
+        _settings.Save();
+        App.Tray.RegisterShortcuts(_settings);
+        FillShortcuts();
+        ShowPrintScreenState();
     }
 
     /// <summary>One row per action: its name, its keys, “Change”, and why Windows refused it if it did.</summary>
     private void FillShortcuts()
     {
+        // Off: the rows stay visible (what comes back when turned on) but greyed.
+        ShortcutCard.IsEnabled = _settings.ShortcutsEnabled;
+        ShortcutCard.Opacity = _settings.ShortcutsEnabled ? 1 : 0.5;
         ShortcutRows.Children.Clear();
         foreach (var action in Enum.GetValues<ShortcutAction>())
         {
@@ -211,6 +240,8 @@ public partial class SettingsWindow : Window
     /// </summary>
     private void ShowPrintScreenState()
     {
+        // Without shortcuts, who holds Print Screen does not matter to ScreenClip.
+        PrintScreenCard.Visibility = _settings.ShortcutsEnabled ? Visibility.Visible : Visibility.Collapsed;
         bool windowsKeepsIt = WindowsSettings.PrintScreenUsedByWindows;
         bool needed = PrintScreenKey.IsNeededBy(Enum.GetValues<ShortcutAction>().Select(_settings.GetShortcut));
         bool refused = App.Tray.Refused.Any(a => _settings.GetShortcut(a).Key == Hotkey.PrintScreen);

@@ -59,6 +59,11 @@ internal sealed class TrayHost : IDisposable
     {
         UnregisterShortcuts();
         var refused = new List<ShortcutAction>();
+        if (!settings.ShortcutsEnabled)
+        {
+            Refused = refused;
+            return refused;
+        }
         foreach (var action in Enum.GetValues<ShortcutAction>())
         {
             var hotkey = settings.GetShortcut(action);

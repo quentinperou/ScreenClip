@@ -24,6 +24,7 @@ public partial class PrintScreenWindow : Window
     /// <summary>True when a shortcut uses Print Screen, Windows keeps the key, and the user was never asked.</summary>
     internal static bool ShouldAsk(AppSettings settings) =>
         !settings.PrintScreenAsked
+        && settings.ShortcutsEnabled
         && PrintScreenKey.IsNeededBy(Enum.GetValues<ShortcutAction>().Select(settings.GetShortcut))
         && WindowsSettings.PrintScreenUsedByWindows;
 

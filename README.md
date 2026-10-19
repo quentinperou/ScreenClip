@@ -27,12 +27,15 @@
 ### Capture
 
 - **Print Screen** captures an area, **Alt + Print Screen** a window, **Ctrl + Print Screen** the whole screen,
-  **Shift + Print Screen** the last area again. Every shortcut can be changed in **Settings → Capture**.
+  **Shift + Print Screen** the last area again. Every shortcut can be changed in **Settings → Capture**, or all of
+  them turned off (the notification menu still captures).
 - ScreenClip waits in the **notification area** (its menu gives the same captures, the captures folder, Settings).
   At rest it uses almost nothing: no window, no timer, about 5 MB of memory in use.
 - The screen is **frozen** the moment the key is pressed: menus and tooltips stay in the picture.
-- **Area**: drag a rectangle; a **click** without dragging takes the window under the pointer. A **magnifier**
-  shows the pixels under the pointer (with their position and color), and the size is shown as you drag.
+- **Area**: the part of the window under the pointer is **outlined** as you move (a video player, a card of a web
+  page, a panel, the whole window), from what the app tells Windows and from the blocks drawn on the screen: a
+  **click** takes it, the **mouse wheel** goes to a larger or smaller part. Or drag a rectangle. A **magnifier** shows
+  the pixels under the pointer (with their position and color), and the size is shown as you drag.
   **Shift** makes a square, **Space** moves the area, **right click** or **Esc** starts again or cancels.
 - **Window**: the window under the pointer is highlighted, a click takes it.
 - **Full screen**: a click takes the screen under the pointer.
@@ -49,7 +52,8 @@ look.
 - **Background**: eight gradients, white, black, transparent, the capture itself blurred, or **your own picture**.
 - **Frame**: none, a **browser in the macOS style** (traffic lights and an address you type), a **macOS window**, a
   **Windows 11 window** (with a title you type), light or dark; or a device, a **laptop** or a **phone**, silver or
-  graphite (the phone turns sideways for a wide capture). No brand on them.
+  graphite (the phone turns sideways for a wide capture). No brand on them. Their screen keeps the shape of a real
+  one: a capture of another shape is cropped (a long page keeps its top).
 - **Margin**, **rounded corners** and **shadow** (sliders), a **3D tilt** (left or right in one click, or by hand:
   left–right and up–down), and the **format**: auto, 16:9, 4:3, 1:1, 4:5 or 9:16.
 - The capture keeps its own pixels: the picture grows around it, nothing is resized. Large (high DPI) captures get a
@@ -67,11 +71,11 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
 
 ### After a capture
 
-- A **thumbnail** in the bottom left corner of the screen (Windows' notifications are on the right): **Copy**,
-  **Save**, **Lay out** (opens it in the editor), **pin** it so that it stays, or **drag it** into an app (mail,
-  chat, Word, a folder…), which
-  receives the image file. It goes away by itself after a few seconds, never takes the keyboard from the app you are
-  in, and never appears in the next captures.
+- A **thumbnail** in the bottom left corner of the screen of the capture, the main screen or the pointer's (as set in
+  **Settings → Capture**; Windows' notifications are on the right): **Copy**, **Save**, **Lay out** (opens it in the
+  editor), **pin** it so that it stays, or **drag it** into an app (mail, chat, Word, a folder…), which receives the
+  image file. It goes away by itself after a few seconds, never takes the keyboard from the app you are in, and never
+  appears in the next captures.
 - The capture is **copied** to the clipboard (bitmap and PNG), and can be **saved automatically**: PNG files in
   `Pictures\ScreenClip`, named `Screenshot 2026-10-19 at 18.12.05.png` (folder and name can be changed).
 
@@ -164,7 +168,8 @@ dotnet run --project src\ScreenClip       # run the app (it opens the editor; --
 
 Set `SCREENCLIP_LANG` to `en` or `fr`, or `SCREENCLIP_THEME` to `Light` or `Dark`, before starting the app to check
 the other language or theme without changing any setting. `SCREENCLIP_CAPTURABLE=1` leaves the thumbnails in
-screenshots (they are normally excluded, so that they never show in the next capture). ScreenClip runs once per
+screenshots (they are normally excluded, so that they never show in the next capture). `SCREENCLIP_TRACE=1` writes
+what the Area mode finds under the pointer to `%TEMP%\ScreenClip-trace.txt`. ScreenClip runs once per
 session: quit it from its notification menu before starting another build.
 
 ### Code layout
@@ -175,7 +180,8 @@ src/
                       setting of Windows, list of the GitHub releases (updates), and Composition/: the layout of a
                       capture (styles, backgrounds, sizes, 3D tilt) drawn with SkiaSharp, PNG / JPG / WebP export
   ScreenClip/         WPF app: notification icon and global shortcuts (TrayHost), screen capture (GDI), selection
-                      overlay, thumbnail, layout editor, settings, updates, UI strings
+                      overlay (with the elements under the pointer, from UI Automation), thumbnail, layout editor,
+                      settings, updates, UI strings
 installer/            Inno Setup script of the installer
 scripts/              build.ps1 (full build), make-icons.ps1 (regenerates the icons)
 tests/                Unit tests (xUnit)
