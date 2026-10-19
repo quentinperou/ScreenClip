@@ -61,6 +61,9 @@ internal sealed class CaptureController
             case ShortcutAction.Screen:
                 Start(CaptureMode.Screen);
                 break;
+            case ShortcutAction.AllScreens:
+                TakeAllScreens();
+                break;
             case ShortcutAction.RepeatArea:
                 RepeatLastArea();
                 break;
@@ -109,7 +112,10 @@ internal sealed class CaptureController
                 App.Settings.LastArea = chosen.Area.ToString();
                 App.Settings.Save();
             }
-            Deliver(Crop(session.Image, session.Screen, chosen.Area), chosen.Monitor);
+            var image = Crop(session.Image, session.Screen, chosen.Area);
+            if (chosen.IsAllScreens)
+                image = ClearBetweenScreens(image, chosen.Area, session.Monitors);
+            Deliver(image, chosen.Monitor);
         }
         else
             TakeEditorRequest()?.Invoke(null);
@@ -121,6 +127,23 @@ internal sealed class CaptureController
         var request = _forEditor;
         _forEditor = null;
         return request;
+    }
+
+    // Every screen at once, without the overlay: nothing to choose. Pressed while choosing, from what is frozen.
+    private void TakeAllScreens()
+    {
+        if (_session is not null)
+        {
+            _session.TakeAllScreens();
+            return;
+        }
+        App.EnsureTheme();
+        var screen = ScreenGrabber.VirtualScreen;
+        var monitors = ScreenGrabber.Monitors();
+        var area = PixelRect.Union(monitors.Select(m => m.Bounds)).Intersect(screen);
+        var image = DemoScreen.IsOn ? Crop(DemoScreen.Grab(screen, monitors), screen, area) : ScreenGrabber.Grab(area);
+        Deliver(ClearBetweenScreens(image, area, monitors), ScreenGrabber.MonitorAtCursor(monitors));
+        MemoryTrim.Soon();
     }
 
     private void RepeatLastArea()
@@ -140,11 +163,12 @@ internal sealed class CaptureController
     {
         var settings = App.Settings;
         var clip = new Clip(image, DateTime.Now, monitor);
-        // Copy and save follow the settings for every capture, the ones made from the editor too: only the thumbnail
-        // gives way to the editor.
+        // Copy and save follow the settings for every capture, the ones made from the editor too; then the editor, or
+        // the thumbnail.
         if (settings.CopyToClipboard)
             ClipActions.Copy(image);
-        if (settings.SaveAutomatically)
+        // A made-up desktop (README pictures, tests) never lands in the user's captures folder.
+        if (settings.SaveAutomatically && !DemoScreen.IsOn)
         {
             try
             {
@@ -157,8 +181,23 @@ internal sealed class CaptureController
         }
         if (TakeEditorRequest() is { } editor)
             editor(clip);
+        else if (settings.OpenEditorAfterCapture)
+            App.OpenEditor(clip: clip);
         else if (settings.ShowThumbnail)
             ClipThumbnail.Show(clip);
+    }
+
+    // Screens of different sizes or placed apart leave gaps in the rectangle around them: transparent rather than
+    // black, so that a layout shows its background there (the PNG keeps it; a bitmap for other apps shows black).
+    private static BitmapSource ClearBetweenScreens(BitmapSource image, PixelRect area, IReadOnlyList<MonitorInfo> monitors)
+    {
+        int width = image.PixelWidth, height = image.PixelHeight, stride = width * 4;
+        var pixels = new byte[stride * height];
+        (image.Format.BitsPerPixel == 32 ? image : new FormatConvertedBitmap(image, PixelFormats.Bgr32, null, 0)).CopyPixels(pixels, stride, 0);
+        Selection.ClearBetweenScreens(pixels, area with { Width = width, Height = height }, [.. monitors.Select(m => m.Bounds)]);
+        var cleared = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null, pixels, stride);
+        cleared.Freeze();
+        return cleared;
     }
 
     /// <summary>The monitor that holds the center of <paramref name="area"/>.</summary>

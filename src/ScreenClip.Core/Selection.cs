@@ -16,6 +16,37 @@ public enum CaptureMode
 /// <summary>The geometry of the area being selected on screen, in physical pixels.</summary>
 public static class Selection
 {
+    /// <summary>
+    /// For an “All screens” capture of <paramref name="area"/> (the rectangle around the screens): the pixels no screen
+    /// shows (screens of different sizes, or placed apart) made transparent, the others opaque. 32-bit pixels, blue,
+    /// green, red, alpha, a row after the other.
+    /// </summary>
+    public static void ClearBetweenScreens(Span<byte> bgra, PixelRect area, IReadOnlyList<PixelRect> screens)
+    {
+        int width = area.Width, stride = width * 4;
+        var shown = new bool[width];
+        for (int y = 0; y < area.Height; y++)
+        {
+            Array.Clear(shown);
+            int screenY = area.Y + y;
+            foreach (var screen in screens)
+            {
+                if (screenY < screen.Y || screenY >= screen.Bottom)
+                    continue;
+                for (int x = Math.Max(screen.X, area.X); x < Math.Min(screen.Right, area.Right); x++)
+                    shown[x - area.X] = true;
+            }
+            var row = bgra.Slice(y * stride, stride);
+            for (int x = 0; x < width; x++)
+            {
+                if (shown[x])
+                    row[x * 4 + 3] = 255;
+                else
+                    row.Slice(x * 4, 4).Clear();
+            }
+        }
+    }
+
     /// <summary>A drag shorter than this (in pixels, both ways) is a click.</summary>
     public const int ClickTolerance = 4;
 

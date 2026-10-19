@@ -25,6 +25,22 @@ public readonly record struct PixelRect(int X, int Y, int Width, int Height)
         return right > x && bottom > y ? new PixelRect(x, y, right - x, bottom - y) : default;
     }
 
+    /// <summary>The smallest rectangle that holds all of <paramref name="rects"/>; empty for none.</summary>
+    public static PixelRect Union(IEnumerable<PixelRect> rects)
+    {
+        int left = int.MaxValue, top = int.MaxValue, right = int.MinValue, bottom = int.MinValue;
+        foreach (var r in rects)
+        {
+            if (r.IsEmpty)
+                continue;
+            left = Math.Min(left, r.X);
+            top = Math.Min(top, r.Y);
+            right = Math.Max(right, r.Right);
+            bottom = Math.Max(bottom, r.Bottom);
+        }
+        return right > left && bottom > top ? new PixelRect(left, top, right - left, bottom - top) : default;
+    }
+
     /// <summary>"x,y,width,height", as kept in the settings (last area).</summary>
     public override string ToString() => $"{X},{Y},{Width},{Height}";
 

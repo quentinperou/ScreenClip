@@ -31,7 +31,8 @@ menu, settings, icon):
 
 - trigger: resident app in the notification area + global shortcuts, everything on Print Screen (validated):
   area `PrintScreen`, window `Alt+PrintScreen`, full screen `Ctrl+PrintScreen`, last area again `Shift+PrintScreen`;
-- after a capture: a floating thumbnail (CleanShot-style), bottom left; the editor opens only on demand;
+- after a capture: a floating thumbnail (CleanShot-style), bottom left; the editor opens only on demand (later, the
+  author asked for the editor to open after every capture by default, the thumbnail when it is off);
 - v1 scope: **layout editor** (background, padding, rounded corners, shadow, ratio, 3D tilt, styles) and **fake
   windows** (macOS-style browser, macOS window, Windows 11 window, light/dark). Later: annotations, video/GIF, device
   mock-ups. Uses: README screenshots, social posts, tutorials, slides;
@@ -101,7 +102,15 @@ frame now takes the corners of the real window (Windows 8 px, macOS and browser 
 icon captures an area (the menu is on the right click), with the choice in Settings › General (capture, menu,
 editor). In the empty editor, “Capture an area” is now the accent button, before “Import a picture” (the author's
 question; people who open the editor by hand mostly do not know the shortcut yet). The captures now go to Windows'
-Screenshots folder and the editor's pictures to `Pictures\ScreenClip`, two settings (asked by the author). 151 tests.
+Screenshots folder and the editor's pictures to `Pictures\ScreenClip`, two settings (asked by the author). Then an **All screens** mode (see Technical choices › Capture), checked on the
+demo desktop (every screen lit), not the click itself (WPF ignores posted mouse buttons); the author tried it, and asked for a *Plain* preset and a
+shadow that follows the screens, then rounded corners on every visible corner and a blurred background without
+holes. “All screens” is now taken at once (no click after its button), and the editor opens after a capture
+(`AppSettings.OpenEditorAfterCapture`, on by default, Settings › Capture; the thumbnail rows are greyed while it is
+on). A demo desktop (`SCREENCLIP_DEMO_SCREEN`) is never saved automatically (three test captures had landed in the
+author's Screenshots folder; moved to the Recycle Bin). The presets' “Reset” is a small button, not a link (asked by
+the author). *Plain* is now the first preset, the default style (on the brand's violet) and what Reset gives (the
+background kept), the author's idea: the editor opens after every capture. 160 tests.
 
 **Next**: the author tries the presets; then annotations, video/GIF.
 
@@ -148,9 +157,12 @@ again (and the `HKCU\Software\ScreenClip` key).
 the real editor (laying out a capture of the Settings window, `.local\readme\pieces\demo-<lang>.png`, on the “ocean”
 background, no frame), the notification menu and the capture bar, light theme, on the gradient of the icon with
 rounded corners and shadows. The author first had the Settings window there, then asked for the editor in its place.
-The test `settings.json` of the script also holds the demo style; it is removed afterwards. Made by `.local\readme\capture-pieces.ps1`
-(UI Automation and posted messages, fictitious save folder `D:\Captures`) then `.local\readme\compose.ps1`
-(System.Drawing); `.local\README.md` lists the local tools. Retake them when the UI changes.
+The test `settings.json` of the script also holds the demo style; it is removed afterwards (the author's is put
+aside and back). Made by `.localeadme\capture-pieces.ps1` (UI Automation and posted messages, fictitious save
+folder `D:\Captures`; it takes the Settings window's Capture page as `demo-<lang>.png` first, then lays it out in
+the editor; the menu is opened with `WM_CONTEXTMENU`, since a left click on the icon captures) then
+`.localeadme\compose.ps1` (System.Drawing); `.local\README.md` lists the local tools. Retake them when the UI
+changes (last: October 19, 2026, with the Plain preset, the Reset button and “All screens”).
 
 `.github/selection.png` / `selection.fr.png` (1600 × 951, under “Capture” in the READMEs; asked by the author from the
 mock-up, made from the real overlay instead since the mock-up's had handles, a delay and keys the app does not have):
@@ -205,7 +217,11 @@ eadmerame` (a console on Core) lays it out with `Composer`
   `Matches` says which tile shows chosen (a built-in one first), `ToSave` is what a user preset keeps. The user's are
   `AppSettings.UserPresets` (`UserPreset`: name + style, tidied on load), saved at once. Each tile is a miniature that
   `Composer` renders (twice the tile size) on a made-up 480 × 300 app (bar, gradient card, lines): built-in and user
-  presets look like what they give; a picture background is read small (256 px) for it.
+  presets look like what they give; a picture background is read small (256 px) for it. The *Plain* preset (asked by
+  the author) keeps the background chosen: its `Background` is `StylePresets.CurrentBackground`, which `ApplyTo`
+  replaces by the current one (so its tile stays chosen whatever the background), and its miniature is drawn again
+  on the current background when it changes. It comes first and is the default (`StylePresets.Default`: plain on
+  violet) and what Reset gives (`StylePresets.Reset`: plain, background kept).
 - **Devices** (asked by the author, October 19, 2026): `FrameKind.Laptop` and `Phone`, drawn by `Composer`, no brand.
   `DeviceShape` gives their bezel and the room they take around the capture (`ClipLayout.CaptureX/Y` place the capture
   inside the device's box): laptop = black lid (camera dot) with a metal rim, a base 14 % wider with a thumb notch;
@@ -246,7 +262,22 @@ eadmerame` (a console on Core) lays it out with `Composer`
   setups); an area cannot span two monitors. The overlay is placed in physical pixels with `SetWindowPos`; on
   `WM_DPICHANGED` the suggested rectangle is replaced by the monitor's own before WPF applies it. Pointer positions
   are turned into pixels with monitor size / window size. The chosen pixels are copied out of the frozen screen
-  (`Crop`) so that it can be freed.
+  (`Crop`) so that it can be freed. **All screens** (`CaptureMode.AllScreens`, `ShortcutAction.AllScreens` =
+  Ctrl+Shift+PrintScreen, appended last so that the hotkey ids of the others stay; asked by the author): offered with
+  several screens only (bar, tray menu, editor's New capture); taken at once, nothing to choose (the author: “two
+  steps, one useless”): the shortcut grabs `PixelRect.Union` of the monitors without the overlay, the bar's button
+  takes it from what is frozen (`CaptureSession.TakeAllScreens`); `Selection.ClearBetweenScreens` makes transparent
+  what no screen shows. It is not a `CaptureMode`. The
+  composer draws shadows only outside the window (`ClipPath` difference); a see-through picture (alpha) without a
+  frame gets its shadow from what it shows (`SKImageFilter.CreateDropShadowOnly` on a recorded `SKPicture`) and no
+  outline (the author found the shadow of the rectangle around the screens odd); in a window frame, what it leaves
+  empty is the window's page (white, or dark). A bare picture (no frame, no shadow) has no outline either. Its rounded
+  corners follow what it shows (the author: “some corners rounded, others in the middle not”): `Composer.Trace` turns
+  its opaque part into rectangles (rows with the same opaque runs make a band; more than 64 rectangles, an icon with
+  soft edges, keeps the rectangle around), joined with `SKPath.Op` and rounded with `SKPathEffect.CreateCorner`
+  (concave corners only fill a little of the empty part); traced once per picture (`ConditionalWeakTable`). The
+  blurred background fills what such a picture leaves empty with its average color, and the background blur is
+  `Clamp`ed (with the default, the edges of every exported picture faded to transparent). The size label moves below the capture bar when it would be under it.
 - **Elements under the pointer** (Area mode, asked by the author): two sources, merged.
   - **UI Automation** (`ElementFinder`): the tree of the window under the pointer, from its handle
     (`ScreenGrabber.VisibleWindow` keeps it; `ElementFromPoint` would find the overlay, which is on top), down to the
@@ -326,6 +357,8 @@ while unchanged, so that it follows the language.
 - `Path` is ambiguous (`System.IO` is a global using in WPF code): write `System.Windows.Shapes.Path`.
 - PrintScreen only sends a key-up to WPF: `ShortcutWindow` reads it in `PreviewKeyUp`. The app's own shortcuts are
   unregistered while a new one is typed.
+- WPF takes a posted `WM_MOUSEMOVE` (its position comes from the message) but not posted mouse buttons (it reads the
+  real button state): a click on the overlay cannot be faked by messages.
 - A window shown by a process started from a script does not get the foreground (no keyboard focus on the overlay);
   a real hotkey gives the foreground right to the app.
 

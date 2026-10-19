@@ -70,6 +70,9 @@
   <data name="CancelCapture" xml:space="preserve">
     <value>Cancel (Esc)</value>
   </data>
+  <data name="CaptureAllScreens" xml:space="preserve">
+    <value>Capture all the screens</value>
+  </data>
   <data name="CaptureArea" xml:space="preserve">
     <value>Capture an area</value>
   </data>
@@ -310,6 +313,9 @@
   <data name="LanguageSystem" xml:space="preserve">
     <value>System language (automatic)</value>
   </data>
+  <data name="ModeAllScreens" xml:space="preserve">
+    <value>All screens</value>
+  </data>
   <data name="ModeArea" xml:space="preserve">
     <value>Area</value>
   </data>
@@ -354,6 +360,9 @@
   </data>
   <data name="PresetNameTaken" xml:space="preserve">
     <value>A preset already has this name.</value>
+  </data>
+  <data name="PresetPlain" xml:space="preserve">
+    <value>Plain</value>
   </data>
   <data name="PresetPost" xml:space="preserve">
     <value>Post 1:1</value>
@@ -472,6 +481,12 @@
   <data name="SettingsLanguageDescription" xml:space="preserve">
     <value>Language of the app.</value>
   </data>
+  <data name="SettingsOpenEditor" xml:space="preserve">
+    <value>Open the editor</value>
+  </data>
+  <data name="SettingsOpenEditorDescription" xml:space="preserve">
+    <value>The capture opens in the layout editor. Off, a thumbnail shows in the corner instead.</value>
+  </data>
   <data name="SettingsQuit" xml:space="preserve">
     <value>Quit ScreenClip</value>
   </data>
@@ -537,6 +552,9 @@
   </data>
   <data name="SettingsTrayClickDescription" xml:space="preserve">
     <value>The icon of ScreenClip in the notification area. A right click always opens its menu.</value>
+  </data>
+  <data name="ShortcutAllScreens" xml:space="preserve">
+    <value>Capture all the screens</value>
   </data>
   <data name="ShortcutArea" xml:space="preserve">
     <value>Capture an area</value>

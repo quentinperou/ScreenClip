@@ -179,6 +179,86 @@ public class ComposerTests
     }
 
     [Fact]
+    public void ATransparentPicture_ShowsTheBackground_NotTheShadow()
+    {
+        // The gaps between screens of an “All screens” capture, or an icon: transparent.
+        using var surface = SKSurface.Create(new SKImageInfo(200, 100));
+        surface.Canvas.Clear(SKColors.Transparent);
+        using var capture = surface.Snapshot();
+        var style = new ClipStyle { Background = "white", Frame = FrameKind.None, Padding = 10, Shadow = 100 };
+        using var picture = Composer.Render(capture, style);
+        var layout = ClipLayout.Measure(200, 100, style);
+        var middle = PixelAt(picture, layout.CaptureX + 100, layout.CaptureY + 50);
+        Assert.Equal(SKColors.White, middle);
+    }
+
+    [Fact]
+    public void TheShadowOfASeeThroughPicture_FollowsWhatItShows()
+    {
+        // Red on the left half, nothing on the right half (a screen, and a gap beside it).
+        using var surface = SKSurface.Create(new SKImageInfo(200, 100));
+        surface.Canvas.Clear(SKColors.Transparent);
+        using (var red = new SKPaint { Color = SKColors.Red })
+            surface.Canvas.DrawRect(0, 0, 100, 100, red);
+        using var capture = surface.Snapshot();
+        var style = new ClipStyle { Background = "white", Frame = FrameKind.None, Padding = 25, Radius = 0, Shadow = 100 };
+        using var picture = Composer.Render(capture, style);
+        var layout = ClipLayout.Measure(200, 100, style);
+        Assert.Equal(SKColors.White, PixelAt(picture, layout.CaptureX + 190, layout.CaptureY + 50)); // the gap
+        Assert.NotEqual(SKColors.White, PixelAt(picture, layout.CaptureX + 50, layout.CaptureY + 104)); // under the red
+    }
+
+    [Fact]
+    public void ASeeThroughPicture_IsRoundedOnEveryVisibleCorner()
+    {
+        // A landscape screen beside a taller one (an “All screens” capture): the left screen's corners are not those
+        // of the rectangle around, yet they are rounded too.
+        using var surface = SKSurface.Create(new SKImageInfo(200, 100));
+        surface.Canvas.Clear(SKColors.Transparent);
+        using (var paint = new SKPaint { Color = SKColors.Red })
+        {
+            surface.Canvas.DrawRect(0, 25, 100, 50, paint);
+            surface.Canvas.DrawRect(100, 0, 100, 100, paint);
+        }
+        using var capture = surface.Snapshot();
+        var style = new ClipStyle { Background = "white", Frame = FrameKind.None, Padding = 10, Radius = 20, Shadow = 0 };
+        using var picture = Composer.Render(capture, style);
+        var layout = ClipLayout.Measure(200, 100, style);
+        int x = layout.CaptureX, y = layout.CaptureY;
+        Assert.Equal(SKColors.White, PixelAt(picture, x + 1, y + 26));    // the left screen's top left corner: rounded
+        Assert.Equal(SKColors.White, PixelAt(picture, x + 1, y + 73));    // its bottom left corner
+        Assert.Equal(SKColors.White, PixelAt(picture, x + 101, y + 1));   // the tall screen's top left corner
+        Assert.Equal(SKColors.Red, PixelAt(picture, x + 50, y + 50));     // the screens themselves
+        Assert.Equal(SKColors.Red, PixelAt(picture, x + 99, y + 26));     // where they meet: not rounded
+    }
+
+    [Fact]
+    public void TheBlurredBackground_OfASeeThroughPicture_HasNoHoles()
+    {
+        // Red on the left half, nothing on the right half.
+        using var surface = SKSurface.Create(new SKImageInfo(200, 100));
+        surface.Canvas.Clear(SKColors.Transparent);
+        using (var red = new SKPaint { Color = SKColors.Red })
+            surface.Canvas.DrawRect(0, 0, 100, 100, red);
+        using var capture = surface.Snapshot();
+        var style = new ClipStyle { Background = "blur", Frame = FrameKind.None, Padding = 20, Shadow = 0 };
+        using var picture = Composer.Render(capture, style);
+        var corner = PixelAt(picture, picture.Width - 2, 2);
+        Assert.Equal(255, corner.Alpha);
+        Assert.True(corner.Red > corner.Blue, $"the red of the picture: {corner}");
+    }
+
+    [Fact]
+    public void APlainPicture_HasNoOutline()
+    {
+        var style = new ClipStyle { Background = "white", Frame = FrameKind.None, Padding = 10, Radius = 0, Shadow = 0 };
+        using var capture = Capture();
+        using var picture = Composer.Render(capture, style);
+        var layout = ClipLayout.Measure(200, 100, style);
+        Assert.Equal(new SKColor(0, 200, 0), PixelAt(picture, layout.CaptureX, layout.CaptureY + 50));
+    }
+
+    [Fact]
     public void Render_HasTheLayoutSize_TheCaptureInTheMiddle_AndTheBackgroundAround()
     {
         using var capture = Capture();

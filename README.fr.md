@@ -27,7 +27,7 @@
 ### Capture
 
 - **Impr. écran** capture une zone, **Alt + Impr. écran** une fenêtre, **Ctrl + Impr. écran** l'écran entier,
-  **Maj + Impr. écran** refait la dernière zone. Chaque raccourci se modifie dans **Paramètres → Capture**, ou tous
+  **Ctrl + Maj + Impr. écran** tous les écrans d'un coup, **Maj + Impr. écran** refait la dernière zone. Chaque raccourci se modifie dans **Paramètres → Capture**, ou tous
   se désactivent (le menu de la zone de notification capture toujours).
 - ScreenClip attend dans la **zone de notification** : un **clic** sur son icône capture une zone (ou ouvre le menu
   ou l'éditeur, au choix dans **Paramètres → Général**), un **clic droit** ouvre son menu (les mêmes captures, le
@@ -42,6 +42,8 @@
   **Maj** fait un carré, **Espace** déplace la zone, **clic droit** ou **Échap** recommence ou annule.
 - **Fenêtre** : la fenêtre sous le pointeur est mise en évidence, un clic la prend.
 - **Plein écran** : un clic prend l'écran sous le pointeur.
+- **Tous les écrans** (avec plusieurs écrans) : pris tout de suite, en une image, depuis son bouton, son raccourci ou
+  le menu ; là où il n'y a pas d'écran (écrans de tailles différentes), le PNG est transparent.
 - Plusieurs écrans, chacun à sa propre échelle (100 %, 150 %…) : chaque pixel reste net.
 
 <p align="center">
@@ -54,10 +56,11 @@ Lancé depuis le menu Démarrer, ScreenClip ouvre son **éditeur** : une capture
 une image**, la coller avec **Ctrl+V**, la glisser sur la fenêtre) est mise en forme en direct, comme les captures des
 pages de présentation d'applications et des posts de réseaux sociaux.
 
-- Des **préréglages** en un clic, chacun dessiné tel qu'il rend : *README* (clair, discret), *Post 1:1*,
-  *Story 9:16*, *Slide 16:9*, et **les vôtres** : **+ Enregistrer** garde le style actuel sous un nom (son image de
-  fond comprise) ; un clic droit sur l'un d'eux le renomme, le remplace par le style actuel ou le supprime.
-  **Réinitialiser** revient au préréglage README. Les derniers réglages utilisés sont gardés pour la capture suivante.
+- Des **préréglages** en un clic, chacun dessiné tel qu'il rend : *Neutre* (par défaut : juste l'image sur le fond de
+  votre choix, ni cadre, ni coins, ni ombre, ni contour), *README* (clair, discret), *Post 1:1*, *Story 9:16*,
+  *Slide 16:9*, et **les vôtres** : **+ Enregistrer** garde le style actuel sous un nom (son image de fond comprise) ;
+  un clic droit sur l'un d'eux le renomme, le remplace par le style actuel ou le supprime. **Réinitialiser** revient
+  à *Neutre*, en gardant le fond. Les derniers réglages utilisés sont gardés pour la capture suivante.
 - **Fond** : huit dégradés, blanc, noir, transparent, la capture elle-même floutée, ou **votre propre image**.
 - **Cadre** : aucun, un **navigateur façon macOS** (feux tricolores et une adresse que vous tapez), une **fenêtre
   macOS**, une **fenêtre Windows 11** (avec un titre que vous tapez), clair ou sombre, chacun avec les coins arrondis
@@ -84,11 +87,13 @@ parfois le changement qu'à la prochaine ouverture de session.
 
 ### Après une capture
 
-- Une **vignette** dans le coin en bas à gauche de l'écran de la capture, de l'écran principal ou de celui du pointeur
-  (au choix dans **Paramètres → Capture** ; les notifications de Windows sont à droite) : **Copier**, **Enregistrer**,
-  **Mettre en forme** (l'ouvre dans l'éditeur), l'**épingler** pour qu'elle reste, ou la **glisser** dans une
-  application (mail, messagerie, Word, un dossier…), qui reçoit le fichier image. Elle disparaît d'elle-même après quelques secondes, ne
-  prend jamais le clavier à l'application en cours et n'apparaît jamais dans les captures suivantes.
+- La capture **s'ouvre dans l'éditeur**, prête à mettre en forme (activé par défaut ; **Paramètres → Capture**).
+- Ou, l'éditeur désactivé, une **vignette** dans le coin en bas à gauche de l'écran de la capture, de l'écran
+  principal ou de celui du pointeur (au choix dans **Paramètres → Capture** ; les notifications de Windows sont à
+  droite) : **Copier**, **Enregistrer**, **Mettre en forme** (l'ouvre dans l'éditeur), l'**épingler** pour qu'elle
+  reste, ou la **glisser** dans une application (mail, messagerie, Word, un dossier…), qui reçoit le fichier image.
+  Elle disparaît d'elle-même après quelques secondes, ne prend jamais le clavier à l'application en cours et
+  n'apparaît jamais dans les captures suivantes.
 - La capture est **copiée** dans le presse-papiers (image et PNG), et peut être **enregistrée automatiquement** :
   fichiers PNG dans le dossier **Captures d'écran** de Windows (`Images\Captures d'écran`, là où Win + Impr. écran et
   l'Outil Capture enregistrent), nommés `Capture 2026-10-19 à 18.12.05.png` (dossier et nom modifiables).
@@ -109,6 +114,7 @@ parfois le changement qu'à la prochaine ouverture de session.
 | Capturer une zone | `Impr. écran` |
 | Capturer une fenêtre | `Alt` + `Impr. écran` |
 | Capturer l'écran entier | `Ctrl` + `Impr. écran` |
+| Capturer tous les écrans | `Ctrl` + `Maj` + `Impr. écran` |
 | Refaire la dernière zone | `Maj` + `Impr. écran` |
 | Pendant la sélection : carré / déplacer / annuler | `Maj` / `Espace` / `Échap` ou clic droit |
 | Éditeur : importer / coller / copier / enregistrer | `Ctrl+O` / `Ctrl+V` / `Ctrl+C` / `Ctrl+S` |

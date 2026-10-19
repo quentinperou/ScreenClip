@@ -65,6 +65,7 @@ public partial class CaptureOverlay : Window
             Children = { new RectangleGeometry(new Rect(0, 0, 100_000, 100_000)), _hole },
         };
         Toolbar.Visibility = showBars ? Visibility.Visible : Visibility.Collapsed;
+        AllScreensButton.Visibility = session.HasSeveralScreens ? Visibility.Visible : Visibility.Collapsed;
         Hints.Visibility = showBars ? Visibility.Visible : Visibility.Collapsed;
 
         SourceInitialized += (_, _) => Place();
@@ -141,6 +142,12 @@ public partial class CaptureOverlay : Window
     {
         if (_syncingMode)
             return;
+        // All screens: nothing to choose, taken at once.
+        if (sender == AllScreensButton)
+        {
+            _session.TakeAllScreens();
+            return;
+        }
         _session.SetMode(sender == WindowButton ? CaptureMode.Window : sender == ScreenButton ? CaptureMode.Screen : CaptureMode.Area);
     }
 
@@ -373,6 +380,12 @@ public partial class CaptureOverlay : Window
         _selection = default;
     }
 
+    // Where the capture bar is drawn, when it is.
+    private Rect? BarBounds() =>
+        Toolbar.Visibility == Visibility.Visible && Toolbar.ActualWidth > 0
+            ? new Rect(Toolbar.TranslatePoint(new Point(0, 0), Root), new Size(Toolbar.ActualWidth, Toolbar.ActualHeight))
+            : null;
+
     // The capture bar takes its own clicks; no crosshair over it.
     private bool IsOverBars(MouseEventArgs e) => Toolbar.IsVisible && Toolbar.IsMouseOver;
 
@@ -433,9 +446,15 @@ public partial class CaptureOverlay : Window
             SizeText.Text = Strings.Format("SizePixels", size.Width, size.Height);
             SizeLabel.Visibility = Visibility.Visible;
             SizeLabel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            double top = r.Y - SizeLabel.DesiredSize.Height - 6;
-            Canvas.SetLeft(SizeLabel, Math.Max(4, r.X));
-            Canvas.SetTop(SizeLabel, top >= 4 ? top : r.Y + 6);
+            var label = SizeLabel.DesiredSize;
+            double labelLeft = Math.Max(4, r.X), labelTop = r.Y - label.Height - 6;
+            if (labelTop < 4)
+                labelTop = r.Y + 6;
+            // Not hidden under the capture bar (an element at the top of the screen): below the bar then.
+            if (BarBounds() is { } bar && bar.IntersectsWith(new Rect(labelLeft, labelTop, label.Width, label.Height)))
+                labelTop = Math.Max(r.Bottom, bar.Bottom) + 6;
+            Canvas.SetLeft(SizeLabel, labelLeft);
+            Canvas.SetTop(SizeLabel, labelTop);
         }
         else
             SizeLabel.Visibility = Visibility.Collapsed;

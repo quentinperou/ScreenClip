@@ -170,6 +170,18 @@
         <Border Style="{StaticResource Card}" Padding="0">
           <StackPanel>
             <DockPanel Margin="16,14">
+              <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xE70F;" />
+              <CheckBox x:Name="OpenEditorBox" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
+                        VerticalAlignment="Center" Margin="16,0,0,0" Checked="AfterCapture_Changed" Unchecked="AfterCapture_Changed"
+                        AutomationProperties.Name="{local:Tr SettingsOpenEditor}" />
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{local:Tr SettingsOpenEditor}" />
+                <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsOpenEditorDescription}" />
+              </StackPanel>
+            </DockPanel>
+            <Rectangle Style="{StaticResource CardDivider}" />
+            <!-- The thumbnail: when the editor does not open. -->
+            <DockPanel x:Name="ThumbnailRow" Margin="16,14">
               <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xE8B9;" />
               <CheckBox x:Name="ShowThumbnailBox" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
                         VerticalAlignment="Center" Margin="16,0,0,0" Checked="AfterCapture_Changed" Unchecked="AfterCapture_Changed"
@@ -180,7 +192,7 @@
               </StackPanel>
             </DockPanel>
             <Rectangle Style="{StaticResource CardDivider}" />
-            <DockPanel Style="{StaticResource CardSubRow}">
+            <DockPanel x:Name="ThumbnailScreenRow" Style="{StaticResource CardSubRow}">
               <ComboBox x:Name="ThumbnailScreenBox" DockPanel.Dock="Right" MinWidth="220" VerticalAlignment="Center"
                         Margin="16,0,0,0" SelectionChanged="ThumbnailScreenBox_SelectionChanged"
                         AutomationProperties.Name="{local:Tr SettingsThumbnailScreen}" />

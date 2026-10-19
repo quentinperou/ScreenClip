@@ -27,7 +27,7 @@
 ### Capture
 
 - **Print Screen** captures an area, **Alt + Print Screen** a window, **Ctrl + Print Screen** the whole screen,
-  **Shift + Print Screen** the last area again. Every shortcut can be changed in **Settings → Capture**, or all of
+  **Ctrl + Shift + Print Screen** all the screens at once, **Shift + Print Screen** the last area again. Every shortcut can be changed in **Settings → Capture**, or all of
   them turned off (the notification menu still captures).
 - ScreenClip waits in the **notification area**: a **click** on its icon captures an area (or opens the menu or the
   editor, as set in **Settings → General**), a **right click** opens its menu (the same captures, the captures folder,
@@ -40,6 +40,8 @@
   **Shift** makes a square, **Space** moves the area, **right click** or **Esc** starts again or cancels.
 - **Window**: the window under the pointer is highlighted, a click takes it.
 - **Full screen**: a click takes the screen under the pointer.
+- **All screens** (with several screens): taken at once, as one picture, from its button, its shortcut or the menu;
+  where no screen is (screens of different sizes), the PNG is transparent.
 - Several monitors, each at its own scale (100 %, 150 %…): every pixel stays sharp.
 
 <p align="center">
@@ -52,10 +54,11 @@ Started from the Start menu, ScreenClip opens its **editor**: a capture (or any 
 it with **Ctrl+V**, drop it on the window) is laid out live, the way the screenshots of app pages and social posts
 look.
 
-- **Presets** in one click, each drawn as it renders: *README* (light, discreet), *Post 1:1*, *Story 9:16*,
-  *Slide 16:9*, and **your own**: **+ Save** keeps the current style under a name (its picture background included);
-  right click one to rename it, replace it with the current style or delete it. **Reset** goes back to the README one.
-  The last settings used are kept for the next capture.
+- **Presets** in one click, each drawn as it renders: *Plain* (the default: just the picture on the background you
+  choose, no frame, corners, shadow nor outline), *README* (light, discreet), *Post 1:1*, *Story 9:16*, *Slide 16:9*,
+  and **your own**: **+ Save** keeps the current style under a name (its picture background included); right click
+  one to rename it, replace it with the current style or delete it. **Reset** goes back to *Plain*, the background
+  kept. The last settings used are kept for the next capture.
 - **Background**: eight gradients, white, black, transparent, the capture itself blurred, or **your own picture**.
 - **Frame**: none, a **browser in the macOS style** (traffic lights and an address you type), a **macOS window**, a
   **Windows 11 window** (with a title you type), light or dark, each with the rounded corners of the real one (8 px
@@ -79,10 +82,11 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
 
 ### After a capture
 
-- A **thumbnail** in the bottom left corner of the screen of the capture, the main screen or the pointer's (as set in
-  **Settings → Capture**; Windows' notifications are on the right): **Copy**, **Save**, **Lay out** (opens it in the
-  editor), **pin** it so that it stays, or **drag it** into an app (mail, chat, Word, a folder…), which receives the
-  image file. It goes away by itself after a few seconds, never takes the keyboard from the app you are in, and never
+- The capture **opens in the editor**, ready to lay out (on by default; **Settings → Capture**).
+- Or, with the editor off, a **thumbnail** in the bottom left corner of the screen of the capture, the main screen
+  or the pointer's (as set in **Settings → Capture**; Windows' notifications are on the right): **Copy**, **Save**,
+  **Lay out** (opens it in the editor), **pin** it so that it stays, or **drag it** into an app (mail, chat, Word, a
+  folder…), which receives the image file. It goes away by itself after a few seconds, never takes the keyboard from the app you are in, and never
   appears in the next captures.
 - The capture is **copied** to the clipboard (bitmap and PNG), and can be **saved automatically**: PNG files in the
   **Screenshots** folder of Windows (`Pictures\Screenshots`, where Win + Print Screen and the Snipping Tool save),
@@ -104,6 +108,7 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
 | Capture an area | `Print Screen` |
 | Capture a window | `Alt` + `Print Screen` |
 | Capture the full screen | `Ctrl` + `Print Screen` |
+| Capture all the screens | `Ctrl` + `Shift` + `Print Screen` |
 | Capture the last area again | `Shift` + `Print Screen` |
 | While selecting: square / move / cancel | `Shift` / `Space` / `Esc` or right click |
 | Editor: import / paste / copy / save | `Ctrl+O` / `Ctrl+V` / `Ctrl+C` / `Ctrl+S` |

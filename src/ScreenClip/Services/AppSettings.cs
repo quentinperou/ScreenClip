@@ -38,6 +38,7 @@ public enum ShortcutAction
     Window,
     Screen,
     RepeatArea,
+    AllScreens, // last: the hotkey ids are the values + 1
 }
 
 /// <summary>
@@ -59,6 +60,7 @@ public sealed class AppSettings
         [ShortcutAction.Window] = new(HotkeyModifiers.Alt, Hotkey.PrintScreen),
         [ShortcutAction.Screen] = new(HotkeyModifiers.Control, Hotkey.PrintScreen),
         [ShortcutAction.RepeatArea] = new(HotkeyModifiers.Shift, Hotkey.PrintScreen),
+        [ShortcutAction.AllScreens] = new(HotkeyModifiers.Control | HotkeyModifiers.Shift, Hotkey.PrintScreen),
     };
 
     private static readonly string FilePath = Path.Combine(
@@ -78,6 +80,12 @@ public sealed class AppSettings
     public TrayClick TrayClick { get; set; } = TrayClick.Capture;
 
     // ---------------------------------------------------------------- After a capture
+
+    /// <summary>
+    /// The capture opens in the layout editor (asked by the author, on by default: laying out is what ScreenClip is
+    /// for). The thumbnail is shown only when this is off.
+    /// </summary>
+    public bool OpenEditorAfterCapture { get; set; } = true;
 
     /// <summary>A thumbnail in the bottom left corner of the screen: copy, save, drag to an app.</summary>
     public bool ShowThumbnail { get; set; } = true;

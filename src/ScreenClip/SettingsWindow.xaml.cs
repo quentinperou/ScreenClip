@@ -49,12 +49,13 @@ public partial class SettingsWindow : Window
         TrayClickBox.Items.Add(new Option<TrayClick>(TrayClick.Editor, Strings.Get("TrayClickEditor")));
         TrayClickBox.SelectedItem = TrayClickBox.Items.Cast<Option<TrayClick>>().First(o => o.Value == _settings.TrayClick);
 
+        OpenEditorBox.IsChecked = _settings.OpenEditorAfterCapture;
         ShowThumbnailBox.IsChecked = _settings.ShowThumbnail;
         ThumbnailScreenBox.Items.Add(new Option<ThumbnailScreen>(ThumbnailScreen.Capture, Strings.Get("ThumbnailScreenCapture")));
         ThumbnailScreenBox.Items.Add(new Option<ThumbnailScreen>(ThumbnailScreen.Primary, Strings.Get("ThumbnailScreenPrimary")));
         ThumbnailScreenBox.Items.Add(new Option<ThumbnailScreen>(ThumbnailScreen.Pointer, Strings.Get("ThumbnailScreenPointer")));
         ThumbnailScreenBox.SelectedItem = ThumbnailScreenBox.Items.Cast<Option<ThumbnailScreen>>().First(o => o.Value == _settings.ThumbnailScreen);
-        ThumbnailScreenBox.IsEnabled = _settings.ShowThumbnail;
+        ShowThumbnailRows();
         CopyBox.IsChecked = _settings.CopyToClipboard;
         SaveBox.IsChecked = _settings.SaveAutomatically;
         ShortcutsEnabledBox.IsChecked = _settings.ShortcutsEnabled;
@@ -146,11 +147,22 @@ public partial class SettingsWindow : Window
     {
         if (!_initialized)
             return;
+        _settings.OpenEditorAfterCapture = OpenEditorBox.IsChecked == true;
         _settings.ShowThumbnail = ShowThumbnailBox.IsChecked == true;
         _settings.CopyToClipboard = CopyBox.IsChecked == true;
         _settings.SaveAutomatically = SaveBox.IsChecked == true;
         _settings.Save();
-        ThumbnailScreenBox.IsEnabled = _settings.ShowThumbnail;
+        ShowThumbnailRows();
+    }
+
+    // The thumbnail is shown only when the editor does not open: its rows are greyed while it does.
+    private void ShowThumbnailRows()
+    {
+        bool thumbnail = !_settings.OpenEditorAfterCapture;
+        ThumbnailRow.IsEnabled = thumbnail;
+        ThumbnailRow.Opacity = thumbnail ? 1 : 0.5;
+        ThumbnailScreenRow.IsEnabled = thumbnail && _settings.ShowThumbnail;
+        ThumbnailScreenRow.Opacity = ThumbnailScreenRow.IsEnabled ? 1 : 0.5;
     }
 
     private void ThumbnailScreenBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

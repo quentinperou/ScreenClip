@@ -135,14 +135,23 @@ public static class StylePresets
 {
     public static readonly IReadOnlyList<(string Id, ClipStyle Style)> All =
     [
+        // Just the picture on a background, the one chosen (asked by the author): no frame, corners, shadow nor outline.
+        // First, and the default: the editor opens after every capture, with nothing added that was not asked for.
+        ("plain", new ClipStyle { Background = CurrentBackground, Padding = 6, Radius = 0, Shadow = 0, Frame = FrameKind.None, Ratio = AspectRatio.Auto, Format = ExportFormat.Png }),
         ("readme", new ClipStyle { Background = "mica", Padding = 7, Radius = 10, Shadow = 40, Frame = FrameKind.None, Ratio = AspectRatio.Auto, Format = ExportFormat.Png }),
         ("post", new ClipStyle { Background = "violet", Padding = 10, Radius = 12, Shadow = 60, Frame = FrameKind.Browser, Ratio = AspectRatio.Square, Format = ExportFormat.Jpeg }),
         ("story", new ClipStyle { Background = "night", Padding = 6, Radius = 14, Shadow = 70, Frame = FrameKind.MacWindow, DarkFrame = true, Ratio = AspectRatio.Story, Format = ExportFormat.Jpeg }),
         ("slide", new ClipStyle { Background = "ocean", Padding = 11, Radius = 12, Shadow = 65, Frame = FrameKind.Browser, TurnDegrees = -16, TiltDegrees = 4, Ratio = AspectRatio.Wide, Format = ExportFormat.Png }),
     ];
 
-    /// <summary>The style of a new user: the README preset, close to what a screenshot of an app needs.</summary>
-    public static ClipStyle Default => All[0].Style;
+    /// <summary>The background of a preset that keeps the one chosen (its tile shows it chosen whatever the background).</summary>
+    public const string CurrentBackground = "current";
+
+    /// <summary>The style of a new user: the plain preset (asked by the author), on the violet of the brand.</summary>
+    public static ClipStyle Default => ApplyTo(All[0].Style, new ClipStyle());
+
+    /// <summary>What “Reset” gives: the plain preset, the background kept.</summary>
+    public static ClipStyle Reset(ClipStyle current) => ApplyTo(All[0].Style, current);
 
     /// <summary>The longest name of a preset of the user.</summary>
     public const int MaxNameLength = 40;
@@ -157,6 +166,7 @@ public static class StylePresets
     public static ClipStyle ApplyTo(ClipStyle preset, ClipStyle current) => (preset with
     {
         FrameText = current.FrameText,
+        Background = preset.Background == CurrentBackground ? current.Background : preset.Background,
         BackgroundImage = preset.Background == Backgrounds.ImageId ? preset.BackgroundImage : current.BackgroundImage,
     }).Normalized();
 

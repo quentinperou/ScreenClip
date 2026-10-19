@@ -41,6 +41,7 @@ public partial class EditorWindow : Window
     private readonly List<RadioButton> _userTiles = [];
     private int? _naming;                                    // the preset being renamed; null: a new one
     private readonly Dictionary<string, SKImage?> _miniatureBackgrounds = [];
+    private readonly List<(Image Image, ClipStyle Style)> _keepBackgroundMiniatures = []; // redrawn with the background
     private SKImage? _demoCapture;
     private readonly Dictionary<string, RadioButton> _backgroundTiles = [];
     private readonly Dictionary<FrameKind, RadioButton> _frameTiles = [];
@@ -155,12 +156,15 @@ public partial class EditorWindow : Window
     private void NewCapture_Click(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu { PlacementTarget = NewCaptureButton, Placement = PlacementMode.Bottom };
-        foreach (var (action, text, icon) in new[]
+        var actions = new List<(ShortcutAction, string, string)>
         {
             (ShortcutAction.Area, "CaptureArea", "IconArea"),
             (ShortcutAction.Window, "CaptureWindow", "IconWindow"),
             (ShortcutAction.Screen, "CaptureScreen", "IconScreen"),
-        })
+        };
+        if (ScreenGrabber.Monitors().Count > 1)
+            actions.Add((ShortcutAction.AllScreens, "CaptureAllScreens", "IconAllScreens"));
+        foreach (var (action, text, icon) in actions)
         {
             var item = new MenuItem
             {
@@ -198,6 +202,7 @@ public partial class EditorWindow : Window
         PresetList.Children.Clear();
         _presetTiles.Clear();
         _userTiles.Clear();
+        _keepBackgroundMiniatures.Clear();
         foreach (var (id, style) in StylePresets.All)
         {
             var tile = PresetTile(style, Strings.Get("Preset" + Capitalize(id)));
@@ -280,13 +285,26 @@ public partial class EditorWindow : Window
     // The preset drawn by the composer itself, twice the size of the tile (sharp up to 200 %).
     private Image PresetMiniature(ClipStyle style)
     {
-        const double Width = 58, Height = 38, Density = 2;
+        var image = new Image { Width = 58, Height = 38, Stretch = Stretch.Uniform };
+        DrawMiniature(image, style);
+        if (style.Background == StylePresets.CurrentBackground)
+            _keepBackgroundMiniatures.Add((image, style));
+        return image;
+    }
+
+    private void DrawMiniature(Image image, ClipStyle style)
+    {
+        const double Density = 2;
         _demoCapture ??= DemoCapture();
-        var shown = style with { FrameText = "" };
+        // A preset that keeps the background is drawn on the one chosen now.
+        var shown = style.Background == StylePresets.CurrentBackground
+            ? style with { FrameText = "", Background = _style.Background, BackgroundImage = _style.BackgroundImage }
+            : style with { FrameText = "" };
         var layout = ClipLayout.Measure(_demoCapture.Width, _demoCapture.Height, shown);
-        float scale = (float)Math.Min(Width * Density / layout.Width, Height * Density / layout.Height);
+        float scale = (float)Math.Min(image.Width * Density / layout.Width, image.Height * Density / layout.Height);
         using var picture = Composer.Render(_demoCapture, shown, scale, MiniatureBackground(shown));
-        return new Image { Source = Imaging.ToWpf(picture), Width = Width, Height = Height, Stretch = Stretch.Uniform };
+        image.Source = Imaging.ToWpf(picture);
+        image.Tag = (shown.Background, shown.BackgroundImage);
     }
 
     // A made-up app for the miniatures: a bar, a colorful card, lines of text.
@@ -683,6 +701,11 @@ public partial class EditorWindow : Window
         FormatJpeg.IsChecked = _style.Format == ExportFormat.Jpeg;
         FormatWebp.IsChecked = _style.Format == ExportFormat.Webp;
         ShowImageSwatch();
+        foreach (var (image, style) in _keepBackgroundMiniatures)
+        {
+            if (!Equals(image.Tag, (_style.Background, _style.BackgroundImage)))
+                DrawMiniature(image, style);
+        }
         _syncing = false;
     }
 
@@ -759,7 +782,7 @@ public partial class EditorWindow : Window
         Apply(_style with { FrameText = FrameTextBox.Text });
     }
 
-    private void Reset_Click(object sender, RoutedEventArgs e) => Apply(StylePresets.ApplyTo(StylePresets.Default, _style));
+    private void Reset_Click(object sender, RoutedEventArgs e) => Apply(StylePresets.Reset(_style));
 
     private void PickBackgroundImage()
     {

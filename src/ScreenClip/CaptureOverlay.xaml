@@ -112,6 +112,14 @@
             <TextBlock Text="{local:Tr ModeScreen}" VerticalAlignment="Center" />
           </StackPanel>
         </RadioButton>
+        <!-- Shown with several screens only. -->
+        <RadioButton x:Name="AllScreensButton" Style="{StaticResource ModeButton}" Checked="Mode_Checked"
+                     AutomationProperties.Name="{local:Tr ModeAllScreens}">
+          <StackPanel Orientation="Horizontal">
+            <Path Style="{StaticResource BarIcon}" Data="{StaticResource IconAllScreens}" />
+            <TextBlock Text="{local:Tr ModeAllScreens}" VerticalAlignment="Center" />
+          </StackPanel>
+        </RadioButton>
         <Rectangle Style="{StaticResource BarDivider}" />
         <StackPanel Orientation="Horizontal" Margin="12,0" Opacity="0.55" ToolTip="{local:Tr ComingSoon}">
           <Path Style="{StaticResource IconPath}" Data="{StaticResource IconVideo}" Margin="0,0,8,0" />

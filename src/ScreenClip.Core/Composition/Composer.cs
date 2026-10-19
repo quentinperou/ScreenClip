@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using SkiaSharp;
 
 namespace ScreenClip.Core.Composition;
@@ -102,9 +103,36 @@ public static class Composer
         var info = new SKImageInfo(ratio >= 1 ? small : Math.Max(2, (int)(small * ratio)), ratio >= 1 ? Math.Max(2, (int)(small / ratio)) : small);
         using var surface = SKSurface.Create(info);
         DrawCover(surface.Canvas, SKRect.Create(info.Width, info.Height), capture);
+        if (capture.AlphaType != SKAlphaType.Opaque)
+        {
+            // What a see-through picture leaves empty (the gaps of an “All screens” capture) takes its average
+            // color: the background stays a background, not a hole (seen by the author).
+            using var shown = surface.Snapshot();
+            surface.Canvas.Clear(AverageColor(shown));
+            surface.Canvas.DrawImage(shown, 0, 0);
+        }
         using var tiny = surface.Snapshot();
-        using var paint = new SKPaint { ImageFilter = SKImageFilter.CreateBlur(all.Width / 60f, all.Width / 60f) };
+        // Clamp: the blur carries the edge pixels on; the default would fade the edges of the picture to transparent.
+        using var paint = new SKPaint { ImageFilter = SKImageFilter.CreateBlur(all.Width / 60f, all.Width / 60f, SKShaderTileMode.Clamp) };
         canvas.DrawImage(tiny, all, new SKSamplingOptions(SKCubicResampler.Mitchell), paint);
+    }
+
+    // The mean color of what a small picture shows (transparent pixels aside); grey when it shows nothing.
+    private static SKColor AverageColor(SKImage image)
+    {
+        using var bitmap = new SKBitmap(new SKImageInfo(image.Width, image.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul));
+        if (!image.ReadPixels(bitmap.Info, bitmap.GetPixels(), bitmap.RowBytes))
+            return SKColors.Gray;
+        double r = 0, g = 0, b = 0, weight = 0;
+        foreach (var color in bitmap.Pixels)
+        {
+            double a = color.Alpha / 255.0;
+            r += color.Red * a;
+            g += color.Green * a;
+            b += color.Blue * a;
+            weight += a;
+        }
+        return weight < 0.01 ? SKColors.Gray : new SKColor((byte)(r / weight), (byte)(g / weight), (byte)(b / weight));
     }
 
     // Fills the rectangle with the picture, cropped to its shape.
@@ -153,6 +181,39 @@ public static class Composer
             return;
         }
 
+        // A picture with transparent parts (the gaps of an “All screens” capture, an icon) and no window around it:
+        // its shadow follows what it shows, not the rectangle around it (asked by the author: “the shadow is odd”),
+        // and no outline traces that rectangle.
+        bool seeThrough = capture.AlphaType != SKAlphaType.Opaque;
+        if (seeThrough && style.Frame == FrameKind.None)
+        {
+            canvas.Save();
+            canvas.Concat(in tilt);
+            using var recorder = new SKPictureRecorder();
+            var recording = recorder.BeginRecording(window);
+            // Rounded corners on every visible corner (each screen of an “All screens” capture), not on the corners of
+            // the rectangle around, which may be empty (asked by the author: “some corners rounded, others not”).
+            if (Visible(capture) is { } visible && radius > 0)
+            {
+                using var placed = new SKPath(visible.Path);
+                placed.Transform(SKMatrix.CreateTranslation(content.Left, content.Top));
+                using var rounded = RoundCorners(placed, Math.Min((float)layout.Radius, visible.SmallestSide / 2));
+                recording.ClipPath(rounded, SKClipOperation.Intersect, antialias: true);
+            }
+            else
+                recording.ClipRoundRect(shape, SKClipOperation.Intersect, antialias: true);
+            recording.DrawImage(capture, content, sampling);
+            using var picture = recorder.EndRecording();
+            if (strength > 0)
+            {
+                DrawShadowOf(canvas, picture, (byte)(40 + 100 * strength), (6 + 34 * strength) * k, (2 + 14 * strength) * k);
+                DrawShadowOf(canvas, picture, (byte)(30 + 30 * strength), 1.5f * k, 1 * k);
+            }
+            canvas.DrawPicture(picture);
+            canvas.Restore();
+            return;
+        }
+
         // Shadow: a soft one that grows with the setting, and a thin one that keeps the edge visible.
         if (strength > 0)
         {
@@ -170,8 +231,18 @@ public static class Composer
         canvas.ClipRoundRect(shape, SKClipOperation.Intersect, antialias: true);
         if (layout.BarHeight > 0)
             DrawBar(canvas, SKRect.Create(window.Left, window.Top, window.Width, layout.BarHeight), style, k);
+        if (seeThrough)
+        {
+            // In a window, what the picture leaves empty is the window's own page.
+            using var page = new SKPaint { Color = style.DarkFrame ? new SKColor(0x20, 0x20, 0x22) : SKColors.White };
+            canvas.DrawRect(content, page);
+        }
         canvas.DrawImage(capture, content, sampling);
         canvas.Restore();
+
+        // Nothing around a bare picture without a shadow (the “Plain” preset, asked by the author).
+        if (style.Frame == FrameKind.None && strength == 0)
+            return;
 
         // A fine outline, as Windows and macOS draw around their windows.
         canvas.Save();
@@ -184,6 +255,94 @@ public static class Composer
         canvas.Restore();
     }
 
+    // ---------------------------------------------------------------- Shape of a see-through picture
+
+    private const int MaxShapeRectangles = 64;
+
+    /// <summary>What a see-through picture shows, as rectangles joined in one path, and the shortest side of them.</summary>
+    private sealed record VisibleShape(SKPath Path, float SmallestSide);
+
+    private sealed record ShapeEntry(VisibleShape? Shape);
+
+    // Traced once per picture (the preview draws it again on every change).
+    private static readonly ConditionalWeakTable<SKImage, ShapeEntry> Shapes = new();
+
+    private static VisibleShape? Visible(SKImage capture) => Shapes.GetValue(capture, image => new ShapeEntry(Trace(image))).Shape;
+
+    // The opaque part of the picture as rectangles: rows with the same opaque runs make one band. A few rectangles for
+    // screens; a shape that is not (an icon with soft edges) gives null, and the rectangle around is used.
+    private static VisibleShape? Trace(SKImage image)
+    {
+        using var pixmap = image.PeekPixels();
+        if (pixmap is null || pixmap.ColorType is not (SKColorType.Bgra8888 or SKColorType.Rgba8888))
+            return null;
+        var pixels = pixmap.GetPixelSpan();
+        int width = pixmap.Width, height = pixmap.Height, stride = pixmap.RowBytes;
+        var rects = new List<SKRect>();
+        var band = new List<(int Start, int End)>();
+        var row = new List<(int Start, int End)>();
+        int bandTop = 0;
+        for (int y = 0; y <= height; y++)
+        {
+            row.Clear();
+            if (y < height)
+            {
+                int start = -1;
+                for (int x = 0; x <= width; x++)
+                {
+                    bool opaque = x < width && pixels[y * stride + x * 4 + 3] >= 128;
+                    if (opaque && start < 0)
+                        start = x;
+                    else if (!opaque && start >= 0)
+                    {
+                        row.Add((start, x));
+                        start = -1;
+                    }
+                }
+            }
+            if (y > 0 && row.SequenceEqual(band))
+                continue;
+            foreach (var (start, end) in band)
+                rects.Add(new SKRect(start, bandTop, end, y));
+            if (rects.Count > MaxShapeRectangles)
+                return null;
+            band = [.. row];
+            bandTop = y;
+        }
+        if (rects.Count == 0)
+            return null;
+
+        var path = new SKPath();
+        foreach (var rect in rects)
+        {
+            using var piece = new SKPath();
+            piece.AddRect(rect);
+            var joined = path.Op(piece, SKPathOp.Union);
+            if (joined is null)
+                return null;
+            path.Dispose();
+            path = joined;
+        }
+        return new VisibleShape(path, rects.Min(r => Math.Min(r.Width, r.Height)));
+    }
+
+    private static SKPath RoundCorners(SKPath path, float radius)
+    {
+        using var effect = SKPathEffect.CreateCorner(radius);
+        using var paint = new SKPaint { Style = SKPaintStyle.Fill, PathEffect = effect };
+        var rounded = new SKPath();
+        paint.GetFillPath(path, rounded);
+        return rounded;
+    }
+
+    // The shadow of what a picture shows (its alpha), drawn under it.
+    private static void DrawShadowOf(SKCanvas canvas, SKPicture picture, byte alpha, float blur, float offset)
+    {
+        float sigma = Math.Max(0.5f, blur / 2);
+        using var paint = new SKPaint { ImageFilter = SKImageFilter.CreateDropShadowOnly(0, offset, sigma, sigma, new SKColor(10, 12, 30, alpha)) };
+        canvas.DrawPicture(picture, paint);
+    }
+
     private static void DrawShadow(SKCanvas canvas, SKPath shape, byte alpha, float blur, float offset)
     {
         using var paint = new SKPaint
@@ -193,6 +352,9 @@ public static class Composer
             MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, Math.Max(0.5f, blur / 2)),
         };
         canvas.Save();
+        // Only around the window: through the transparent parts of a picture (the gaps between screens, an icon)
+        // the background shows, not a shadow.
+        canvas.ClipPath(shape, SKClipOperation.Difference, antialias: true);
         canvas.Translate(0, offset);
         canvas.DrawPath(shape, paint);
         canvas.Restore();

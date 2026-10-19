@@ -76,6 +76,9 @@ internal static class TrayMenu
             () => App.Capture.RunAfterMenu(ShortcutAction.Window)));
         menu.Items.Add(Item(Strings.Get("CaptureScreen"), PathIcon("IconScreen"), settings.GetShortcut(ShortcutAction.Screen),
             () => App.Capture.RunAfterMenu(ShortcutAction.Screen)));
+        if (ScreenGrabber.Monitors().Count > 1)
+            menu.Items.Add(Item(Strings.Get("CaptureAllScreens"), PathIcon("IconAllScreens"), settings.GetShortcut(ShortcutAction.AllScreens),
+                () => App.Capture.RunAfterMenu(ShortcutAction.AllScreens)));
         var repeat = Item(Strings.Get("CaptureRepeatArea"), PathIcon("IconRepeat"), settings.GetShortcut(ShortcutAction.RepeatArea),
             () => App.Capture.RunAfterMenu(ShortcutAction.RepeatArea));
         repeat.IsEnabled = App.Capture.HasLastArea;

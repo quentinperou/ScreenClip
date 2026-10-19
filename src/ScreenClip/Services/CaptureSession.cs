@@ -5,7 +5,8 @@ namespace ScreenClip.Services;
 
 /// <summary>What the user chose on the frozen screen.</summary>
 /// <param name="IsDraggedArea">A rectangle dragged by hand (remembered for “Capture the last area again”).</param>
-internal readonly record struct CaptureResult(PixelRect Area, MonitorInfo Monitor, bool IsDraggedArea);
+/// <param name="IsAllScreens">Every screen at once: what lies between them is made transparent.</param>
+internal readonly record struct CaptureResult(PixelRect Area, MonitorInfo Monitor, bool IsDraggedArea, bool IsAllScreens = false);
 
 /// <summary>
 /// One capture in progress: the screen frozen at the moment of the shortcut, shown by one overlay window per monitor
@@ -40,6 +41,19 @@ internal sealed class CaptureSession
     public IReadOnlyList<VisibleWindow> Windows { get; }
 
     public IReadOnlyList<PixelRect> WindowBounds { get; }
+
+    /// <summary>All the screens together (the rectangle around them).</summary>
+    public PixelRect AllScreens => PixelRect.Union(Monitors.Select(m => m.Bounds)).Intersect(Screen);
+
+    /// <summary>
+    /// Every screen at once, as frozen, right away: there is nothing to choose (asked by the author: no click after
+    /// the button). The thumbnail goes to the screen of the pointer.
+    /// </summary>
+    public void TakeAllScreens() =>
+        Finish(new CaptureResult(AllScreens, ScreenGrabber.MonitorAtCursor(Monitors), IsDraggedArea: false, IsAllScreens: true));
+
+    /// <summary>Whether there is more than one screen (the “All screens” mode is offered then).</summary>
+    public bool HasSeveralScreens => Monitors.Count > 1;
 
     /// <summary>The front window under the point, if any (the desktop has none).</summary>
     public VisibleWindow? WindowUnder(int x, int y) => Windows.FirstOrDefault(w => w.Bounds.Contains(x, y));

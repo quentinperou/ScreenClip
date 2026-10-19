@@ -71,8 +71,36 @@ public class SelectionTests
     }
 }
 
+public class AllScreensTests
+{
+    [Fact]
+    public void WhatNoScreenShows_IsTransparent_TheRestOpaque()
+    {
+        // A wide screen, and a smaller one on its right, its top aligned: the corner under the small one is empty.
+        var area = new PixelRect(-4, 0, 6, 4);
+        PixelRect[] screens = [new(-4, 0, 4, 4), new(0, 0, 2, 2)];
+        var bgra = Enumerable.Repeat((byte)0x80, 6 * 4 * 4).ToArray(); // grey, alpha undefined (as Bgr32 leaves it)
+        Selection.ClearBetweenScreens(bgra, area, screens);
+        byte Alpha(int x, int y) => bgra[(y * 6 + x) * 4 + 3];
+        Assert.Equal(255, Alpha(1, 1));                   // on the wide screen
+        Assert.Equal(255, Alpha(5, 1));                   // on the small one
+        Assert.Equal(0, Alpha(5, 3));                     // under the small one: no screen
+        Assert.Equal(0, bgra[(3 * 6 + 5) * 4]);           // and no color left there
+        Assert.Equal(0x80, bgra[(1 * 6 + 1) * 4]);        // colors kept elsewhere
+    }
+}
+
 public class PixelRectTests
 {
+    [Fact]
+    public void Union_HoldsAllTheScreens()
+    {
+        // The author's screens: one in the middle, one standing on its right, one on its left.
+        PixelRect[] screens = [new(0, 0, 1920, 1080), new(1920, -557, 1080, 1920), new(-1920, 0, 1920, 1080)];
+        Assert.Equal(new PixelRect(-1920, -557, 4920, 1920), PixelRect.Union(screens));
+        Assert.True(PixelRect.Union([]).IsEmpty);
+    }
+
     [Fact]
     public void Intersect_GivesTheCommonPart()
     {

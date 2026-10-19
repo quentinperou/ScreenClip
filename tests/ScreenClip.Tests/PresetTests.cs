@@ -33,8 +33,30 @@ public class PresetTests
         var applied = StylePresets.ApplyTo(Mine, current);
         Assert.True(StylePresets.Matches(Mine, applied));
         Assert.False(StylePresets.Matches(Mine, applied with { Shadow = 21 }));
-        Assert.Equal("slide", StylePresets.IdOf(StylePresets.ApplyTo(StylePresets.All[3].Style, current)));
+        var slide = StylePresets.All.Single(p => p.Id == "slide").Style;
+        Assert.Equal("slide", StylePresets.IdOf(StylePresets.ApplyTo(slide, current)));
         Assert.Null(StylePresets.IdOf(applied));
+    }
+
+    [Fact]
+    public void ThePlainPreset_IsTheDefault_AndWhatResetGives()
+    {
+        Assert.Equal("plain", StylePresets.All[0].Id);
+        Assert.Equal("plain", StylePresets.IdOf(StylePresets.Default));
+        Assert.Equal("violet", StylePresets.Default.Background);
+        var reset = StylePresets.Reset(new ClipStyle { Background = "ocean", Frame = FrameKind.Browser, Shadow = 90 });
+        Assert.Equal(("ocean", FrameKind.None, 0), (reset.Background, reset.Frame, reset.Shadow));
+    }
+
+    [Fact]
+    public void ThePlainPreset_KeepsTheBackgroundChosen()
+    {
+        var plain = StylePresets.All.Single(p => p.Id == "plain").Style;
+        var applied = StylePresets.ApplyTo(plain, new ClipStyle { Background = "sunset", Shadow = 80, Radius = 30 });
+        Assert.Equal("sunset", applied.Background);
+        Assert.Equal((0, 0, FrameKind.None), (applied.Radius, applied.Shadow, applied.Frame));
+        Assert.Equal("plain", StylePresets.IdOf(applied));
+        Assert.Equal("plain", StylePresets.IdOf(applied with { Background = "ocean" }));
     }
 
     [Fact]

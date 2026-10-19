@@ -231,10 +231,15 @@
           <Border Style="{StaticResource PanelCard}">
             <StackPanel>
               <DockPanel>
+                <!-- A small button, not a link (asked by the author): it changes the style. -->
+                <Button DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-4,0,0"
+                        Padding="10,3" FontSize="12" Click="Reset_Click" AutomationProperties.Name="{local:Tr EditorReset}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource IconText}" FontSize="12" Margin="0,0,6,0" Text="&#xE7A7;" />
+                    <TextBlock Text="{local:Tr EditorReset}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
                 <TextBlock Style="{StaticResource PanelTitle}" Text="{local:Tr EditorStyles}" />
-                <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="12">
-                  <Hyperlink Click="Reset_Click"><Run Text="{local:Tr EditorReset}" /></Hyperlink>
-                </TextBlock>
               </DockPanel>
               <UniformGrid x:Name="PresetList" Columns="4" />
 
