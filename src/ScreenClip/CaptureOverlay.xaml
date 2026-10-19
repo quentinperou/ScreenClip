@@ -1,0 +1,138 @@
+<Window x:Class="ScreenClip.CaptureOverlay"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ScreenClip"
+        Title="ScreenClip"
+        WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
+        WindowStartupLocation="Manual" Width="1" Height="1"
+        Background="Black" Cursor="Cross" UseLayoutRounding="True">
+
+  <Window.Resources>
+    <!-- A mode of the capture bar: Area, Window, Screen. -->
+    <Style x:Key="ModeButton" TargetType="RadioButton">
+      <Setter Property="GroupName" Value="Mode" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Back" CornerRadius="4" Padding="12,0" Height="36" Background="Transparent">
+              <ContentPresenter VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="BarIcon" TargetType="Path" BasedOn="{StaticResource IconPath}">
+      <Setter Property="Stroke" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Control}}" />
+      <Setter Property="Margin" Value="0,0,8,0" />
+    </Style>
+
+    <!-- Labels drawn over the screen: dark in both themes, like those of Windows' own capture tool. -->
+    <SolidColorBrush x:Key="LabelBackground" Color="#DC1C1C20" />
+
+    <Style x:Key="BarDivider" TargetType="Rectangle">
+      <Setter Property="Width" Value="1" />
+      <Setter Property="Height" Value="22" />
+      <Setter Property="Margin" Value="4,0" />
+      <Setter Property="Fill" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+    </Style>
+  </Window.Resources>
+
+  <Grid x:Name="Root" Background="Transparent">
+    <!-- The screen as it was when the shortcut was pressed, pixel for pixel. -->
+    <Image x:Name="Frozen" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+    <!-- Dims everything but the hole (the area, window or screen chosen). -->
+    <Path x:Name="Shade" Fill="#73000000" IsHitTestVisible="False" />
+
+    <Canvas x:Name="Marks" IsHitTestVisible="False">
+      <Rectangle x:Name="CrossH" Height="1" Fill="#99FFFFFF" Visibility="Collapsed" />
+      <Rectangle x:Name="CrossV" Width="1" Fill="#99FFFFFF" Visibility="Collapsed" />
+      <Rectangle x:Name="Outline" Stroke="White" StrokeThickness="1" SnapsToDevicePixels="True" Visibility="Collapsed" />
+      <Border x:Name="SizeLabel" CornerRadius="4" Background="{StaticResource LabelBackground}" Padding="8,3" Visibility="Collapsed">
+        <TextBlock x:Name="SizeText" Foreground="White" FontSize="12" />
+      </Border>
+      <StackPanel x:Name="Magnifier" Visibility="Collapsed">
+        <Grid Width="120" Height="120">
+          <Ellipse Stroke="White" StrokeThickness="2" RenderOptions.BitmapScalingMode="NearestNeighbor">
+            <Ellipse.Fill>
+              <ImageBrush x:Name="LensBrush" ViewboxUnits="Absolute" Stretch="Fill" />
+            </Ellipse.Fill>
+            <Ellipse.Effect>
+              <DropShadowEffect BlurRadius="14" ShadowDepth="3" Opacity="0.45" />
+            </Ellipse.Effect>
+          </Ellipse>
+          <Rectangle Width="10" Height="10" Stroke="{DynamicResource AccentFillColorDefaultBrush}" StrokeThickness="2" />
+        </Grid>
+        <Border CornerRadius="4" Background="{StaticResource LabelBackground}" Padding="8,2" Margin="0,6,0,0"
+                HorizontalAlignment="Center">
+          <TextBlock x:Name="LensText" Foreground="White" FontSize="11" />
+        </Border>
+      </StackPanel>
+    </Canvas>
+
+    <!-- Capture bar: what to capture, the video to come, cancel. -->
+    <Border x:Name="Toolbar" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,20,0,0" Padding="6"
+            CornerRadius="8" Cursor="Arrow" BorderThickness="1"
+            Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+            BorderBrush="{DynamicResource SurfaceStrokeColorFlyoutBrush}">
+      <Border.Effect>
+        <DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.3" Direction="270" />
+      </Border.Effect>
+      <StackPanel Orientation="Horizontal">
+        <RadioButton x:Name="AreaButton" Style="{StaticResource ModeButton}" Checked="Mode_Checked"
+                     AutomationProperties.Name="{local:Tr ModeArea}">
+          <StackPanel Orientation="Horizontal">
+            <Path Style="{StaticResource BarIcon}" Data="{StaticResource IconArea}" />
+            <TextBlock Text="{local:Tr ModeArea}" VerticalAlignment="Center" />
+          </StackPanel>
+        </RadioButton>
+        <RadioButton x:Name="WindowButton" Style="{StaticResource ModeButton}" Checked="Mode_Checked"
+                     AutomationProperties.Name="{local:Tr ModeWindow}">
+          <StackPanel Orientation="Horizontal">
+            <Path Style="{StaticResource BarIcon}" Data="{StaticResource IconWindow}" />
+            <TextBlock Text="{local:Tr ModeWindow}" VerticalAlignment="Center" />
+          </StackPanel>
+        </RadioButton>
+        <RadioButton x:Name="ScreenButton" Style="{StaticResource ModeButton}" Checked="Mode_Checked"
+                     AutomationProperties.Name="{local:Tr ModeScreen}">
+          <StackPanel Orientation="Horizontal">
+            <Path Style="{StaticResource BarIcon}" Data="{StaticResource IconScreen}" />
+            <TextBlock Text="{local:Tr ModeScreen}" VerticalAlignment="Center" />
+          </StackPanel>
+        </RadioButton>
+        <Rectangle Style="{StaticResource BarDivider}" />
+        <StackPanel Orientation="Horizontal" Margin="12,0" Opacity="0.55" ToolTip="{local:Tr ComingSoon}">
+          <Path Style="{StaticResource IconPath}" Data="{StaticResource IconVideo}" Margin="0,0,8,0" />
+          <TextBlock Text="{local:Tr ModeVideo}" VerticalAlignment="Center" />
+          <Border CornerRadius="8" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center"
+                  Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+            <TextBlock Text="{local:Tr ComingSoon}" FontSize="10" />
+          </Border>
+        </StackPanel>
+        <Rectangle Style="{StaticResource BarDivider}" />
+        <Button Width="36" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Cancel_Click"
+                ToolTip="{local:Tr CancelCapture}" AutomationProperties.Name="{local:Tr CancelCapture}">
+          <TextBlock Style="{StaticResource IconText}" FontSize="12" Text="&#xE711;" />
+        </Button>
+      </StackPanel>
+    </Border>
+
+    <!-- Keys that help, at the bottom. -->
+    <Border x:Name="Hints" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,72" Padding="14,8"
+            CornerRadius="8" Background="{StaticResource LabelBackground}" IsHitTestVisible="False">
+      <StackPanel x:Name="HintsPanel" Orientation="Horizontal" TextElement.Foreground="#F2F2F2" TextElement.FontSize="12" />
+    </Border>
+  </Grid>
+</Window>

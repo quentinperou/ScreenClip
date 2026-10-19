@@ -1,0 +1,27 @@
+# Build outputs
+bin/
+obj/
+out/
+build/
+artifacts/
+dist/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Personal notes, Claude's memory, local dev tools and local Claude Code settings
+CLAUDE.local.md
+.local/
+.claude/settings.local.json
+
+# Signing material (never commit private keys)
+*.pfx
+*.p12
+*.snk
+
+# OS
+Thumbs.db
+Desktop.ini

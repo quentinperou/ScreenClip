@@ -1,0 +1,39 @@
+<Window x:Class="ScreenClip.PrintScreenWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ScreenClip"
+        Title="ScreenClip"
+        Width="560" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" Icon="Assets/ScreenClip.ico">
+
+  <StackPanel Margin="24,20,24,24">
+    <DockPanel Margin="0,0,0,16">
+      <Image Source="Assets/ScreenClip.png" Width="40" Height="40" Margin="0,0,16,0" VerticalAlignment="Top"
+             RenderOptions.BitmapScalingMode="HighQuality" />
+      <TextBlock Text="{local:Tr PrintScreenAskTitle}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap"
+                 VerticalAlignment="Center" />
+    </DockPanel>
+
+    <TextBlock Text="{local:Tr PrintScreenAskText}" TextWrapping="Wrap" />
+    <TextBlock Text="{local:Tr PrintScreenAskRestore}" TextWrapping="Wrap" Margin="0,8,0,0"
+               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+    <!-- What happened after "Yes". -->
+    <Border x:Name="ResultBar" Style="{StaticResource SuccessBar}" Margin="0,16,0,0" Visibility="Collapsed">
+      <StackPanel>
+        <TextBlock x:Name="ResultText" TextWrapping="Wrap" />
+        <TextBlock x:Name="WindowsSettingsLink" Margin="0,6,0,0" Visibility="Collapsed">
+          <Hyperlink Click="WindowsSettings_Click"><Run Text="{local:Tr PrintScreenOpenWindowsSettings}" /></Hyperlink>
+        </TextBlock>
+      </StackPanel>
+    </Border>
+
+    <StackPanel x:Name="AskButtons" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
+      <Button Content="{local:Tr PrintScreenAskNo}" Margin="0,0,8,0" Click="No_Click" />
+      <Button Content="{local:Tr PrintScreenAskYes}" Style="{DynamicResource AccentButtonStyle}" Click="Yes_Click"
+              IsDefault="True" />
+    </StackPanel>
+    <Button x:Name="CloseButton" Content="{local:Tr Close}" HorizontalAlignment="Right" MinWidth="96" Margin="0,24,0,0"
+            Visibility="Collapsed" IsCancel="True" Click="Close_Click" />
+  </StackPanel>
+</Window>

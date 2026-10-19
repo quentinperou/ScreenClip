@@ -1,0 +1,329 @@
+<Window x:Class="ScreenClip.EditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ScreenClip"
+        Title="ScreenClip"
+        Width="1280" Height="820" MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen" Icon="Assets/ScreenClip.ico"
+        AllowDrop="True" UseLayoutRounding="True">
+
+  <Window.Resources>
+    <!-- A choice of a segmented control (frame theme, tilt, ratio, file format). -->
+    <Style x:Key="Segment" TargetType="RadioButton">
+      <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Back" CornerRadius="4" Height="28" Margin="1" Background="Transparent" BorderThickness="1"
+                    BorderBrush="Transparent">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="6,0"
+                                TextElement.FontSize="13" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+                <Setter TargetName="Back" Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="SegmentBar" TargetType="Border">
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Padding" Value="1" />
+      <Setter Property="Background" Value="{DynamicResource ControlAltFillColorSecondaryBrush}" />
+    </Style>
+
+    <!-- A swatch, a frame or a preset: a tile with a ring when chosen. -->
+    <Style x:Key="Tile" TargetType="RadioButton">
+      <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Ring" CornerRadius="8" BorderThickness="2" BorderBrush="Transparent" Padding="2">
+              <ContentPresenter />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="PanelCard" TargetType="Border" BasedOn="{StaticResource Card}">
+      <Setter Property="Padding" Value="14,12,14,14" />
+      <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+
+    <Style x:Key="PanelTitle" TargetType="TextBlock">
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Margin" Value="0,0,0,10" />
+    </Style>
+
+    <Style x:Key="RowLabel" TargetType="TextBlock">
+      <Setter Property="Width" Value="104" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style x:Key="BarButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Setter Property="Margin" Value="0,0,6,0" />
+      <Setter Property="Padding" Value="12,5" />
+    </Style>
+
+    <Style x:Key="BarLabel" TargetType="TextBlock">
+      <Setter Property="Margin" Value="8,0,0,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+  </Window.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- Command bar. -->
+    <DockPanel Margin="12,8,12,8" LastChildFill="False">
+      <Button x:Name="NewCaptureButton" Style="{StaticResource BarButton}" Click="NewCapture_Click"
+              AutomationProperties.Name="{local:Tr EditorNewCapture}">
+        <StackPanel Orientation="Horizontal">
+          <Path Style="{StaticResource IconPath}" Data="{StaticResource IconArea}" />
+          <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr EditorNewCapture}" />
+          <TextBlock Style="{StaticResource IconText}" FontSize="9" Margin="8,1,0,0" Text="&#xE70D;" />
+        </StackPanel>
+      </Button>
+      <Button Style="{StaticResource BarButton}" Click="Import_Click" ToolTip="Ctrl+O"
+              AutomationProperties.Name="{local:Tr EditorImport}">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Style="{StaticResource IconText}" FontSize="15" Text="&#xE8E5;" />
+          <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr EditorImport}" />
+        </StackPanel>
+      </Button>
+
+      <!-- Right to left: Settings at the far right (as in Crop PDF), then Copy (the main action), then Save. -->
+      <Button DockPanel.Dock="Right" Style="{StaticResource BarButton}" Margin="10,0,0,0" Padding="8,5" Background="Transparent"
+              BorderThickness="0" Click="Settings_Click" ToolTip="{local:Tr Settings}" AutomationProperties.Name="{local:Tr Settings}">
+        <TextBlock Style="{StaticResource IconText}" FontSize="16" Text="&#xE713;" />
+      </Button>
+      <Button DockPanel.Dock="Right" x:Name="CopyButton" Style="{DynamicResource AccentButtonStyle}" Padding="14,5"
+              Click="Copy_Click" ToolTip="Ctrl+C" AutomationProperties.Name="{local:Tr Copy}">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Style="{StaticResource IconText}" FontSize="15" Text="&#xE8C8;" />
+          <TextBlock x:Name="CopyText" Style="{StaticResource BarLabel}" Text="{local:Tr Copy}" />
+        </StackPanel>
+      </Button>
+      <Button DockPanel.Dock="Right" x:Name="SaveButton" Style="{StaticResource BarButton}" Click="Save_Click" ToolTip="Ctrl+S"
+              AutomationProperties.Name="{local:Tr Save}">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Style="{StaticResource IconText}" FontSize="15" Text="&#xE74E;" />
+          <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr Save}" />
+        </StackPanel>
+      </Button>
+    </DockPanel>
+
+    <Grid Grid.Row="1" Margin="12,0,12,12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="12" />
+        <ColumnDefinition Width="350" />
+      </Grid.ColumnDefinitions>
+
+      <!-- Preview. -->
+      <Border x:Name="PreviewArea" CornerRadius="8" BorderThickness="1"
+              Background="{DynamicResource LayerFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <Grid x:Name="PreviewHost" Margin="24,24,24,8" SizeChanged="PreviewHost_SizeChanged">
+            <Image x:Name="Preview" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Fill"
+                   Cursor="Hand" RenderOptions.BitmapScalingMode="HighQuality"
+                   MouseLeftButtonDown="Preview_MouseLeftButtonDown" MouseMove="Preview_MouseMove" />
+
+            <!-- Nothing to lay out yet. -->
+            <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440">
+              <!-- The app's own icon (scripts\make-icons.ps1). -->
+              <Image Source="Assets/ScreenClip.png" Width="80" Height="80" HorizontalAlignment="Center"
+                     RenderOptions.BitmapScalingMode="HighQuality" />
+
+              <TextBlock Text="{local:Tr EditorEmptyTitle}" FontSize="20" FontWeight="SemiBold" Margin="0,20,0,8"
+                         HorizontalAlignment="Center" />
+              <TextBlock Text="{local:Tr EditorEmptyText}" TextWrapping="Wrap" TextAlignment="Center"
+                         Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+                <Button Style="{DynamicResource AccentButtonStyle}" Padding="16,6" Margin="0,0,8,0" Click="Import_Click"
+                        AutomationProperties.Name="{local:Tr EditorImport}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource IconText}" FontSize="15" Text="&#xE8E5;" />
+                    <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr EditorImport}" />
+                  </StackPanel>
+                </Button>
+                <Button Padding="16,6" Click="CaptureArea_Click" AutomationProperties.Name="{local:Tr CaptureArea}">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconArea}" />
+                    <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr CaptureArea}" />
+                  </StackPanel>
+                </Button>
+              </StackPanel>
+            </StackPanel>
+          </Grid>
+
+          <!-- Size of the export, and what happened last (copied, saved). -->
+          <DockPanel Grid.Row="1" Margin="16,0,16,10" LastChildFill="False">
+            <TextBlock x:Name="OutputText" VerticalAlignment="Center" FontSize="12"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            <TextBlock x:Name="StatusText" Margin="16,0,0,0" VerticalAlignment="Center" FontSize="12" Visibility="Collapsed" />
+            <TextBlock x:Name="StatusLink" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" Visibility="Collapsed">
+              <Hyperlink Click="StatusLink_Click"><Run Text="{local:Tr ShowInExplorer}" /></Hyperlink>
+            </TextBlock>
+            <TextBlock x:Name="DragHint" DockPanel.Dock="Right" VerticalAlignment="Center" FontSize="12"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{local:Tr EditorDragHint}" />
+          </DockPanel>
+        </Grid>
+      </Border>
+
+      <!-- Settings of the layout. -->
+      <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
+        <StackPanel x:Name="Panel">
+          <Border Style="{StaticResource PanelCard}">
+            <StackPanel>
+              <DockPanel>
+                <TextBlock Style="{StaticResource PanelTitle}" Text="{local:Tr EditorStyles}" />
+                <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="12">
+                  <Hyperlink Click="Reset_Click"><Run Text="{local:Tr EditorReset}" /></Hyperlink>
+                </TextBlock>
+              </DockPanel>
+              <UniformGrid x:Name="PresetList" Columns="4" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource PanelCard}">
+            <StackPanel>
+              <TextBlock Style="{StaticResource PanelTitle}" Text="{local:Tr EditorBackground}" />
+              <UniformGrid x:Name="BackgroundList" Columns="7" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource PanelCard}">
+            <StackPanel>
+              <TextBlock Style="{StaticResource PanelTitle}" Text="{local:Tr EditorFrame}" />
+              <UniformGrid x:Name="FrameList" Columns="3" />
+              <!-- Only for a frame: hidden with “None”; the text only for the windows (not the devices). -->
+              <StackPanel x:Name="FrameOptions">
+              <DockPanel Margin="0,12,0,0">
+                <TextBlock Style="{StaticResource RowLabel}" Text="{local:Tr EditorFrameTheme}" />
+                <Border Style="{StaticResource SegmentBar}">
+                  <UniformGrid Rows="1">
+                    <RadioButton x:Name="LightFrame" Style="{StaticResource Segment}" GroupName="FrameTheme" Content="{local:Tr ThemeLight}" Checked="Option_Changed" />
+                    <RadioButton x:Name="DarkFrame" Style="{StaticResource Segment}" GroupName="FrameTheme" Content="{local:Tr ThemeDark}" Checked="Option_Changed" />
+                  </UniformGrid>
+                </Border>
+              </DockPanel>
+              <DockPanel x:Name="FrameTextRow" Margin="0,10,0,0">
+                <TextBlock x:Name="FrameTextLabel" Style="{StaticResource RowLabel}" Text="{local:Tr EditorAddress}" />
+                <TextBox x:Name="FrameTextBox" TextChanged="FrameTextBox_TextChanged" />
+              </DockPanel>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource PanelCard}">
+            <StackPanel>
+              <TextBlock Style="{StaticResource PanelTitle}" Text="{local:Tr EditorLayout}" />
+              <DockPanel>
+                <TextBlock Text="{local:Tr EditorPadding}" FontSize="13" />
+                <TextBlock x:Name="PaddingValue" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="13"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+              </DockPanel>
+              <Slider x:Name="PaddingSlider" Minimum="0" Maximum="25" SmallChange="1" LargeChange="5" IsSnapToTickEnabled="True"
+                      TickFrequency="1" ValueChanged="Slider_ValueChanged" Margin="0,2,0,8"
+                      AutomationProperties.Name="{local:Tr EditorPadding}" />
+              <!-- The corners of a window: a device has its own. -->
+              <StackPanel x:Name="RadiusRow">
+                <DockPanel>
+                  <TextBlock Text="{local:Tr EditorCorners}" FontSize="13" />
+                  <TextBlock x:Name="RadiusValue" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="13"
+                             Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </DockPanel>
+                <Slider x:Name="RadiusSlider" Minimum="0" Maximum="80" SmallChange="1" LargeChange="8" IsSnapToTickEnabled="True"
+                        TickFrequency="1" ValueChanged="Slider_ValueChanged" Margin="0,2,0,8"
+                        AutomationProperties.Name="{local:Tr EditorCorners}" />
+              </StackPanel>
+              <DockPanel>
+                <TextBlock Text="{local:Tr EditorShadow}" FontSize="13" />
+                <TextBlock x:Name="ShadowValue" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="13"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+              </DockPanel>
+              <Slider x:Name="ShadowSlider" Minimum="0" Maximum="100" SmallChange="5" LargeChange="10" IsSnapToTickEnabled="True"
+                      TickFrequency="5" ValueChanged="Slider_ValueChanged" Margin="0,2,0,10"
+                      AutomationProperties.Name="{local:Tr EditorShadow}" />
+              <DockPanel>
+                <TextBlock Style="{StaticResource RowLabel}" Text="{local:Tr EditorTilt}" />
+                <Border Style="{StaticResource SegmentBar}">
+                  <UniformGrid Rows="1">
+                    <RadioButton x:Name="TiltLeft" Style="{StaticResource Segment}" GroupName="Tilt" Content="{local:Tr TiltLeft}" Checked="Tilt_Checked" />
+                    <RadioButton x:Name="TiltNone" Style="{StaticResource Segment}" GroupName="Tilt" Content="{local:Tr TiltNone}" Checked="Tilt_Checked" />
+                    <RadioButton x:Name="TiltRight" Style="{StaticResource Segment}" GroupName="Tilt" Content="{local:Tr TiltRight}" Checked="Tilt_Checked" />
+                  </UniformGrid>
+                </Border>
+              </DockPanel>
+              <!-- The turn by hand; a double click on a slider puts it back to 0. -->
+              <DockPanel Margin="0,10,0,0">
+                <TextBlock Text="{local:Tr EditorTurn}" FontSize="13" />
+                <TextBlock x:Name="TurnValue" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="13"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+              </DockPanel>
+              <Slider x:Name="TurnSlider" Minimum="-30" Maximum="30" SmallChange="1" LargeChange="5" IsSnapToTickEnabled="True"
+                      TickFrequency="1" ValueChanged="Slider_ValueChanged" MouseDoubleClick="AngleSlider_MouseDoubleClick"
+                      Margin="0,2,0,8" AutomationProperties.Name="{local:Tr EditorTurn}" ToolTip="{local:Tr EditorAngleReset}" />
+              <DockPanel>
+                <TextBlock Text="{local:Tr EditorTiltVertical}" FontSize="13" />
+                <TextBlock x:Name="TiltValue" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="13"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+              </DockPanel>
+              <Slider x:Name="TiltSlider" Minimum="-20" Maximum="20" SmallChange="1" LargeChange="5" IsSnapToTickEnabled="True"
+                      TickFrequency="1" ValueChanged="Slider_ValueChanged" MouseDoubleClick="AngleSlider_MouseDoubleClick"
+                      Margin="0,2,0,0" AutomationProperties.Name="{local:Tr EditorTiltVertical}" ToolTip="{local:Tr EditorAngleReset}" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource PanelCard}">
+            <StackPanel>
+              <TextBlock Style="{StaticResource PanelTitle}" Text="{local:Tr EditorFormat}" />
+              <Border Style="{StaticResource SegmentBar}">
+                <UniformGrid x:Name="RatioList" Rows="1" />
+              </Border>
+              <DockPanel Margin="0,10,0,0">
+                <TextBlock Style="{StaticResource RowLabel}" Text="{local:Tr EditorFile}" />
+                <Border Style="{StaticResource SegmentBar}">
+                  <UniformGrid Rows="1">
+                    <RadioButton x:Name="FormatPng" Style="{StaticResource Segment}" GroupName="Format" Content="PNG" Checked="Option_Changed" />
+                    <RadioButton x:Name="FormatJpeg" Style="{StaticResource Segment}" GroupName="Format" Content="JPG" Checked="Option_Changed" />
+                    <RadioButton x:Name="FormatWebp" Style="{StaticResource Segment}" GroupName="Format" Content="WebP" Checked="Option_Changed" />
+                  </UniformGrid>
+                </Border>
+              </DockPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</Window>

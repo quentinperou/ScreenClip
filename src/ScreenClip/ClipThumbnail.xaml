@@ -1,0 +1,79 @@
+<Window x:Class="ScreenClip.ClipThumbnail"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ScreenClip"
+        Title="ScreenClip"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize"
+        ShowInTaskbar="False" Topmost="True" ShowActivated="False" SizeToContent="WidthAndHeight"
+        WindowStartupLocation="Manual" UseLayoutRounding="True">
+
+  <Window.Resources>
+    <!-- The round buttons in the corners of the thumbnail. -->
+    <Style x:Key="CornerButton" TargetType="Button">
+      <Setter Property="Width" Value="28" />
+      <Setter Property="Height" Value="28" />
+      <Setter Property="Margin" Value="8" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Back" CornerRadius="14" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                    BorderBrush="{DynamicResource SurfaceStrokeColorFlyoutBrush}" BorderThickness="1">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource SolidBackgroundFillColorTertiaryBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="ActionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Setter Property="MinWidth" Value="140" />
+      <Setter Property="Margin" Value="0,4" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+  </Window.Resources>
+
+  <!-- The margin leaves room for the shadow; it is also the gap between stacked thumbnails. -->
+  <Border x:Name="Card" Margin="16" CornerRadius="8" BorderThickness="1"
+          Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+          BorderBrush="{DynamicResource SurfaceStrokeColorFlyoutBrush}">
+    <Border.Effect>
+      <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.35" Direction="270" />
+    </Border.Effect>
+    <Grid>
+      <!-- The capture, rounded like the card. -->
+      <Border x:Name="Picture" CornerRadius="7" Cursor="Hand"
+              ToolTip="{local:Tr ThumbnailDragHint}">
+        <Border.Background>
+          <ImageBrush x:Name="PictureBrush" Stretch="Uniform" />
+        </Border.Background>
+      </Border>
+
+      <!-- Over the capture while the pointer is on it. -->
+      <Grid x:Name="HoverLayer" Visibility="Collapsed">
+        <Border CornerRadius="7" Background="#73000000" IsHitTestVisible="False" />
+        <StackPanel VerticalAlignment="Center">
+          <Button x:Name="CopyButton" Style="{StaticResource ActionButton}" Content="{local:Tr Copy}" Click="Copy_Click" />
+          <Button x:Name="SaveButton" Style="{StaticResource ActionButton}" Content="{local:Tr Save}" Click="Save_Click" />
+        </StackPanel>
+        <Button Style="{StaticResource CornerButton}" HorizontalAlignment="Left" VerticalAlignment="Top"
+                Click="Close_Click" ToolTip="{local:Tr Close}" AutomationProperties.Name="{local:Tr Close}">
+          <TextBlock Style="{StaticResource IconText}" FontSize="10" Text="&#xE711;" />
+        </Button>
+        <Button Style="{StaticResource CornerButton}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                Click="Edit_Click" ToolTip="{local:Tr ThumbnailEdit}" AutomationProperties.Name="{local:Tr ThumbnailEdit}">
+          <TextBlock Style="{StaticResource IconText}" FontSize="12" Text="&#xE70F;" />
+        </Button>
+        <Button x:Name="PinButton" Style="{StaticResource CornerButton}" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                Click="Pin_Click" ToolTip="{local:Tr ThumbnailPin}" AutomationProperties.Name="{local:Tr ThumbnailPin}">
+          <TextBlock x:Name="PinGlyph" Style="{StaticResource IconText}" FontSize="12" Text="&#xE718;" />
+        </Button>
+      </Grid>
+    </Grid>
+  </Border>
+</Window>

@@ -1,0 +1,619 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English: default UI language. Every key must also exist in Strings.fr.resx (checked by the tests). -->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AboutDevelopedBy" xml:space="preserve">
+    <value>Developed by </value>
+  </data>
+  <data name="AboutSourceCode" xml:space="preserve">
+    <value>Source code on GitHub</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>Version {0} · MIT license</value>
+  </data>
+  <data name="BackgroundBlack" xml:space="preserve">
+    <value>Black</value>
+  </data>
+  <data name="BackgroundBlur" xml:space="preserve">
+    <value>Blurred capture</value>
+  </data>
+  <data name="BackgroundImage" xml:space="preserve">
+    <value>Your picture…</value>
+  </data>
+  <data name="BackgroundLagoon" xml:space="preserve">
+    <value>Lagoon</value>
+  </data>
+  <data name="BackgroundMica" xml:space="preserve">
+    <value>Mica (subtle)</value>
+  </data>
+  <data name="BackgroundNight" xml:space="preserve">
+    <value>Night</value>
+  </data>
+  <data name="BackgroundOcean" xml:space="preserve">
+    <value>Ocean</value>
+  </data>
+  <data name="BackgroundPeach" xml:space="preserve">
+    <value>Peach</value>
+  </data>
+  <data name="BackgroundSky" xml:space="preserve">
+    <value>Sky</value>
+  </data>
+  <data name="BackgroundSunset" xml:space="preserve">
+    <value>Sunset</value>
+  </data>
+  <data name="BackgroundTransparent" xml:space="preserve">
+    <value>Transparent</value>
+  </data>
+  <data name="BackgroundViolet" xml:space="preserve">
+    <value>Violet pink</value>
+  </data>
+  <data name="BackgroundWhite" xml:space="preserve">
+    <value>White</value>
+  </data>
+  <data name="Browse" xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="CancelCapture" xml:space="preserve">
+    <value>Cancel (Esc)</value>
+  </data>
+  <data name="CaptureArea" xml:space="preserve">
+    <value>Capture an area</value>
+  </data>
+  <data name="CaptureRepeatArea" xml:space="preserve">
+    <value>Capture the last area again</value>
+  </data>
+  <data name="CaptureScreen" xml:space="preserve">
+    <value>Capture the full screen</value>
+  </data>
+  <data name="CaptureVideo" xml:space="preserve">
+    <value>Record a video</value>
+  </data>
+  <data name="CaptureWindow" xml:space="preserve">
+    <value>Capture a window</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="ComingSoon" xml:space="preserve">
+    <value>coming soon</value>
+  </data>
+  <data name="Copied" xml:space="preserve">
+    <value>Copied</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="CopyFailed" xml:space="preserve">
+    <value>Clipboard busy, try again</value>
+  </data>
+  <data name="DefaultFileName" xml:space="preserve">
+    <value>Screenshot {date} at {time}</value>
+  </data>
+  <data name="EditorAddress" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="EditorAngleReset" xml:space="preserve">
+    <value>Double click: back to 0</value>
+  </data>
+  <data name="EditorBackground" xml:space="preserve">
+    <value>Background</value>
+  </data>
+  <data name="EditorCopied" xml:space="preserve">
+    <value>Copied to the clipboard.</value>
+  </data>
+  <data name="EditorCorners" xml:space="preserve">
+    <value>Rounded corners</value>
+  </data>
+  <data name="EditorDegrees" xml:space="preserve">
+    <value>{0}°</value>
+  </data>
+  <data name="EditorDragHint" xml:space="preserve">
+    <value>Drag the picture to an app (mail, chat, Word…) to drop it there</value>
+  </data>
+  <data name="EditorEmptyText" xml:space="preserve">
+    <value>Import a picture, paste it (Ctrl+V) or drop it here, or take a new capture.</value>
+  </data>
+  <data name="EditorEmptyTitle" xml:space="preserve">
+    <value>Lay out a screenshot</value>
+  </data>
+  <data name="EditorFile" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="EditorFormat" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="EditorFrame" xml:space="preserve">
+    <value>Window</value>
+  </data>
+  <data name="EditorFrameTheme" xml:space="preserve">
+    <value>Frame theme</value>
+  </data>
+  <data name="EditorImport" xml:space="preserve">
+    <value>Import a picture</value>
+  </data>
+  <data name="EditorLayout" xml:space="preserve">
+    <value>Layout</value>
+  </data>
+  <data name="EditorNewCapture" xml:space="preserve">
+    <value>New capture</value>
+  </data>
+  <data name="EditorNoImageInClipboard" xml:space="preserve">
+    <value>The clipboard holds no picture.</value>
+  </data>
+  <data name="EditorOutput" xml:space="preserve">
+    <value>{0} × {1} px · {2}</value>
+  </data>
+  <data name="EditorPadding" xml:space="preserve">
+    <value>Margin</value>
+  </data>
+  <data name="EditorPercent" xml:space="preserve">
+    <value>{0}%</value>
+  </data>
+  <data name="EditorPickBackground" xml:space="preserve">
+    <value>Choose a background picture</value>
+  </data>
+  <data name="EditorPixels" xml:space="preserve">
+    <value>{0} px</value>
+  </data>
+  <data name="EditorReset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="EditorSaved" xml:space="preserve">
+    <value>Saved: {0}</value>
+  </data>
+  <data name="EditorShadow" xml:space="preserve">
+    <value>Shadow</value>
+  </data>
+  <data name="EditorStyles" xml:space="preserve">
+    <value>Presets</value>
+  </data>
+  <data name="EditorTilt" xml:space="preserve">
+    <value>Tilt</value>
+  </data>
+  <data name="EditorTiltVertical" xml:space="preserve">
+    <value>Up – down</value>
+  </data>
+  <data name="EditorTurn" xml:space="preserve">
+    <value>Left – right</value>
+  </data>
+  <data name="EditorWindowTitle" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="ErrorOpenImage" xml:space="preserve">
+    <value>This file could not be opened as a picture: {0}</value>
+  </data>
+  <data name="ErrorSave" xml:space="preserve">
+    <value>The capture could not be saved: {0}</value>
+  </data>
+  <data name="ErrorUpdate" xml:space="preserve">
+    <value>The update failed: {0}</value>
+  </data>
+  <data name="ErrorUpdateIntegrity" xml:space="preserve">
+    <value>the downloaded file is damaged, try again.</value>
+  </data>
+  <data name="ErrorUpdateOffline" xml:space="preserve">
+    <value>GitHub cannot be reached (no Internet connection?).</value>
+  </data>
+  <data name="ErrorUpdateRateLimited" xml:space="preserve">
+    <value>GitHub limits the number of checks, try again in a while.</value>
+  </data>
+  <data name="FilterImages" xml:space="preserve">
+    <value>Pictures</value>
+  </data>
+  <data name="FilterJpeg" xml:space="preserve">
+    <value>JPEG picture</value>
+  </data>
+  <data name="FilterPng" xml:space="preserve">
+    <value>PNG picture</value>
+  </data>
+  <data name="FilterWebp" xml:space="preserve">
+    <value>WebP picture</value>
+  </data>
+  <data name="FrameBrowser" xml:space="preserve">
+    <value>Browser</value>
+  </data>
+  <data name="FrameLaptop" xml:space="preserve">
+    <value>Laptop</value>
+  </data>
+  <data name="FrameMacWindow" xml:space="preserve">
+    <value>macOS</value>
+  </data>
+  <data name="FrameNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="FramePhone" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="FrameWindows" xml:space="preserve">
+    <value>Windows</value>
+  </data>
+  <data name="HintCancel" xml:space="preserve">
+    <value>cancel</value>
+  </data>
+  <data name="HintClickAWindow" xml:space="preserve">
+    <value>Click a window</value>
+  </data>
+  <data name="HintClickScreen" xml:space="preserve">
+    <value>Click a screen</value>
+  </data>
+  <data name="HintClickWindow" xml:space="preserve">
+    <value>Click: the window under the pointer</value>
+  </data>
+  <data name="HintDrag" xml:space="preserve">
+    <value>Drag to select</value>
+  </data>
+  <data name="HintMove" xml:space="preserve">
+    <value>move</value>
+  </data>
+  <data name="HintSquare" xml:space="preserve">
+    <value>square</value>
+  </data>
+  <data name="KeyAlt" xml:space="preserve">
+    <value>Alt</value>
+  </data>
+  <data name="KeyCtrl" xml:space="preserve">
+    <value>Ctrl</value>
+  </data>
+  <data name="KeyDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="KeyEnd" xml:space="preserve">
+    <value>End</value>
+  </data>
+  <data name="KeyEscape" xml:space="preserve">
+    <value>Esc</value>
+  </data>
+  <data name="KeyHome" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="KeyInsert" xml:space="preserve">
+    <value>Insert</value>
+  </data>
+  <data name="KeyPageDown" xml:space="preserve">
+    <value>Page Down</value>
+  </data>
+  <data name="KeyPageUp" xml:space="preserve">
+    <value>Page Up</value>
+  </data>
+  <data name="KeyPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="KeyPrintScreen" xml:space="preserve">
+    <value>Print Screen</value>
+  </data>
+  <data name="KeyShift" xml:space="preserve">
+    <value>Shift</value>
+  </data>
+  <data name="KeySpace" xml:space="preserve">
+    <value>Space</value>
+  </data>
+  <data name="KeyWin" xml:space="preserve">
+    <value>Win</value>
+  </data>
+  <data name="LanguageSystem" xml:space="preserve">
+    <value>System language (automatic)</value>
+  </data>
+  <data name="ModeArea" xml:space="preserve">
+    <value>Area</value>
+  </data>
+  <data name="ModeScreen" xml:space="preserve">
+    <value>Full screen</value>
+  </data>
+  <data name="ModeVideo" xml:space="preserve">
+    <value>Video</value>
+  </data>
+  <data name="ModeWindow" xml:space="preserve">
+    <value>Window</value>
+  </data>
+  <data name="Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="OpenCapturesFolder" xml:space="preserve">
+    <value>Open the captures folder</value>
+  </data>
+  <data name="OpenEditor" xml:space="preserve">
+    <value>Lay out a picture…</value>
+  </data>
+  <data name="OpenFolder" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="PresetPost" xml:space="preserve">
+    <value>Post 1:1</value>
+  </data>
+  <data name="PresetReadme" xml:space="preserve">
+    <value>README</value>
+  </data>
+  <data name="PresetSlide" xml:space="preserve">
+    <value>Slide 16:9</value>
+  </data>
+  <data name="PresetStory" xml:space="preserve">
+    <value>Story 9:16</value>
+  </data>
+  <data name="PrintScreenAfterSignIn" xml:space="preserve">
+    <value>The Windows setting is changed, but Windows still holds the key: it lets it go at your next sign-in. You can also turn the switch off in Windows Settings.</value>
+  </data>
+  <data name="PrintScreenAskNo" xml:space="preserve">
+    <value>No, keep the Snipping Tool</value>
+  </data>
+  <data name="PrintScreenAskRestore" xml:space="preserve">
+    <value>You can give the key back to Windows at any time in Settings › Capture of ScreenClip.</value>
+  </data>
+  <data name="PrintScreenAskText" xml:space="preserve">
+    <value>Windows opens its Snipping Tool with the Print Screen key. For this key to start ScreenClip, a setting of Windows must be turned off: ScreenClip can do it for you.</value>
+  </data>
+  <data name="PrintScreenAskTitle" xml:space="preserve">
+    <value>Use the Print Screen key for ScreenClip?</value>
+  </data>
+  <data name="PrintScreenAskYes" xml:space="preserve">
+    <value>Yes, use Print Screen</value>
+  </data>
+  <data name="PrintScreenDone" xml:space="preserve">
+    <value>Done: Print Screen now starts ScreenClip.</value>
+  </data>
+  <data name="PrintScreenOpenWindowsSettings" xml:space="preserve">
+    <value>Open the Windows setting</value>
+  </data>
+  <data name="PrintScreenRestore" xml:space="preserve">
+    <value>Restore Windows' setting</value>
+  </data>
+  <data name="PrintScreenStatusAfterSignIn" xml:space="preserve">
+    <value>The Windows setting is off, but Windows still holds the key until your next sign-in.</value>
+  </data>
+  <data name="PrintScreenStatusApps" xml:space="preserve">
+    <value>Left to the apps: ScreenClip uses it. Restoring Windows' setting gives it back to the Snipping Tool.</value>
+  </data>
+  <data name="PrintScreenStatusWindows" xml:space="preserve">
+    <value>Windows uses it to open its Snipping Tool.</value>
+  </data>
+  <data name="PrintScreenStatusWindowsNeeded" xml:space="preserve">
+    <value>Windows keeps it for its Snipping Tool: the ScreenClip shortcuts that use it do not work.</value>
+  </data>
+  <data name="PrintScreenTakeOver" xml:space="preserve">
+    <value>Use it for ScreenClip</value>
+  </data>
+  <data name="PrintScreenTitle" xml:space="preserve">
+    <value>Print Screen key</value>
+  </data>
+  <data name="Quit" xml:space="preserve">
+    <value>Quit ScreenClip</value>
+  </data>
+  <data name="RatioAuto" xml:space="preserve">
+    <value>Auto</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="SettingsAbout" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="SettingsAfterCapture" xml:space="preserve">
+    <value>After a capture</value>
+  </data>
+  <data name="SettingsCapture" xml:space="preserve">
+    <value>Capture</value>
+  </data>
+  <data name="SettingsCopy" xml:space="preserve">
+    <value>Copy to the clipboard</value>
+  </data>
+  <data name="SettingsCopyDescription" xml:space="preserve">
+    <value>Ready to paste with Ctrl+V.</value>
+  </data>
+  <data name="SettingsFileName" xml:space="preserve">
+    <value>File names</value>
+  </data>
+  <data name="SettingsFileNameDescription" xml:space="preserve">
+    <value>{date} and {time} are replaced by the date and time of the capture.</value>
+  </data>
+  <data name="SettingsFileNameExample" xml:space="preserve">
+    <value>Example: {0}</value>
+  </data>
+  <data name="SettingsGeneral" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="SettingsLanguage" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="SettingsLanguageDescription" xml:space="preserve">
+    <value>Language of the app.</value>
+  </data>
+  <data name="SettingsQuit" xml:space="preserve">
+    <value>Quit ScreenClip</value>
+  </data>
+  <data name="SettingsQuitDescription" xml:space="preserve">
+    <value>The shortcuts stop working until ScreenClip is started again (Start menu).</value>
+  </data>
+  <data name="SettingsSaveAutomatically" xml:space="preserve">
+    <value>Save automatically</value>
+  </data>
+  <data name="SettingsSaveAutomaticallyDescription" xml:space="preserve">
+    <value>In {0}</value>
+  </data>
+  <data name="SettingsSaveFolder" xml:space="preserve">
+    <value>Captures folder</value>
+  </data>
+  <data name="SettingsSaveFolderReset" xml:space="preserve">
+    <value>Back to the default folder (Pictures\ScreenClip)</value>
+  </data>
+  <data name="SettingsSaving" xml:space="preserve">
+    <value>Saving</value>
+  </data>
+  <data name="SettingsShortcuts" xml:space="preserve">
+    <value>Shortcuts</value>
+  </data>
+  <data name="SettingsShowThumbnail" xml:space="preserve">
+    <value>Show a thumbnail</value>
+  </data>
+  <data name="SettingsShowThumbnailDescription" xml:space="preserve">
+    <value>In the bottom left corner: copy, save, or drag the capture to an app. It goes away by itself after a few seconds.</value>
+  </data>
+  <data name="SettingsStartWithWindows" xml:space="preserve">
+    <value>Start with Windows</value>
+  </data>
+  <data name="SettingsStartWithWindowsDescription" xml:space="preserve">
+    <value>ScreenClip waits in the notification area, ready to capture, using almost nothing while it waits.</value>
+  </data>
+  <data name="SettingsTheme" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="SettingsThemeDescription" xml:space="preserve">
+    <value>Light or dark appearance. Automatic follows Windows.</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>ScreenClip settings</value>
+  </data>
+  <data name="ShortcutArea" xml:space="preserve">
+    <value>Capture an area</value>
+  </data>
+  <data name="ShortcutChange" xml:space="preserve">
+    <value>Change</value>
+  </data>
+  <data name="ShortcutChangeTitle" xml:space="preserve">
+    <value>Change the shortcut</value>
+  </data>
+  <data name="ShortcutNeedsModifier" xml:space="preserve">
+    <value>Add Ctrl, Alt or Win: this key alone would get in the way of typing.</value>
+  </data>
+  <data name="ShortcutNone" xml:space="preserve">
+    <value>No shortcut</value>
+  </data>
+  <data name="ShortcutNoneSet" xml:space="preserve">
+    <value>No shortcut</value>
+  </data>
+  <data name="ShortcutPressKeys" xml:space="preserve">
+    <value>Press keys…</value>
+  </data>
+  <data name="ShortcutPrompt" xml:space="preserve">
+    <value>Press the keys for “{0}”.</value>
+  </data>
+  <data name="ShortcutRefused" xml:space="preserve">
+    <value>Windows refused it: another app already uses it.</value>
+  </data>
+  <data name="ShortcutRefusedPrintScreen" xml:space="preserve">
+    <value>Does not work while Windows keeps Print Screen for its Snipping Tool (below).</value>
+  </data>
+  <data name="ShortcutRepeatArea" xml:space="preserve">
+    <value>Capture the last area again</value>
+  </data>
+  <data name="ShortcutScreen" xml:space="preserve">
+    <value>Capture the full screen</value>
+  </data>
+  <data name="ShortcutTaken" xml:space="preserve">
+    <value>Already used by another app or by Windows.</value>
+  </data>
+  <data name="ShortcutUsedByAction" xml:space="preserve">
+    <value>Already used for “{0}”.</value>
+  </data>
+  <data name="ShortcutWindow" xml:space="preserve">
+    <value>Capture a window</value>
+  </data>
+  <data name="ShowInExplorer" xml:space="preserve">
+    <value>Show in File Explorer</value>
+  </data>
+  <data name="SizePixels" xml:space="preserve">
+    <value>{0} × {1}</value>
+  </data>
+  <data name="ThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="ThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="ThemeSystem" xml:space="preserve">
+    <value>System theme (automatic)</value>
+  </data>
+  <data name="ThumbnailDragHint" xml:space="preserve">
+    <value>Drag the capture to an app (mail, chat, document…) to drop it there</value>
+  </data>
+  <data name="ThumbnailEdit" xml:space="preserve">
+    <value>Lay out</value>
+  </data>
+  <data name="ThumbnailPin" xml:space="preserve">
+    <value>Keep on screen</value>
+  </data>
+  <data name="ThumbnailUnpin" xml:space="preserve">
+    <value>Let it go away</value>
+  </data>
+  <data name="TiltLeft" xml:space="preserve">
+    <value>Left</value>
+  </data>
+  <data name="TiltNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="TiltRight" xml:space="preserve">
+    <value>Right</value>
+  </data>
+  <data name="UpdateBarText" xml:space="preserve">
+    <value>ScreenClip {0} is available.</value>
+  </data>
+  <data name="UpdateCancelled" xml:space="preserve">
+    <value>The update was not installed.</value>
+  </data>
+  <data name="UpdateChannel" xml:space="preserve">
+    <value>Update channel</value>
+  </data>
+  <data name="UpdateChannelBeta" xml:space="preserve">
+    <value>Beta</value>
+  </data>
+  <data name="UpdateChannelDescription" xml:space="preserve">
+    <value>Beta versions get new features earlier but may be less stable. Back on Stable, you keep the beta until the next stable version.</value>
+  </data>
+  <data name="UpdateChannelStable" xml:space="preserve">
+    <value>Stable</value>
+  </data>
+  <data name="UpdateCheck" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
+  <data name="UpdateCheckAtStartup" xml:space="preserve">
+    <value>Check for updates at startup</value>
+  </data>
+  <data name="UpdateCheckAtStartupDescription" xml:space="preserve">
+    <value>Asks GitHub for the latest version each time the app starts.</value>
+  </data>
+  <data name="UpdateDownloading" xml:space="preserve">
+    <value>Downloading the update…</value>
+  </data>
+  <data name="UpdateInstall" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="UpdateStarting" xml:space="preserve">
+    <value>Installing… accept the Windows prompt to continue.</value>
+  </data>
+  <data name="UpdateStatusAvailable" xml:space="preserve">
+    <value>Version {0} · version {1} is available.</value>
+  </data>
+  <data name="UpdateStatusChecking" xml:space="preserve">
+    <value>Checking for updates…</value>
+  </data>
+  <data name="UpdateStatusFailed" xml:space="preserve">
+    <value>Version {0} · could not check for updates: {1}</value>
+  </data>
+  <data name="UpdateStatusIdle" xml:space="preserve">
+    <value>Version {0}</value>
+  </data>
+  <data name="UpdateStatusUpToDate" xml:space="preserve">
+    <value>Version {0} · ScreenClip is up to date.</value>
+  </data>
+  <data name="UpdateWhatsNew" xml:space="preserve">
+    <value>What's new</value>
+  </data>
+  <data name="UpdatesTitle" xml:space="preserve">
+    <value>Updates</value>
+  </data>
+</root>

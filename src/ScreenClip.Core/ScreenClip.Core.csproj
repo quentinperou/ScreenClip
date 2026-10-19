@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ScreenClip.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Composition of the laid-out captures (preview and export): perspective, blur, WebP. 3.x rather than the
+         recent 4.x: a year of use behind it. Loaded only when the editor opens. -->
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
+  </ItemGroup>
+
+</Project>

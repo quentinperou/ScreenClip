@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- No Windows SDK projection yet: it adds a large assembly and nothing uses WinRT so far (the video capture
+         will need Windows.Graphics.Capture: net10.0-windows10.0.19041.0 then). Windows 10 2004 at least is
+         required by the installer (MinVersion). -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>ScreenClip</AssemblyName>
+    <RootNamespace>ScreenClip</RootNamespace>
+    <ApplicationIcon>Assets\ScreenClip.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Product>ScreenClip</Product>
+    <SatelliteResourceLanguages>fr</SatelliteResourceLanguages>
+    <!-- Application.ThemeMode (Windows 11 Fluent theme) is still marked experimental in WPF .NET 10. -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+
+    <!-- The app stays in the notification area all day: as light as it can be. No background GC thread (the heap
+         is small and the app idle), and code compiled ahead of time (less JIT memory, a first capture without
+         waiting for the JIT). -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <PublishReadyToRun>true</PublishReadyToRun>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\ScreenClip.ico" />
+    <Resource Include="Assets\ScreenClip.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WPF projects do not import System.IO implicitly. -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ScreenClip.Core\ScreenClip.Core.csproj" />
+  </ItemGroup>
+
+</Project>
