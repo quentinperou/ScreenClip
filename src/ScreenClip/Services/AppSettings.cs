@@ -13,6 +13,14 @@ public enum AppTheme
     Dark,
 }
 
+/// <summary>What a left click on the notification icon does (a right click always opens the menu).</summary>
+public enum TrayClick
+{
+    Capture,
+    Menu,
+    Editor,
+}
+
 /// <summary>The screen where the thumbnail appears after a capture.</summary>
 public enum ThumbnailScreen
 {
@@ -62,6 +70,13 @@ public sealed class AppSettings
     [JsonConverter(typeof(JsonStringEnumConverter<AppTheme>))]
     public AppTheme Theme { get; set; } = AppTheme.System;
 
+    /// <summary>
+    /// A left click on the notification icon: an area capture by default (the app's main action, as Windows apps do
+    /// with a left click), or the menu, or the editor (asked by the author: the choice in Settings).
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<TrayClick>))]
+    public TrayClick TrayClick { get; set; } = TrayClick.Capture;
+
     // ---------------------------------------------------------------- After a capture
 
     /// <summary>A thumbnail in the bottom left corner of the screen: copy, save, drag to an app.</summary>
@@ -93,8 +108,14 @@ public sealed class AppSettings
 
     // ---------------------------------------------------------------- Saving
 
-    /// <summary>Folder of the saved captures; null: Pictures\ScreenClip.</summary>
+    /// <summary>
+    /// Folder of the captures (saved automatically, or with Save on the thumbnail); null: Windows' Screenshots folder,
+    /// where people look for their screenshots (asked by the author).
+    /// </summary>
     public string? SaveFolder { get; set; }
+
+    /// <summary>Folder where the editor saves the pictures laid out; null: Pictures\ScreenClip, apart from the captures.</summary>
+    public string? ExportFolder { get; set; }
 
     /// <summary>Name of the saved captures, with {date} and {time}; null: the default of the UI language.</summary>
     public string? FileNameTemplate { get; set; }
@@ -103,6 +124,9 @@ public sealed class AppSettings
 
     /// <summary>The layout of the editor, as last used: the next capture opens with it.</summary>
     public ClipStyle EditorStyle { get; set; } = StylePresets.Default;
+
+    /// <summary>The styles the user saved under a name, in the order they were made.</summary>
+    public List<UserPreset> UserPresets { get; set; } = [];
 
     // ---------------------------------------------------------------- Other
 
@@ -128,7 +152,12 @@ public sealed class AppSettings
     [JsonIgnore]
     public string EffectiveSaveFolder => string.IsNullOrWhiteSpace(SaveFolder) ? DefaultSaveFolder : SaveFolder;
 
-    public static string DefaultSaveFolder =>
+    public static string DefaultSaveFolder => WindowsSettings.ScreenshotsFolder;
+
+    [JsonIgnore]
+    public string EffectiveExportFolder => string.IsNullOrWhiteSpace(ExportFolder) ? DefaultExportFolder : ExportFolder;
+
+    public static string DefaultExportFolder =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "ScreenClip");
 
     [JsonIgnore]
@@ -151,6 +180,9 @@ public sealed class AppSettings
                     settings.Language = SystemLanguage;
                 settings.Shortcuts ??= [];
                 settings.EditorStyle = (settings.EditorStyle ?? StylePresets.Default).Normalized();
+                settings.UserPresets = [.. (settings.UserPresets ?? [])
+                    .Where(p => p is not null && StylePresets.CleanName(p.Name) is not null)
+                    .Select(p => p with { Name = StylePresets.CleanName(p.Name)!, Style = (p.Style ?? StylePresets.Default).Normalized() })];
                 return settings;
             }
         }

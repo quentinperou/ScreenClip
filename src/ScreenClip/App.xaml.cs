@@ -52,7 +52,8 @@ public partial class App : Application
         ClipActions.CleanTempFolder();
         Capture = new CaptureController();
         Tray = new TrayHost();
-        Tray.IconInvoked += (_, _) => TrayMenu.Show();
+        Tray.IconClicked += (_, _) => IconClicked();
+        Tray.MenuRequested += (_, _) => TrayMenu.Show();
         Tray.ShortcutPressed += (_, action) => Capture.Run(action);
         Tray.RegisterShortcuts(Settings);
 
@@ -158,6 +159,24 @@ public partial class App : Application
     /// Opens the editor, or brings it to the front, with <paramref name="picturePath"/> or <paramref name="clip"/> in it
     /// when given (otherwise it keeps what it shows, or offers to import a picture).
     /// </summary>
+    // A left click on the notification icon: as Settings › General says. The capture waits a moment, so that a
+    // flyout of hidden icons the click came from is gone from the screen.
+    private static void IconClicked()
+    {
+        switch (Settings.TrayClick)
+        {
+            case TrayClick.Menu:
+                TrayMenu.Show();
+                break;
+            case TrayClick.Editor:
+                OpenEditor();
+                break;
+            default:
+                Capture.RunAfterMenu(ShortcutAction.Area);
+                break;
+        }
+    }
+
     internal static void OpenEditor(string? picturePath = null, Clip? clip = null)
     {
         EnsureTheme();

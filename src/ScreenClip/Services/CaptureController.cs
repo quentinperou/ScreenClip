@@ -90,8 +90,10 @@ internal sealed class CaptureController
 
         App.EnsureTheme();
         var screen = ScreenGrabber.VirtualScreen;
-        var image = ScreenGrabber.Grab(screen);
-        _session = new CaptureSession(image, screen, ScreenGrabber.Monitors(), ScreenGrabber.VisibleWindows(), mode);
+        var monitors = ScreenGrabber.Monitors();
+        var image = DemoScreen.IsOn ? DemoScreen.Grab(screen, monitors) : ScreenGrabber.Grab(screen);
+        var windows = DemoScreen.IsOn ? DemoScreen.Windows(monitors) : ScreenGrabber.VisibleWindows();
+        _session = new CaptureSession(image, screen, monitors, windows, mode);
         _session.Finished += Session_Finished;
         _session.Show();
     }

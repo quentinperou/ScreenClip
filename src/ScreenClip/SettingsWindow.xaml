@@ -147,6 +147,19 @@
             </StackPanel>
           </DockPanel>
         </Border>
+
+        <Border Style="{StaticResource Card}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xE962;" />
+            <ComboBox x:Name="TrayClickBox" DockPanel.Dock="Right" MinWidth="220" VerticalAlignment="Center"
+                      Margin="16,0,0,0" SelectionChanged="TrayClickBox_SelectionChanged"
+                      AutomationProperties.Name="{local:Tr SettingsTrayClick}" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{local:Tr SettingsTrayClick}" />
+              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsTrayClickDescription}" />
+            </StackPanel>
+          </DockPanel>
+        </Border>
       </StackPanel>
     </ScrollViewer>
 
@@ -249,9 +262,29 @@
             </StackPanel>
             <StackPanel VerticalAlignment="Center">
               <TextBlock Text="{local:Tr SettingsSaveFolder}" />
-              <TextBlock x:Name="SaveFolderText" Style="{StaticResource CardDescription}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsSaveFolderDescription}" />
+              <TextBlock x:Name="SaveFolderText" Style="{StaticResource CardDescription}" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" />
               <TextBlock x:Name="ResetFolderLink" Style="{StaticResource CardDescription}" Margin="0,6,0,0">
                 <Hyperlink Click="ResetFolder_Click"><Run Text="{local:Tr SettingsSaveFolderReset}" /></Hyperlink>
+              </TextBlock>
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
+        <!-- The pictures laid out by the editor, apart from the captures. -->
+        <Border Style="{StaticResource Card}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xE91B;" VerticalAlignment="Top" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+              <Button Content="{local:Tr Browse}" Margin="0,0,8,0" Click="BrowseExportFolder_Click" />
+              <Button Content="{local:Tr OpenFolder}" Click="OpenExportFolder_Click" />
+            </StackPanel>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{local:Tr SettingsExportFolder}" />
+              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsExportFolderDescription}" />
+              <TextBlock x:Name="ExportFolderText" Style="{StaticResource CardDescription}" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" />
+              <TextBlock x:Name="ResetExportFolderLink" Style="{StaticResource CardDescription}" Margin="0,6,0,0">
+                <Hyperlink Click="ResetExportFolder_Click"><Run Text="{local:Tr SettingsExportFolderReset}" /></Hyperlink>
               </TextBlock>
             </StackPanel>
           </DockPanel>

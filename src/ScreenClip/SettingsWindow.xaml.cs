@@ -44,6 +44,10 @@ public partial class SettingsWindow : Window
         ThemeBox.Items.Add(new Option<AppTheme>(AppTheme.Light, Strings.Get("ThemeLight")));
         ThemeBox.Items.Add(new Option<AppTheme>(AppTheme.Dark, Strings.Get("ThemeDark")));
         ThemeBox.SelectedItem = ThemeBox.Items.Cast<Option<AppTheme>>().First(o => o.Value == _settings.Theme);
+        TrayClickBox.Items.Add(new Option<TrayClick>(TrayClick.Capture, Strings.Get("CaptureArea")));
+        TrayClickBox.Items.Add(new Option<TrayClick>(TrayClick.Menu, Strings.Get("TrayClickMenu")));
+        TrayClickBox.Items.Add(new Option<TrayClick>(TrayClick.Editor, Strings.Get("TrayClickEditor")));
+        TrayClickBox.SelectedItem = TrayClickBox.Items.Cast<Option<TrayClick>>().First(o => o.Value == _settings.TrayClick);
 
         ShowThumbnailBox.IsChecked = _settings.ShowThumbnail;
         ThumbnailScreenBox.Items.Add(new Option<ThumbnailScreen>(ThumbnailScreen.Capture, Strings.Get("ThumbnailScreenCapture")));
@@ -126,6 +130,14 @@ public partial class SettingsWindow : Window
         _settings.Theme = option.Value;
         _settings.Save();
         App.ApplyTheme(option.Value);
+    }
+
+    private void TrayClickBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_initialized || TrayClickBox.SelectedItem is not Option<TrayClick> option)
+            return;
+        _settings.TrayClick = option.Value;
+        _settings.Save();
     }
 
     // ---------------------------------------------------------------- Capture
@@ -283,6 +295,28 @@ public partial class SettingsWindow : Window
         SaveFolderText.ToolTip = _settings.EffectiveSaveFolder;
         ResetFolderLink.Visibility = string.IsNullOrWhiteSpace(_settings.SaveFolder) ? Visibility.Collapsed : Visibility.Visible;
         SaveAutomaticallyDescription.Text = Strings.Format("SettingsSaveAutomaticallyDescription", _settings.EffectiveSaveFolder);
+        ExportFolderText.Text = _settings.EffectiveExportFolder;
+        ExportFolderText.ToolTip = _settings.EffectiveExportFolder;
+        ResetExportFolderLink.Visibility = string.IsNullOrWhiteSpace(_settings.ExportFolder) ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void BrowseExportFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog { Title = Strings.Get("SettingsExportFolder"), InitialDirectory = _settings.EffectiveExportFolder };
+        if (dialog.ShowDialog(this) != true)
+            return;
+        _settings.ExportFolder = dialog.FolderName;
+        _settings.Save();
+        ShowSaveFolder();
+    }
+
+    private void OpenExportFolder_Click(object sender, RoutedEventArgs e) => ClipActions.OpenFolder(_settings.EffectiveExportFolder);
+
+    private void ResetExportFolder_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.ExportFolder = null;
+        _settings.Save();
+        ShowSaveFolder();
     }
 
     private void BrowseFolder_Click(object sender, RoutedEventArgs e)

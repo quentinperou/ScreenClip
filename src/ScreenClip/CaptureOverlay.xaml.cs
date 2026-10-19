@@ -221,7 +221,9 @@ public partial class CaptureOverlay : Window
 
     // ---------------------------------------------------------------- Elements under the pointer
 
-    // A new lookup when the pointer leaves the smallest element found, or moves on a window where none was found.
+    // A new lookup when the pointer leaves the smallest element found, or has moved a few pixels since the last one: a
+    // smaller element may lie under it now (the first look may have been on the background of a window, which gave the
+    // whole window). Only the latest point is looked at, so a quick move costs nothing more.
     private void UpdateHover()
     {
         var window = _session.WindowUnder(_pointerX, _pointerY);
@@ -234,8 +236,8 @@ public partial class CaptureOverlay : Window
         if (window is null)
             return; // the desktop: a click takes the screen
         bool outside = _elements.Count == 0 || !_elements[0].Contains(_pointerX, _pointerY);
-        bool onlyWindow = _elements.Count <= 1 && Math.Abs(_pointerX - _lookupX) + Math.Abs(_pointerY - _lookupY) > 24;
-        if (outside || onlyWindow)
+        bool moved = Math.Abs(_pointerX - _lookupX) + Math.Abs(_pointerY - _lookupY) > 8;
+        if (outside || moved)
         {
             (_lookupX, _lookupY) = (_pointerX, _pointerY);
             _session.FindElements(window, _pointerX, _pointerY);

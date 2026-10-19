@@ -88,6 +88,28 @@ internal static class WindowsSettings
     /// True when this exe is the installed one (Program Files): only then is the start with Windows turned on by
     /// default. A development build never registers itself.
     /// </summary>
+    /// <summary>
+    /// Windows' own Screenshots folder, where Win+Print Screen and the Snipping Tool save: asked to Windows, since
+    /// OneDrive may have moved it, and created by Windows when missing (with its translated name, “Captures d'écran”).
+    /// </summary>
+    public static string ScreenshotsFolder
+    {
+        get
+        {
+            int result = SHGetKnownFolderPath(in FOLDERID_Screenshots, KF_FLAG_CREATE, IntPtr.Zero, out var path);
+            try
+            {
+                if (result == 0 && System.Runtime.InteropServices.Marshal.PtrToStringUni(path) is { Length: > 0 } folder)
+                    return folder;
+            }
+            finally
+            {
+                System.Runtime.InteropServices.Marshal.FreeCoTaskMem(path);
+            }
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Screenshots");
+        }
+    }
+
     public static bool IsInstalled =>
         Environment.ProcessPath is { } exe
         && exe.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), StringComparison.OrdinalIgnoreCase);

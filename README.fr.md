@@ -29,9 +29,10 @@
 - **Impr. écran** capture une zone, **Alt + Impr. écran** une fenêtre, **Ctrl + Impr. écran** l'écran entier,
   **Maj + Impr. écran** refait la dernière zone. Chaque raccourci se modifie dans **Paramètres → Capture**, ou tous
   se désactivent (le menu de la zone de notification capture toujours).
-- ScreenClip attend dans la **zone de notification** (son menu propose les mêmes captures, le dossier des captures et
-  les paramètres). Au repos il ne consomme presque rien : aucune fenêtre, aucun minuteur, environ 5 Mo de mémoire
-  utilisée.
+- ScreenClip attend dans la **zone de notification** : un **clic** sur son icône capture une zone (ou ouvre le menu
+  ou l'éditeur, au choix dans **Paramètres → Général**), un **clic droit** ouvre son menu (les mêmes captures, le
+  dossier des captures et les paramètres). Au repos il ne consomme presque rien : aucune fenêtre, aucun minuteur,
+  environ 5 Mo de mémoire utilisée.
 - L'écran est **figé** à l'instant où la touche est pressée : menus et info-bulles restent sur l'image.
 - **Zone** : la partie de la fenêtre sous le pointeur est **encadrée** au survol (un lecteur vidéo, une carte d'une
   page web, un panneau, la fenêtre entière), d'après ce que l'application indique à Windows et les blocs dessinés à
@@ -43,17 +44,24 @@
 - **Plein écran** : un clic prend l'écran sous le pointeur.
 - Plusieurs écrans, chacun à sa propre échelle (100 %, 150 %…) : chaque pixel reste net.
 
+<p align="center">
+  <img src=".github/selection.fr.png" width="800" alt="La sélection d'une zone : l'écran figé et assombri, une feuille de tirages photo dans une fenêtre encadrée avec sa taille (300 × 420), la loupe qui montre les pixels sous le pointeur, la barre de capture en haut et les indications en bas">
+</p>
+
 ### Éditeur de mise en forme
 
 Lancé depuis le menu Démarrer, ScreenClip ouvre son **éditeur** : une capture (ou n'importe quelle image : **Importer
 une image**, la coller avec **Ctrl+V**, la glisser sur la fenêtre) est mise en forme en direct, comme les captures des
 pages de présentation d'applications et des posts de réseaux sociaux.
 
-- Des **préréglages** en un clic : *README* (clair, discret), *Post 1:1*, *Story 9:16*, *Slide 16:9* ; **Réinitialiser**
-  revient au préréglage README. Les derniers réglages utilisés sont gardés pour la capture suivante.
+- Des **préréglages** en un clic, chacun dessiné tel qu'il rend : *README* (clair, discret), *Post 1:1*,
+  *Story 9:16*, *Slide 16:9*, et **les vôtres** : **+ Enregistrer** garde le style actuel sous un nom (son image de
+  fond comprise) ; un clic droit sur l'un d'eux le renomme, le remplace par le style actuel ou le supprime.
+  **Réinitialiser** revient au préréglage README. Les derniers réglages utilisés sont gardés pour la capture suivante.
 - **Fond** : huit dégradés, blanc, noir, transparent, la capture elle-même floutée, ou **votre propre image**.
 - **Cadre** : aucun, un **navigateur façon macOS** (feux tricolores et une adresse que vous tapez), une **fenêtre
-  macOS**, une **fenêtre Windows 11** (avec un titre que vous tapez), clair ou sombre ; ou un appareil, un
+  macOS**, une **fenêtre Windows 11** (avec un titre que vous tapez), clair ou sombre, chacun avec les coins arrondis
+  de la vraie fenêtre (8 px pour Windows 11, 10 pour macOS ; le curseur les change toujours) ; ou un appareil, un
   **ordinateur portable** ou un **téléphone**, argent ou graphite (le téléphone se met à l'horizontale pour une capture
   large). Sans aucune marque. Leur écran garde la forme d'un vrai : une capture d'une autre forme est recadrée (une
   longue page garde son haut).
@@ -62,7 +70,8 @@ pages de présentation d'applications et des posts de réseaux sociaux.
 - La capture garde ses propres pixels : l'image grandit autour d'elle, rien n'est redimensionné. Les grandes captures
   (écrans haute densité) ont une barre de fenêtre et des coins plus grands, pour qu'un style rende pareil sur toutes.
 - **Copier** (PNG avec sa transparence, et une image pour les autres applications), **Enregistrer** en PNG, JPG ou
-  WebP, ou **glisser l'aperçu** vers une application ou un dossier.
+  WebP (dans `Images\ScreenClip`, à part des captures ; modifiable), ou **glisser l'aperçu** vers une application ou
+  un dossier.
 - **Nouvelle capture** depuis l'éditeur : il s'efface le temps de choisir, et revient avec la capture.
 
 ### La touche Impr. écran de Windows
@@ -81,7 +90,8 @@ parfois le changement qu'à la prochaine ouverture de session.
   application (mail, messagerie, Word, un dossier…), qui reçoit le fichier image. Elle disparaît d'elle-même après quelques secondes, ne
   prend jamais le clavier à l'application en cours et n'apparaît jamais dans les captures suivantes.
 - La capture est **copiée** dans le presse-papiers (image et PNG), et peut être **enregistrée automatiquement** :
-  fichiers PNG dans `Images\ScreenClip`, nommés `Capture 2026-10-19 à 18.12.05.png` (dossier et nom modifiables).
+  fichiers PNG dans le dossier **Captures d'écran** de Windows (`Images\Captures d'écran`, là où Win + Impr. écran et
+  l'Outil Capture enregistrent), nommés `Capture 2026-10-19 à 18.12.05.png` (dossier et nom modifiables).
 
 ### Et aussi
 
@@ -175,7 +185,9 @@ dotnet run --project src\ScreenClip       # lance l'application (elle ouvre l'é
 Définissez `SCREENCLIP_LANG` à `en` ou `fr`, ou `SCREENCLIP_THEME` à `Light` ou `Dark`, avant de lancer l'application
 pour voir l'autre langue ou l'autre thème sans changer de réglage. `SCREENCLIP_CAPTURABLE=1` laisse les vignettes
 apparaître dans les captures d'écran (elles en sont normalement exclues, pour ne jamais se retrouver dans la capture
-suivante). `SCREENCLIP_TRACE=1` écrit ce que le mode Zone trouve sous le pointeur dans `%TEMP%\ScreenClip-trace.txt`. ScreenClip ne tourne qu'une fois par session : quittez-le depuis son menu de notification avant d'en
+suivante). `SCREENCLIP_TRACE=1` écrit ce que le mode Zone trouve sous le pointeur dans `%TEMP%\ScreenClip-trace.txt`.
+`SCREENCLIP_DEMO_SCREEN=<image>` fait figer cette image au lieu de l'écran lors d'une capture (pour les images du
+README). ScreenClip ne tourne qu'une fois par session : quittez-le depuis son menu de notification avant d'en
 lancer une autre version.
 
 ### Organisation du code

@@ -65,6 +65,28 @@
       </Setter>
     </Style>
 
+    <!-- The last preset tile: saves the current style under a name. -->
+    <Style x:Key="AddTile" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Ring" CornerRadius="8" BorderThickness="2" BorderBrush="Transparent" Padding="2" Background="Transparent">
+              <ContentPresenter />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <Style x:Key="PanelCard" TargetType="Border" BasedOn="{StaticResource Card}">
       <Setter Property="Padding" Value="14,12,14,14" />
       <Setter Property="Margin" Value="0,0,0,8" />
@@ -168,17 +190,21 @@
               <TextBlock Text="{local:Tr EditorEmptyText}" TextWrapping="Wrap" TextAlignment="Center"
                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
               <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                <Button Style="{DynamicResource AccentButtonStyle}" Padding="16,6" Margin="0,0,8,0" Click="Import_Click"
-                        AutomationProperties.Name="{local:Tr EditorImport}">
+                <!-- Capturing first (asked by the author): the editor opened by hand is mostly seen by people who do not
+                     know the shortcut yet; a picture they already have can also be pasted or dropped. -->
+                <Button Style="{DynamicResource AccentButtonStyle}" Padding="16,6" Margin="0,0,8,0" Click="CaptureArea_Click"
+                        AutomationProperties.Name="{local:Tr CaptureArea}">
+                  <StackPanel Orientation="Horizontal">
+                    <!-- The color of the button's text, dark on the accent color. -->
+                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconArea}"
+                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                    <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr CaptureArea}" />
+                  </StackPanel>
+                </Button>
+                <Button Padding="16,6" Click="Import_Click" AutomationProperties.Name="{local:Tr EditorImport}">
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Style="{StaticResource IconText}" FontSize="15" Text="&#xE8E5;" />
                     <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr EditorImport}" />
-                  </StackPanel>
-                </Button>
-                <Button Padding="16,6" Click="CaptureArea_Click" AutomationProperties.Name="{local:Tr CaptureArea}">
-                  <StackPanel Orientation="Horizontal">
-                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconArea}" />
-                    <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr CaptureArea}" />
                   </StackPanel>
                 </Button>
               </StackPanel>
@@ -211,6 +237,31 @@
                 </TextBlock>
               </DockPanel>
               <UniformGrid x:Name="PresetList" Columns="4" />
+
+              <!-- The name of a preset, asked when saving or renaming one, under its tile. -->
+              <Popup x:Name="PresetNamePopup" StaysOpen="False" AllowsTransparency="True" Placement="Bottom"
+                     PopupAnimation="Fade">
+                <Border Margin="8" Padding="16,14" CornerRadius="8" BorderThickness="1"
+                        Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}"
+                        BorderBrush="{DynamicResource SurfaceStrokeColorFlyoutBrush}">
+                  <Border.Effect>
+                    <DropShadowEffect BlurRadius="16" ShadowDepth="3" Opacity="0.3" Direction="270" />
+                  </Border.Effect>
+                  <StackPanel Width="260">
+                    <TextBlock FontWeight="SemiBold" Text="{local:Tr PresetName}" />
+                    <TextBox x:Name="PresetNameBox" Margin="0,10,0,0" MaxLength="40"
+                             TextChanged="PresetNameBox_TextChanged" KeyDown="PresetNameBox_KeyDown"
+                             AutomationProperties.Name="{local:Tr PresetName}" />
+                    <TextBlock x:Name="PresetNameTaken" Margin="0,6,0,0" FontSize="12" Visibility="Collapsed"
+                               Foreground="{DynamicResource SystemFillColorCriticalBrush}" Text="{local:Tr PresetNameTaken}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                      <Button x:Name="PresetNameOk" Style="{DynamicResource AccentButtonStyle}" MinWidth="96"
+                              Content="{local:Tr Save}" Click="PresetNameOk_Click" />
+                      <Button MinWidth="96" Margin="8,0,0,0" Content="{local:Tr Cancel}" Click="PresetNameCancel_Click" />
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+              </Popup>
             </StackPanel>
           </Border>
 

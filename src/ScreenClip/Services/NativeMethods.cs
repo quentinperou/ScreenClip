@@ -63,6 +63,13 @@ internal static class NativeMethods
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     public static extern bool Shell_NotifyIcon(int message, ref NOTIFYICONDATA data);
 
+    /// <summary>Windows' Screenshots folder (Win+Print Screen, Snipping Tool).</summary>
+    public static readonly Guid FOLDERID_Screenshots = new("b7bede81-df94-4682-a7d8-57a52620b86f");
+    public const uint KF_FLAG_CREATE = 0x00008000;
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    public static extern int SHGetKnownFolderPath(in Guid id, uint flags, IntPtr token, out IntPtr path);
+
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     public static extern int ExtractIconEx(string file, int index, IntPtr[]? large, IntPtr[]? small, int count);
 

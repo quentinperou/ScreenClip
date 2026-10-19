@@ -38,6 +38,10 @@ public partial class EditorWindow : Window
     private string? _statusPath;
 
     private readonly Dictionary<string, RadioButton> _presetTiles = [];
+    private readonly List<RadioButton> _userTiles = [];
+    private int? _naming;                                    // the preset being renamed; null: a new one
+    private readonly Dictionary<string, SKImage?> _miniatureBackgrounds = [];
+    private SKImage? _demoCapture;
     private readonly Dictionary<string, RadioButton> _backgroundTiles = [];
     private readonly Dictionary<FrameKind, RadioButton> _frameTiles = [];
     private readonly Dictionary<AspectRatio, RadioButton> _ratioButtons = [];
@@ -67,7 +71,11 @@ public partial class EditorWindow : Window
             App.Settings.Save();
             _capture?.Dispose();
             _backgroundImage?.Dispose();
-            _capture = _backgroundImage = null;
+            _demoCapture?.Dispose();
+            foreach (var image in _miniatureBackgrounds.Values)
+                image?.Dispose();
+            _miniatureBackgrounds.Clear();
+            _capture = _backgroundImage = _demoCapture = null;
             Preview.Source = null;
             _previewBitmap = null;
         };
@@ -183,35 +191,245 @@ public partial class EditorWindow : Window
 
     // ---------------------------------------------------------------- Style controls
 
+    // The built-in presets, then the user's (right click: rename, replace, delete), then the tile that saves the
+    // current style. Each one is drawn as it renders, on a small made-up app: what a preset gives is seen at once.
     private void BuildPresets()
     {
+        PresetList.Children.Clear();
+        _presetTiles.Clear();
+        _userTiles.Clear();
         foreach (var (id, style) in StylePresets.All)
         {
-            var miniature = new Border
-            {
-                Width = 58,
-                Height = 38,
-                CornerRadius = new CornerRadius(4),
-                Background = BackgroundBrush(Backgrounds.Find(style.Background)!),
-                Child = new Border
-                {
-                    Width = 30,
-                    Height = 19,
-                    CornerRadius = new CornerRadius(2),
-                    Background = Brushes.White,
-                    Effect = new DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.3 },
-                },
-            };
-            var label = new TextBlock { Text = Strings.Get("Preset" + Capitalize(id)), FontSize = 12, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
-            var tile = Tile("Preset", new StackPanel { Children = { miniature, label } }, Strings.Get("Preset" + Capitalize(id)));
-            tile.Checked += (_, _) =>
-            {
-                if (!_syncing)
-                    Apply(style with { FrameText = _style.FrameText, BackgroundImage = _style.BackgroundImage });
-            };
+            var tile = PresetTile(style, Strings.Get("Preset" + Capitalize(id)));
             _presetTiles[id] = tile;
             PresetList.Children.Add(tile);
         }
+
+        var presets = App.Settings.UserPresets;
+        for (int i = 0; i < presets.Count; i++)
+        {
+            int index = i;
+            var tile = PresetTile(presets[i].Style, presets[i].Name);
+            var menu = new ContextMenu();
+            menu.Items.Add(MenuItem("PresetRename", "\uE8AC", () => AskPresetName(index, tile)));
+            menu.Items.Add(MenuItem("PresetReplace", "\uE72C", () => ReplacePreset(index)));
+            menu.Items.Add(new Separator());
+            menu.Items.Add(MenuItem("PresetDelete", "\uE74D", () => DeletePreset(index)));
+            tile.ContextMenu = menu;
+            _userTiles.Add(tile);
+            PresetList.Children.Add(tile);
+        }
+
+        var dashes = new System.Windows.Shapes.Rectangle { RadiusX = 4, RadiusY = 4, StrokeThickness = 1, StrokeDashArray = [3, 2] };
+        dashes.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, "ControlStrokeColorSecondaryBrush");
+        var add = new Button
+        {
+            Style = (Style)FindResource("AddTile"),
+            Margin = new Thickness(1),
+            ToolTip = Strings.Get("PresetAddToolTip"),
+            Content = new StackPanel
+            {
+                Children =
+                {
+                    new Grid
+                    {
+                        Width = 58,
+                        Height = 38,
+                        Children = { dashes, new TextBlock { Text = "\uE710", Style = (Style)FindResource("IconText"), FontSize = 14, HorizontalAlignment = HorizontalAlignment.Center } },
+                    },
+                    PresetLabel(Strings.Get("PresetAdd")),
+                },
+            },
+        };
+        System.Windows.Automation.AutomationProperties.SetName(add, Strings.Get("PresetAddToolTip"));
+        add.Click += (_, _) => AskPresetName(null, add);
+        PresetList.Children.Add(add);
+    }
+
+    private RadioButton PresetTile(ClipStyle style, string name)
+    {
+        var tile = Tile("Preset", new StackPanel { Children = { PresetMiniature(style), PresetLabel(name) } }, name);
+        tile.Checked += (_, _) =>
+        {
+            if (!_syncing)
+                Apply(StylePresets.ApplyTo(style, _style));
+        };
+        return tile;
+    }
+
+    private static TextBlock PresetLabel(string text) => new()
+    {
+        Text = text,
+        FontSize = 12,
+        TextAlignment = TextAlignment.Center,
+        TextTrimming = TextTrimming.CharacterEllipsis,
+        Margin = new Thickness(0, 4, 0, 0),
+    };
+
+    private static MenuItem MenuItem(string text, string glyph, Action action)
+    {
+        var item = new MenuItem
+        {
+            Header = Strings.Get(text),
+            Icon = new TextBlock { Text = glyph, FontSize = 14, Style = (Style)Application.Current.FindResource("IconText") },
+        };
+        item.Click += (_, _) => action();
+        return item;
+    }
+
+    // The preset drawn by the composer itself, twice the size of the tile (sharp up to 200 %).
+    private Image PresetMiniature(ClipStyle style)
+    {
+        const double Width = 58, Height = 38, Density = 2;
+        _demoCapture ??= DemoCapture();
+        var shown = style with { FrameText = "" };
+        var layout = ClipLayout.Measure(_demoCapture.Width, _demoCapture.Height, shown);
+        float scale = (float)Math.Min(Width * Density / layout.Width, Height * Density / layout.Height);
+        using var picture = Composer.Render(_demoCapture, shown, scale, MiniatureBackground(shown));
+        return new Image { Source = Imaging.ToWpf(picture), Width = Width, Height = Height, Stretch = Stretch.Uniform };
+    }
+
+    // A made-up app for the miniatures: a bar, a colorful card, lines of text.
+    private static SKImage DemoCapture()
+    {
+        using var surface = SKSurface.Create(new SKImageInfo(480, 300));
+        var canvas = surface.Canvas;
+        canvas.Clear(SKColors.White);
+        using var paint = new SKPaint { IsAntialias = true, Color = new SKColor(0xEE, 0xF0, 0xF4) };
+        canvas.DrawRect(0, 0, 480, 46, paint);
+        using (var shader = SKShader.CreateLinearGradient(new SKPoint(30, 80), new SKPoint(230, 260),
+            [new SKColor(0x7B, 0x61, 0xFF), new SKColor(0xE5, 0x48, 0x9A)], SKShaderTileMode.Clamp))
+        {
+            paint.Shader = shader;
+            canvas.DrawRoundRect(30, 80, 200, 180, 14, 14, paint);
+            paint.Shader = null;
+        }
+        paint.Color = new SKColor(0xD5, 0xD9, 0xE0);
+        for (int i = 0; i < 5; i++)
+            canvas.DrawRoundRect(260, 90 + i * 34, i % 2 == 0 ? 180 : 140, 14, 7, 7, paint);
+        return surface.Snapshot();
+    }
+
+    // The picture of a preset's background, read small, once.
+    private SKImage? MiniatureBackground(ClipStyle style)
+    {
+        if (style.Background != Backgrounds.ImageId || style.BackgroundImage is not { } path)
+            return null;
+        if (!_miniatureBackgrounds.TryGetValue(path, out var image))
+        {
+            try
+            {
+                var small = new BitmapImage();
+                small.BeginInit();
+                small.UriSource = new Uri(path);
+                small.DecodePixelWidth = 256;
+                small.CacheOption = BitmapCacheOption.OnLoad;
+                small.EndInit();
+                small.Freeze();
+                image = Imaging.ToSkia(small);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or UriFormatException or FileFormatException or ArgumentException)
+            {
+                image = null;
+            }
+            _miniatureBackgrounds[path] = image;
+        }
+        return image;
+    }
+
+    // ---------------------------------------------------------------- The user's presets
+
+    // Asks the name of a new preset (index null) or of the one renamed, under its tile.
+    private void AskPresetName(int? index, UIElement tile)
+    {
+        var presets = App.Settings.UserPresets;
+        if (index is { } i && i >= presets.Count)
+            return;
+        _naming = index;
+        PresetNameBox.Text = index is { } renamed
+            ? presets[renamed].Name
+            : StylePresets.NewName(Strings.Get("PresetDefaultName"), presets.Select(p => p.Name));
+        CheckPresetName();
+        PresetNamePopup.PlacementTarget = tile;
+        PresetNamePopup.IsOpen = true;
+        Dispatcher.BeginInvoke(() =>
+        {
+            PresetNameBox.Focus();
+            PresetNameBox.SelectAll();
+        }, DispatcherPriority.Input);
+    }
+
+    // A name is needed, and one that no other preset has (the built-in ones included).
+    private bool CheckPresetName()
+    {
+        string? name = StylePresets.CleanName(PresetNameBox.Text);
+        var others = StylePresets.All.Select(p => Strings.Get("Preset" + Capitalize(p.Id)))
+            .Concat(App.Settings.UserPresets.Where((_, i) => i != _naming).Select(p => p.Name));
+        bool taken = name is not null && StylePresets.IsTaken(name, others);
+        PresetNameTaken.Visibility = taken ? Visibility.Visible : Visibility.Collapsed;
+        PresetNameOk.IsEnabled = name is not null && !taken;
+        return PresetNameOk.IsEnabled;
+    }
+
+    private void PresetNameBox_TextChanged(object sender, TextChangedEventArgs e) => CheckPresetName();
+
+    private void PresetNameBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            SavePresetName();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            PresetNamePopup.IsOpen = false;
+            e.Handled = true;
+        }
+    }
+
+    private void PresetNameOk_Click(object sender, RoutedEventArgs e) => SavePresetName();
+
+    private void PresetNameCancel_Click(object sender, RoutedEventArgs e) => PresetNamePopup.IsOpen = false;
+
+    private void SavePresetName()
+    {
+        if (!CheckPresetName())
+            return;
+        string name = StylePresets.CleanName(PresetNameBox.Text)!;
+        var presets = App.Settings.UserPresets;
+        if (_naming is { } i && i < presets.Count)
+            presets[i] = presets[i] with { Name = name };
+        else
+            presets.Add(new UserPreset { Name = name, Style = StylePresets.ToSave(_style) });
+        PresetNamePopup.IsOpen = false;
+        PresetsChanged();
+    }
+
+    private void ReplacePreset(int index)
+    {
+        var presets = App.Settings.UserPresets;
+        if (index >= presets.Count)
+            return;
+        presets[index] = presets[index] with { Style = StylePresets.ToSave(_style) };
+        PresetsChanged();
+    }
+
+    private void DeletePreset(int index)
+    {
+        var presets = App.Settings.UserPresets;
+        if (index >= presets.Count
+            || MessageBox.Show(this, Strings.Format("PresetDeleteQuestion", presets[index].Name), "ScreenClip",
+                MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes)
+            return;
+        presets.RemoveAt(index);
+        PresetsChanged();
+    }
+
+    private void PresetsChanged()
+    {
+        App.Settings.Save();
+        BuildPresets();
+        ShowStyle();
     }
 
     private void BuildBackgrounds()
@@ -275,7 +493,7 @@ public partial class EditorWindow : Window
             tile.Checked += (_, _) =>
             {
                 if (!_syncing)
-                    Apply(_style with { Frame = frame });
+                    Apply(_style.WithFrame(frame));
             };
             _frameTiles[frame] = tile;
             FrameList.Children.Add(tile);
@@ -422,9 +640,13 @@ public partial class EditorWindow : Window
     private void ShowStyle()
     {
         _syncing = true;
+        // A built-in preset first; else the first of the user's that gives this style.
         string? preset = StylePresets.IdOf(_style);
         foreach (var (id, tile) in _presetTiles)
             tile.IsChecked = id == preset;
+        int saved = preset is null ? App.Settings.UserPresets.FindIndex(p => StylePresets.Matches(p.Style, _style)) : -1;
+        for (int i = 0; i < _userTiles.Count; i++)
+            _userTiles[i].IsChecked = i == saved;
         foreach (var (id, tile) in _backgroundTiles)
             tile.IsChecked = id == _style.Background;
         foreach (var (frame, tile) in _frameTiles)
@@ -537,8 +759,7 @@ public partial class EditorWindow : Window
         Apply(_style with { FrameText = FrameTextBox.Text });
     }
 
-    private void Reset_Click(object sender, RoutedEventArgs e) =>
-        Apply(StylePresets.Default with { FrameText = _style.FrameText, BackgroundImage = _style.BackgroundImage });
+    private void Reset_Click(object sender, RoutedEventArgs e) => Apply(StylePresets.ApplyTo(StylePresets.Default, _style));
 
     private void PickBackgroundImage()
     {
@@ -649,7 +870,8 @@ public partial class EditorWindow : Window
     {
         if (_capture is null)
             return;
-        string folder = App.Settings.EffectiveSaveFolder;
+        // The pictures laid out go apart from the captures (Settings › Saving).
+        string folder = App.Settings.EffectiveExportFolder;
         try
         {
             Directory.CreateDirectory(folder);

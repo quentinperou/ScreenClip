@@ -125,7 +125,7 @@
     <value>Drag the picture to an app (mail, chat, Word…) to drop it there</value>
   </data>
   <data name="EditorEmptyText" xml:space="preserve">
-    <value>Import a picture, paste it (Ctrl+V) or drop it here, or take a new capture.</value>
+    <value>Take a capture, or import a picture: paste it (Ctrl+V) or drop it here.</value>
   </data>
   <data name="EditorEmptyTitle" xml:space="preserve">
     <value>Lay out a screenshot</value>
@@ -334,11 +334,38 @@
   <data name="OpenFolder" xml:space="preserve">
     <value>Open</value>
   </data>
+  <data name="PresetAdd" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="PresetAddToolTip" xml:space="preserve">
+    <value>Save the current style as a preset</value>
+  </data>
+  <data name="PresetDefaultName" xml:space="preserve">
+    <value>My style {0}</value>
+  </data>
+  <data name="PresetDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="PresetDeleteQuestion" xml:space="preserve">
+    <value>Delete the preset “{0}”?</value>
+  </data>
+  <data name="PresetName" xml:space="preserve">
+    <value>Name of the preset</value>
+  </data>
+  <data name="PresetNameTaken" xml:space="preserve">
+    <value>A preset already has this name.</value>
+  </data>
   <data name="PresetPost" xml:space="preserve">
     <value>Post 1:1</value>
   </data>
   <data name="PresetReadme" xml:space="preserve">
     <value>README</value>
+  </data>
+  <data name="PresetRename" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="PresetReplace" xml:space="preserve">
+    <value>Replace with the current style</value>
   </data>
   <data name="PresetSlide" xml:space="preserve">
     <value>Slide 16:9</value>
@@ -418,6 +445,15 @@
   <data name="SettingsCopyDescription" xml:space="preserve">
     <value>Ready to paste with Ctrl+V.</value>
   </data>
+  <data name="SettingsExportFolder" xml:space="preserve">
+    <value>Laid-out pictures folder</value>
+  </data>
+  <data name="SettingsExportFolderDescription" xml:space="preserve">
+    <value>Where the editor saves.</value>
+  </data>
+  <data name="SettingsExportFolderReset" xml:space="preserve">
+    <value>Back to the default folder (Pictures\ScreenClip)</value>
+  </data>
   <data name="SettingsFileName" xml:space="preserve">
     <value>File names</value>
   </data>
@@ -451,8 +487,11 @@
   <data name="SettingsSaveFolder" xml:space="preserve">
     <value>Captures folder</value>
   </data>
+  <data name="SettingsSaveFolderDescription" xml:space="preserve">
+    <value>The captures saved automatically, or with Save on the thumbnail.</value>
+  </data>
   <data name="SettingsSaveFolderReset" xml:space="preserve">
-    <value>Back to the default folder (Pictures\ScreenClip)</value>
+    <value>Back to the Screenshots folder of Windows</value>
   </data>
   <data name="SettingsSaving" xml:space="preserve">
     <value>Saving</value>
@@ -492,6 +531,12 @@
   </data>
   <data name="SettingsTitle" xml:space="preserve">
     <value>ScreenClip settings</value>
+  </data>
+  <data name="SettingsTrayClick" xml:space="preserve">
+    <value>Click on the icon</value>
+  </data>
+  <data name="SettingsTrayClickDescription" xml:space="preserve">
+    <value>The icon of ScreenClip in the notification area. A right click always opens its menu.</value>
   </data>
   <data name="ShortcutArea" xml:space="preserve">
     <value>Capture an area</value>
@@ -582,6 +627,12 @@
   </data>
   <data name="TiltRight" xml:space="preserve">
     <value>Right</value>
+  </data>
+  <data name="TrayClickEditor" xml:space="preserve">
+    <value>Open the editor</value>
+  </data>
+  <data name="TrayClickMenu" xml:space="preserve">
+    <value>Open the menu</value>
   </data>
   <data name="UpdateBarText" xml:space="preserve">
     <value>ScreenClip {0} is available.</value>

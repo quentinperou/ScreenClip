@@ -43,8 +43,11 @@ internal sealed class TrayHost : IDisposable
 
     public IntPtr Handle => _window.Handle;
 
-    /// <summary>Left or right click on the notification icon (or Enter/Space on it from the keyboard).</summary>
-    public event EventHandler? IconInvoked;
+    /// <summary>Left click on the notification icon (or Enter/Space on it from the keyboard).</summary>
+    public event EventHandler? IconClicked;
+
+    /// <summary>Right click on the notification icon (or the menu key on it).</summary>
+    public event EventHandler? MenuRequested;
 
     /// <summary>A capture shortcut was pressed.</summary>
     public event EventHandler<ShortcutAction>? ShortcutPressed;
@@ -154,8 +157,10 @@ internal sealed class TrayHost : IDisposable
             case CallbackMessage:
                 // NOTIFYICON_VERSION_4: the event is in the low word of lParam.
                 int iconEvent = lParam.ToInt32() & 0xFFFF;
-                if (iconEvent is WM_CONTEXTMENU or NIN_SELECT or NIN_KEYSELECT)
-                    IconInvoked?.Invoke(this, EventArgs.Empty);
+                if (iconEvent is NIN_SELECT or NIN_KEYSELECT)
+                    IconClicked?.Invoke(this, EventArgs.Empty);
+                else if (iconEvent == WM_CONTEXTMENU)
+                    MenuRequested?.Invoke(this, EventArgs.Empty);
                 handled = true;
                 break;
 

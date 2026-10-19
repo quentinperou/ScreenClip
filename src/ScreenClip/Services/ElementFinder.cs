@@ -157,6 +157,8 @@ internal sealed class ElementFinder : IDisposable
     // in a window of its own, whose tree is not always linked to the window's): one list, outermost first per walk.
     private static IReadOnlyList<PixelRect> FindElements(IntPtr window, int x, int y)
     {
+        if (window == IntPtr.Zero)
+            return []; // a made-up window (DemoScreen): no app to ask
         var clock = Stopwatch.StartNew();
         var elements = Descend(AutomationElement.FromHandle(window), x, y, 0, clock);
         foreach (var child in ChildWindowsAt(window, x, y).Take(ChildWindows))

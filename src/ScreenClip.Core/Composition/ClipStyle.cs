@@ -92,6 +92,20 @@ public sealed record ClipStyle
 
     public bool IsTurned => TurnDegrees != 0 || TiltDegrees != 0;
 
+    /// <summary>
+    /// The corners of the real window a frame imitates, at 100 %: Windows 11 rounds its windows by 8 px, macOS by 10
+    /// (Safari and Chrome on a Mac too). Null for no frame and the devices: their corners stay as set.
+    /// </summary>
+    public static int? NaturalRadius(FrameKind frame) => frame switch
+    {
+        FrameKind.Windows => 8,
+        FrameKind.MacWindow or FrameKind.Browser => 10,
+        _ => null,
+    };
+
+    /// <summary>The style with <paramref name="frame"/>, its corners those of the real window (asked by the author).</summary>
+    public ClipStyle WithFrame(FrameKind frame) => this with { Frame = frame, Radius = NaturalRadius(frame) ?? Radius };
+
     /// <summary>Width / height of <paramref name="ratio"/>, or null for <see cref="AspectRatio.Auto"/>.</summary>
     public static double? RatioValue(AspectRatio ratio) => ratio switch
     {
@@ -121,7 +135,7 @@ public static class StylePresets
 {
     public static readonly IReadOnlyList<(string Id, ClipStyle Style)> All =
     [
-        ("readme", new ClipStyle { Background = "mica", Padding = 7, Radius = 10, Shadow = 40, Frame = FrameKind.Browser, Ratio = AspectRatio.Auto, Format = ExportFormat.Png }),
+        ("readme", new ClipStyle { Background = "mica", Padding = 7, Radius = 10, Shadow = 40, Frame = FrameKind.None, Ratio = AspectRatio.Auto, Format = ExportFormat.Png }),
         ("post", new ClipStyle { Background = "violet", Padding = 10, Radius = 12, Shadow = 60, Frame = FrameKind.Browser, Ratio = AspectRatio.Square, Format = ExportFormat.Jpeg }),
         ("story", new ClipStyle { Background = "night", Padding = 6, Radius = 14, Shadow = 70, Frame = FrameKind.MacWindow, DarkFrame = true, Ratio = AspectRatio.Story, Format = ExportFormat.Jpeg }),
         ("slide", new ClipStyle { Background = "ocean", Padding = 11, Radius = 12, Shadow = 65, Frame = FrameKind.Browser, TurnDegrees = -16, TiltDegrees = 4, Ratio = AspectRatio.Wide, Format = ExportFormat.Png }),
@@ -130,7 +144,65 @@ public static class StylePresets
     /// <summary>The style of a new user: the README preset, close to what a screenshot of an app needs.</summary>
     public static ClipStyle Default => All[0].Style;
 
-    /// <summary>The preset <paramref name="style"/> is (text of the frame and format aside), or null.</summary>
-    public static string? IdOf(ClipStyle style) =>
-        All.FirstOrDefault(p => p.Style with { FrameText = style.FrameText, BackgroundImage = style.BackgroundImage } == style).Id;
+    /// <summary>The longest name of a preset of the user.</summary>
+    public const int MaxNameLength = 40;
+
+    /// <summary>The built-in preset <paramref name="style"/> is, or null.</summary>
+    public static string? IdOf(ClipStyle style) => All.FirstOrDefault(p => Matches(p.Style, style)).Id;
+
+    /// <summary>
+    /// <paramref name="preset"/> applied on top of <paramref name="current"/>: the text of the frame stays (it names the
+    /// page captured, not a style), and so does the user's picture, unless the preset has a picture of its own.
+    /// </summary>
+    public static ClipStyle ApplyTo(ClipStyle preset, ClipStyle current) => (preset with
+    {
+        FrameText = current.FrameText,
+        BackgroundImage = preset.Background == Backgrounds.ImageId ? preset.BackgroundImage : current.BackgroundImage,
+    }).Normalized();
+
+    /// <summary>Whether <paramref name="style"/> is what <paramref name="preset"/> gives (its tile shows it chosen).</summary>
+    public static bool Matches(ClipStyle preset, ClipStyle style) => ApplyTo(preset, style) == style.Normalized();
+
+    /// <summary>
+    /// What a preset of the user keeps of <paramref name="style"/>: everything but the text of the frame, and the picture
+    /// only when it is the background.
+    /// </summary>
+    public static ClipStyle ToSave(ClipStyle style) => (style with
+    {
+        FrameText = "",
+        BackgroundImage = style.Background == Backgrounds.ImageId ? style.BackgroundImage : null,
+    }).Normalized();
+
+    /// <summary>A name typed by the user, tidied (spaces, length), or null when there is nothing left.</summary>
+    public static string? CleanName(string? text)
+    {
+        string name = string.Join(' ', (text ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        if (name.Length > MaxNameLength)
+            name = name[..MaxNameLength].TrimEnd();
+        return name.Length == 0 ? null : name;
+    }
+
+    /// <summary>Whether <paramref name="name"/> is one of <paramref name="taken"/>, case aside.</summary>
+    public static bool IsTaken(string name, IEnumerable<string> taken) =>
+        taken.Any(t => string.Equals(t, name, StringComparison.CurrentCultureIgnoreCase));
+
+    /// <summary>The first free name of the form <paramref name="pattern"/> (“My style {0}”), counting from 1.</summary>
+    public static string NewName(string pattern, IEnumerable<string> taken)
+    {
+        var names = taken.ToList();
+        for (int n = 1; ; n++)
+        {
+            string name = string.Format(System.Globalization.CultureInfo.CurrentCulture, pattern, n);
+            if (!IsTaken(name, names))
+                return name;
+        }
+    }
+}
+
+/// <summary>A style saved by the user under a name, shown after the built-in presets.</summary>
+public sealed record UserPreset
+{
+    public string Name { get; init; } = "";
+
+    public ClipStyle Style { get; init; } = StylePresets.Default;
 }

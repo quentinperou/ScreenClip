@@ -125,7 +125,7 @@
     <value>Glissez l'image vers une application (mail, messagerie, Word…) pour l'y déposer</value>
   </data>
   <data name="EditorEmptyText" xml:space="preserve">
-    <value>Importez une image, collez-la (Ctrl+V) ou glissez-la ici, ou faites une nouvelle capture.</value>
+    <value>Faites une capture, ou importez une image : collez-la (Ctrl+V) ou glissez-la ici.</value>
   </data>
   <data name="EditorEmptyTitle" xml:space="preserve">
     <value>Mettez en forme une capture</value>
@@ -334,11 +334,38 @@
   <data name="OpenFolder" xml:space="preserve">
     <value>Ouvrir</value>
   </data>
+  <data name="PresetAdd" xml:space="preserve">
+    <value>Enregistrer</value>
+  </data>
+  <data name="PresetAddToolTip" xml:space="preserve">
+    <value>Enregistrer le style actuel comme préréglage</value>
+  </data>
+  <data name="PresetDefaultName" xml:space="preserve">
+    <value>Mon style {0}</value>
+  </data>
+  <data name="PresetDelete" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="PresetDeleteQuestion" xml:space="preserve">
+    <value>Supprimer le préréglage « {0} » ?</value>
+  </data>
+  <data name="PresetName" xml:space="preserve">
+    <value>Nom du préréglage</value>
+  </data>
+  <data name="PresetNameTaken" xml:space="preserve">
+    <value>Un préréglage porte déjà ce nom.</value>
+  </data>
   <data name="PresetPost" xml:space="preserve">
     <value>Post 1:1</value>
   </data>
   <data name="PresetReadme" xml:space="preserve">
     <value>README</value>
+  </data>
+  <data name="PresetRename" xml:space="preserve">
+    <value>Renommer</value>
+  </data>
+  <data name="PresetReplace" xml:space="preserve">
+    <value>Remplacer par le style actuel</value>
   </data>
   <data name="PresetSlide" xml:space="preserve">
     <value>Slide 16:9</value>
@@ -418,6 +445,15 @@
   <data name="SettingsCopyDescription" xml:space="preserve">
     <value>Prête à coller avec Ctrl+V.</value>
   </data>
+  <data name="SettingsExportFolder" xml:space="preserve">
+    <value>Dossier des images mises en forme</value>
+  </data>
+  <data name="SettingsExportFolderDescription" xml:space="preserve">
+    <value>Là où l'éditeur enregistre.</value>
+  </data>
+  <data name="SettingsExportFolderReset" xml:space="preserve">
+    <value>Revenir au dossier par défaut (Images\ScreenClip)</value>
+  </data>
   <data name="SettingsFileName" xml:space="preserve">
     <value>Nom des fichiers</value>
   </data>
@@ -451,8 +487,11 @@
   <data name="SettingsSaveFolder" xml:space="preserve">
     <value>Dossier des captures</value>
   </data>
+  <data name="SettingsSaveFolderDescription" xml:space="preserve">
+    <value>Les captures enregistrées automatiquement, ou avec Enregistrer sur la vignette.</value>
+  </data>
   <data name="SettingsSaveFolderReset" xml:space="preserve">
-    <value>Revenir au dossier par défaut (Images\ScreenClip)</value>
+    <value>Revenir au dossier Captures d'écran de Windows</value>
   </data>
   <data name="SettingsSaving" xml:space="preserve">
     <value>Enregistrement</value>
@@ -492,6 +531,12 @@
   </data>
   <data name="SettingsTitle" xml:space="preserve">
     <value>Paramètres de ScreenClip</value>
+  </data>
+  <data name="SettingsTrayClick" xml:space="preserve">
+    <value>Clic sur l'icône</value>
+  </data>
+  <data name="SettingsTrayClickDescription" xml:space="preserve">
+    <value>L'icône de ScreenClip dans la zone de notification. Le clic droit ouvre toujours son menu.</value>
   </data>
   <data name="ShortcutArea" xml:space="preserve">
     <value>Capturer une zone</value>
@@ -582,6 +627,12 @@
   </data>
   <data name="TiltRight" xml:space="preserve">
     <value>Droite</value>
+  </data>
+  <data name="TrayClickEditor" xml:space="preserve">
+    <value>Ouvrir l'éditeur</value>
+  </data>
+  <data name="TrayClickMenu" xml:space="preserve">
+    <value>Ouvrir le menu</value>
   </data>
   <data name="UpdateBarText" xml:space="preserve">
     <value>ScreenClip {0} est disponible.</value>

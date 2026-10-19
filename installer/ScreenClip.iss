@@ -59,8 +59,8 @@ english.RuntimeInstalling=Installing the .NET 10 Desktop Runtime...
 french.RuntimeInstalling=Installation du .NET 10 Desktop Runtime…
 english.RuntimeFailed=The automatic installation failed. The download page will open:%nchoose ".NET Desktop Runtime 10" (x64).
 french.RuntimeFailed=L'installation automatique a échoué. La page de téléchargement va s'ouvrir :%nchoisissez « .NET Desktop Runtime 10 » (x64).
-english.DeleteUserData=Also delete your ScreenClip settings?%n%nKeep them if you are going to install ScreenClip again. Your captures (Pictures\ScreenClip) are always kept.
-french.DeleteUserData=Supprimer aussi vos réglages ScreenClip ?%n%nGardez-les si vous allez réinstaller ScreenClip. Vos captures (Images\ScreenClip) sont toujours conservées.
+english.DeleteUserData=Also delete your ScreenClip settings?%n%nKeep them if you are going to install ScreenClip again. Your captures and your laid-out pictures are always kept.
+french.DeleteUserData=Supprimer aussi vos réglages ScreenClip ?%n%nGardez-les si vous allez réinstaller ScreenClip. Vos captures et vos images mises en forme sont toujours conservées.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked

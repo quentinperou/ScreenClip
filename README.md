@@ -29,8 +29,9 @@
 - **Print Screen** captures an area, **Alt + Print Screen** a window, **Ctrl + Print Screen** the whole screen,
   **Shift + Print Screen** the last area again. Every shortcut can be changed in **Settings → Capture**, or all of
   them turned off (the notification menu still captures).
-- ScreenClip waits in the **notification area** (its menu gives the same captures, the captures folder, Settings).
-  At rest it uses almost nothing: no window, no timer, about 5 MB of memory in use.
+- ScreenClip waits in the **notification area**: a **click** on its icon captures an area (or opens the menu or the
+  editor, as set in **Settings → General**), a **right click** opens its menu (the same captures, the captures folder,
+  Settings). At rest it uses almost nothing: no window, no timer, about 5 MB of memory in use.
 - The screen is **frozen** the moment the key is pressed: menus and tooltips stay in the picture.
 - **Area**: the part of the window under the pointer is **outlined** as you move (a video player, a card of a web
   page, a panel, the whole window), from what the app tells Windows and from the blocks drawn on the screen: a
@@ -41,25 +42,32 @@
 - **Full screen**: a click takes the screen under the pointer.
 - Several monitors, each at its own scale (100 %, 150 %…): every pixel stays sharp.
 
+<p align="center">
+  <img src=".github/selection.png" width="800" alt="The area selection: the screen frozen and dimmed, a sheet of photo prints in a window outlined with its size (300 × 420), the magnifier showing the pixels under the pointer, the capture bar at the top and the hints at the bottom">
+</p>
+
 ### Layout editor
 
 Started from the Start menu, ScreenClip opens its **editor**: a capture (or any picture: **Import a picture**, paste
 it with **Ctrl+V**, drop it on the window) is laid out live, the way the screenshots of app pages and social posts
 look.
 
-- **Presets** in one click: *README* (light, discreet), *Post 1:1*, *Story 9:16*, *Slide 16:9*; **Reset** goes back to
-  the README one. The last settings used are kept for the next capture.
+- **Presets** in one click, each drawn as it renders: *README* (light, discreet), *Post 1:1*, *Story 9:16*,
+  *Slide 16:9*, and **your own**: **+ Save** keeps the current style under a name (its picture background included);
+  right click one to rename it, replace it with the current style or delete it. **Reset** goes back to the README one.
+  The last settings used are kept for the next capture.
 - **Background**: eight gradients, white, black, transparent, the capture itself blurred, or **your own picture**.
 - **Frame**: none, a **browser in the macOS style** (traffic lights and an address you type), a **macOS window**, a
-  **Windows 11 window** (with a title you type), light or dark; or a device, a **laptop** or a **phone**, silver or
+  **Windows 11 window** (with a title you type), light or dark, each with the rounded corners of the real one (8 px
+  for Windows 11, 10 for macOS; the slider still changes them); or a device, a **laptop** or a **phone**, silver or
   graphite (the phone turns sideways for a wide capture). No brand on them. Their screen keeps the shape of a real
   one: a capture of another shape is cropped (a long page keeps its top).
 - **Margin**, **rounded corners** and **shadow** (sliders), a **3D tilt** (left or right in one click, or by hand:
   left–right and up–down), and the **format**: auto, 16:9, 4:3, 1:1, 4:5 or 9:16.
 - The capture keeps its own pixels: the picture grows around it, nothing is resized. Large (high DPI) captures get a
   larger window bar and corners, so that a style looks the same on any capture.
-- **Copy** (PNG with its transparency, and a bitmap for the other apps), **Save** as PNG, JPG or WebP, or **drag the
-  preview** to an app or a folder.
+- **Copy** (PNG with its transparency, and a bitmap for the other apps), **Save** as PNG, JPG or WebP (in
+  `Pictures\ScreenClip`, apart from the captures; can be changed), or **drag the preview** to an app or a folder.
 - **New capture** from the editor: it steps aside while you choose, and comes back with the capture.
 
 ### Windows' Print Screen key
@@ -76,8 +84,9 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
   editor), **pin** it so that it stays, or **drag it** into an app (mail, chat, Word, a folder…), which receives the
   image file. It goes away by itself after a few seconds, never takes the keyboard from the app you are in, and never
   appears in the next captures.
-- The capture is **copied** to the clipboard (bitmap and PNG), and can be **saved automatically**: PNG files in
-  `Pictures\ScreenClip`, named `Screenshot 2026-10-19 at 18.12.05.png` (folder and name can be changed).
+- The capture is **copied** to the clipboard (bitmap and PNG), and can be **saved automatically**: PNG files in the
+  **Screenshots** folder of Windows (`Pictures\Screenshots`, where Win + Print Screen and the Snipping Tool save),
+  named `Screenshot 2026-10-19 at 18.12.05.png` (folder and name can be changed).
 
 ### And also
 
@@ -169,7 +178,8 @@ dotnet run --project src\ScreenClip       # run the app (it opens the editor; --
 Set `SCREENCLIP_LANG` to `en` or `fr`, or `SCREENCLIP_THEME` to `Light` or `Dark`, before starting the app to check
 the other language or theme without changing any setting. `SCREENCLIP_CAPTURABLE=1` leaves the thumbnails in
 screenshots (they are normally excluded, so that they never show in the next capture). `SCREENCLIP_TRACE=1` writes
-what the Area mode finds under the pointer to `%TEMP%\ScreenClip-trace.txt`. ScreenClip runs once per
+what the Area mode finds under the pointer to `%TEMP%\ScreenClip-trace.txt`. `SCREENCLIP_DEMO_SCREEN=<picture>`
+makes a capture freeze that picture instead of the screen (for the README pictures). ScreenClip runs once per
 session: quit it from its notification menu before starting another build.
 
 ### Code layout

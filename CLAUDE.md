@@ -90,7 +90,20 @@ choices › Elements under the pointer); captures made from the editor are now c
 (their style is not based on the theme's button: `Foreground` set), and a setting for the thumbnail's screen. 137
 tests.
 
-**Next**: the author tries the element detection again; then his own saved presets, annotations later.
+Then the author's **own presets** (“on enchaîne”): **+ Save** tile after the built-in ones, a name asked in a popup
+under the tile (“My style 1” proposed, names unique, built-in ones included), right click: rename, replace with the
+current style, delete (confirmed). Every preset tile is now drawn by the composer on a small made-up app. Checked by
+Claude through UI Automation (save, chosen, switch and back), not the right-click menu. 146 tests.
+
+Then: the README preset has no frame (asked by the author), and a README picture of the area selection (see README
+pictures), which showed that moving inside the first element found never looked again (fixed: 8 px). A window
+frame now takes the corners of the real window (Windows 8 px, macOS and browser 10). A left click on the notification
+icon captures an area (the menu is on the right click), with the choice in Settings › General (capture, menu,
+editor). In the empty editor, “Capture an area” is now the accent button, before “Import a picture” (the author's
+question; people who open the editor by hand mostly do not know the shortcut yet). The captures now go to Windows'
+Screenshots folder and the editor's pictures to `Pictures\ScreenClip`, two settings (asked by the author). 151 tests.
+
+**Next**: the author tries the presets; then annotations, video/GIF.
 
 ## Commands
 
@@ -103,7 +116,8 @@ powershell -File scripts\make-icons.ps1   # regenerate the icons (Windows PowerS
 ```
 
 Environment variables: `SCREENCLIP_LANG=en|fr`, `SCREENCLIP_THEME=Light|Dark`, `SCREENCLIP_CAPTURABLE=1` (thumbnails
-stay in screenshots), `SCREENCLIP_TRACE=1` (each element lookup written to `%TEMP%\ScreenClip-trace.txt`). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
+stay in screenshots), `SCREENCLIP_TRACE=1` (each element lookup written to `%TEMP%\ScreenClip-trace.txt`),
+`SCREENCLIP_DEMO_SCREEN=<picture>` (a capture freezes that picture instead of the screen: README pictures). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
 again (and the `HKCU\Software\ScreenClip` key).
 
 ## Working on the project
@@ -138,6 +152,18 @@ The test `settings.json` of the script also holds the demo style; it is removed 
 (UI Automation and posted messages, fictitious save folder `D:\Captures`) then `.local\readme\compose.ps1`
 (System.Drawing); `.local\README.md` lists the local tools. Retake them when the UI changes.
 
+`.github/selection.png` / `selection.fr.png` (1600 × 951, under “Capture” in the READMEs; asked by the author from the
+mock-up, made from the real overlay instead since the mock-up's had handles, a delay and keys the app does not have):
+the real area overlay over a made-up desktop, a sheet of prints outlined. `.local
+eadme\scene\scene.html` (`?lang=fr`)
+rendered by headless Chrome to `scene-<lang>.png`; `.local
+eadme\shoot-selection.ps1 -Lang en|fr` starts the dev
+build with `SCREENCLIP_DEMO_SCREEN` (that picture frozen on every monitor, one handle-less window per monitor: the
+blocks come from the picture), posts `WM_HOTKEY` then `WM_MOUSEMOVE` at a point to the overlay (WPF takes the posted
+position), `PrintWindow`s it and quits; `.local
+eadmerame` (a console on Core) lays it out with `Composer`
+(violet, 5 %, corners 14, shadow 55, 1600 px wide).
+
 ## Architecture
 
 | Folder | Role |
@@ -171,7 +197,15 @@ The test `settings.json` of the script also holds the demo style; it is removed 
   The frame theme and title rows are hidden with no frame (asked by the author). The tilt is two angles in the style
   (`TurnDegrees` −30…30, `TiltDegrees` −20…20, asked by the author: tilt by hand); Left / None / Right are quick
   values (−16°/4°, 0, 16°/4°) shown checked when the sliders match them; a double click on a slider puts it back to 0.
-  Corners up to 80 px (asked by the author: 32 was not enough), never more than half the window.
+  Corners up to 80 px (asked by the author: 32 was not enough), never more than half the window. Choosing a window
+  frame sets the corners of the real window (`ClipStyle.WithFrame` / `NaturalRadius`: Windows 11 8 px, macOS and
+  the browser 10; asked by the author); no frame and the devices keep them; presets bring their own.
+- **Presets**: `StylePresets` (Core, tested). A preset never carries the frame text (it names the page captured) and
+  carries a picture only when it is its background: `ApplyTo` keeps the current text and picture otherwise,
+  `Matches` says which tile shows chosen (a built-in one first), `ToSave` is what a user preset keeps. The user's are
+  `AppSettings.UserPresets` (`UserPreset`: name + style, tidied on load), saved at once. Each tile is a miniature that
+  `Composer` renders (twice the tile size) on a made-up 480 × 300 app (bar, gradient card, lines): built-in and user
+  presets look like what they give; a picture background is read small (256 px) for it.
 - **Devices** (asked by the author, October 19, 2026): `FrameKind.Laptop` and `Phone`, drawn by `Composer`, no brand.
   `DeviceShape` gives their bezel and the room they take around the capture (`ClipLayout.CaptureX/Y` place the capture
   inside the device's box): laptop = black lid (camera dot) with a metal rim, a base 14 % wider with a thumb notch;
@@ -181,7 +215,7 @@ The test `settings.json` of the script also holds the demo style; it is removed 
   phone 16:9 to 20:9; outside, the capture is cropped (`ClipLayout.Shown`), a tall one keeping its top (where a page
   starts), a wide one its middle. Still never resized. With a device, the
   title row and the corner slider are hidden. Export: copy =
-  PNG stream (transparency kept) + a bitmap flattened on white; save = a save dialog in the capture folder, the format
+  PNG stream (transparency kept) + a bitmap flattened on white; save = a save dialog in `AppSettings.EffectiveExportFolder` (`Pictures\ScreenClip`), the format
   of the extension chosen becoming the style's; drag = a temp file in the export format + the bitmap. “New capture”
   hides the editor and goes through `CaptureController.RunForEditor` (the capture comes back to the editor instead of
   the thumbnail; it is still copied and saved as the settings say).
@@ -196,6 +230,10 @@ The test `settings.json` of the script also holds the demo style; it is removed 
   keys, and the Print Screen question is not asked.
 - **Lazy theme**: `App.xaml` sets no `ThemeMode`; `App.EnsureTheme()` applies it before the first window or menu.
   Styles that use `BasedOn="{StaticResource {x:Type Button}}"` or `AccentButtonStyle` need it applied first.
+- **Notification icon clicks**: a left click (`NIN_SELECT`, or `NIN_KEYSELECT` from the keyboard) does what
+  `AppSettings.TrayClick` says (Settings › General, asked by the author): an area capture by default (through
+  `RunAfterMenu`, so that a flyout of hidden icons is gone), or the menu, or the editor; a right click
+  (`WM_CONTEXTMENU`) always opens the menu.
 - **Tray menu**: a WPF `ContextMenu` built on each opening. A WPF menu of an app with no active window loses the
   mouse capture as it opens and closes at once (0.1.0 as first written: the author could not open it). So it belongs
   to a 1 × 1 transparent window put under the pointer, shown and activated first (the click on the icon gives the
@@ -234,7 +272,8 @@ The test `settings.json` of the script also holds the demo style; it is removed 
   - `ElementChain` (Core, tested) merges them into the levels the wheel goes through: clipped to the window and the
     monitor, a block that crosses an element or another block dropped (a wrong guess), sorted by size, each inside the
     next (±4 px), under 12 px dropped, same edges (±4 px) merged, the window itself as the largest. A new lookup is
-    asked when the pointer leaves the smallest one (or moves 24 px while only the window is known); the level is kept
+    asked when the pointer leaves the smallest one or has moved 8 px since the last lookup (a first look on the
+    background of a window gives the whole window: moving onto a card inside must find the card); the level is kept
     when the smallest did not change. `SCREENCLIP_TRACE=1` writes every lookup to `%TEMP%\ScreenClip-trace.txt`
     (measured in the author's Chrome: 37 elements and 7 blocks, 144 ms the first lookup, ~30 ms the next ones).
 - **Thumbnail**: layered window (`AllowsTransparency`) with `WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW` (never takes the
@@ -245,6 +284,11 @@ The test `settings.json` of the script also holds the demo style; it is removed 
   (`%TEMP%\ScreenClip`, emptied at each start, or the saved file) and the bitmap, **Copy effect only** (a Move onto a
   folder of the same drive would take the saved file away).
 - **Clipboard**: bitmap (`SetImage`) and `"PNG"` stream, retried while another app holds the clipboard.
+- **Folders** (asked by the author): the captures (automatic save, Save on the thumbnail, the tray menu's folder) go
+  to Windows' own Screenshots folder by default, where Win+Print Screen and the Snipping Tool save
+  (`WindowsSettings.ScreenshotsFolder`: `SHGetKnownFolderPath(FOLDERID_Screenshots, KF_FLAG_CREATE)`, since OneDrive
+  may move it and Windows gives it its translated name when it creates it); the pictures laid out by the editor go to
+  `Pictures\ScreenClip`. Both can be changed in Settings › Saving (`SaveFolder`, `ExportFolder`; null = default).
 - **Print Screen**: `HKCU\Control Panel\Keyboard\PrintScreenKeyForSnippingEnabled` (missing = on from build 22621,
   off before), written for the user with a `WM_SETTINGCHANGE` broadcast; Windows may apply it only at the next
   sign-in, so the shortcuts are registered again and a refused Print Screen shows “after sign-in”. On this PC,
@@ -287,6 +331,6 @@ while unchanged, so that it follows the language.
 
 ## To do
 
-- The user's own saved presets (“Save the current style” of the mock-up), then annotations, video/GIF.
+- Annotations, video/GIF.
 - Private bytes after the first capture (see Memory).
 - Optional: an area spanning several monitors.
