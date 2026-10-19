@@ -1,4 +1,4 @@
-# CLAUDE.md
+﻿# CLAUDE.md
 
 Guidance for Claude Code and contributors working on this repository. `README.md` (English) and
 `README.fr.md` (French) describe the project for users.
@@ -9,7 +9,8 @@ Guidance for Claude Code and contributors working on this repository. `README.md
 spirit of CleanShot X, ScreenSnap and shots.so: capture with one key, then (to come) export the capture with a nice
 layout (background, rounded corners, shadow, fake macOS-style browser or window). UI in English and French,
 light/dark/system theme. The name “ScreenClip” is never translated. Author: [QuentinPerou](https://github.com/quentinperou).
-Repository: https://github.com/quentinperou/ScreenClip (to be created; the author commits and publishes himself).
+Repository: https://github.com/quentinperou/ScreenClip (public; the author pushes and publishes himself, unless he
+asks: he asked Claude to tag and release v0.1.0).
 Sister projects with the same stack and conventions: CropPdf, PageCompose, FolderTools (their CLAUDE.md files hold
 the history of the shared pieces: updater, installer, Fluent theme, localization). Credits wording: “Developed by
 QuentinPerou, with Claude Code (Anthropic)”.
@@ -23,9 +24,10 @@ resident (Task Manager, private working set) before and after it.
 
 ## Project status (October 19, 2026)
 
-**Version 0.1.0, not released.** Local git repository (branch `main`) created on October 19, 2026 with a first commit
-made in the author's name (`QuentinPerou`, his GitHub noreply address, no Co-Authored-By line, as he asked); **nothing
-is pushed: the author publishes himself** (no remote yet). Framing done with the
+**v0.1.0 released** (October 19, 2026, stable, tag `v0.1.0`; release notes bilingual like CropPdf 1.0.0). Commits in
+the author's name (`QuentinPerou`, his GitHub noreply address, no Co-Authored-By line, as he asked); **the author
+pushes and publishes himself** unless he asks (he asked for the 0.1.0 tag and release). The annotation tools (mock-up
+boards “Éditeur — annoter / recadrer” and “Les outils”) are for a later version. Framing done with the
 author on October 19, 2026 (questions, then an HTML mock-up validated by him: editor, area selection, thumbnail, tray
 menu, settings, icon):
 
@@ -158,10 +160,12 @@ the real editor (laying out a capture of the Settings window, `.local\readme\pie
 background, no frame), the notification menu and the capture bar, light theme, on the gradient of the icon with
 rounded corners and shadows. The author first had the Settings window there, then asked for the editor in its place.
 The test `settings.json` of the script also holds the demo style; it is removed afterwards (the author's is put
-aside and back). Made by `.localeadme\capture-pieces.ps1` (UI Automation and posted messages, fictitious save
+aside and back). Made by `.local
+eadme\capture-pieces.ps1` (UI Automation and posted messages, fictitious save
 folder `D:\Captures`; it takes the Settings window's Capture page as `demo-<lang>.png` first, then lays it out in
 the editor; the menu is opened with `WM_CONTEXTMENU`, since a left click on the icon captures) then
-`.localeadme\compose.ps1` (System.Drawing); `.local\README.md` lists the local tools. Retake them when the UI
+`.local
+eadme\compose.ps1` (System.Drawing); `.local\README.md` lists the local tools. Retake them when the UI
 changes (last: October 19, 2026, with the Plain preset, the Reset button and “All screens”).
 
 `.github/selection.png` / `selection.fr.png` (1600 × 951, under “Capture” in the READMEs; asked by the author from the
@@ -216,7 +220,7 @@ eadmerame` (a console on Core) lays it out with `Composer`
   carries a picture only when it is its background: `ApplyTo` keeps the current text and picture otherwise,
   `Matches` says which tile shows chosen (a built-in one first), `ToSave` is what a user preset keeps. The user's are
   `AppSettings.UserPresets` (`UserPreset`: name + style, tidied on load), saved at once. Each tile is a miniature that
-  `Composer` renders (twice the tile size) on a made-up 480 × 300 app (bar, gradient card, lines): built-in and user
+  `Composer` renders (twice the tile size) on a made-up 480 × 300 app in greys (bar, card, lines; the author: a violet card got lost on violet backgrounds): built-in and user
   presets look like what they give; a picture background is read small (256 px) for it. The *Plain* preset (asked by
   the author) keeps the background chosen: its `Background` is `StylePresets.CurrentBackground`, which `ApplyTo`
   replaces by the current one (so its tile stays chosen whatever the background), and its miniature is drawn again

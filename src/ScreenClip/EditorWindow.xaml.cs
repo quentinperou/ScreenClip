@@ -307,7 +307,7 @@ public partial class EditorWindow : Window
         image.Tag = (shown.Background, shown.BackgroundImage);
     }
 
-    // A made-up app for the miniatures: a bar, a colorful card, lines of text.
+    // A made-up app for the miniatures, in greys: a bar, a card, lines of text.
     private static SKImage DemoCapture()
     {
         using var surface = SKSurface.Create(new SKImageInfo(480, 300));
@@ -315,13 +315,10 @@ public partial class EditorWindow : Window
         canvas.Clear(SKColors.White);
         using var paint = new SKPaint { IsAntialias = true, Color = new SKColor(0xEE, 0xF0, 0xF4) };
         canvas.DrawRect(0, 0, 480, 46, paint);
-        using (var shader = SKShader.CreateLinearGradient(new SKPoint(30, 80), new SKPoint(230, 260),
-            [new SKColor(0x7B, 0x61, 0xFF), new SKColor(0xE5, 0x48, 0x9A)], SKShaderTileMode.Clamp))
-        {
-            paint.Shader = shader;
-            canvas.DrawRoundRect(30, 80, 200, 180, 14, 14, paint);
-            paint.Shader = null;
-        }
+        // Greys only: the colors of a miniature are those of the preset (its background), not of the made-up app
+        // (the author: a violet card got lost on the violet backgrounds).
+        paint.Color = new SKColor(0x9A, 0xA1, 0xAC);
+        canvas.DrawRoundRect(30, 80, 200, 180, 14, 14, paint);
         paint.Color = new SKColor(0xD5, 0xD9, 0xE0);
         for (int i = 0; i < 5; i++)
             canvas.DrawRoundRect(260, 90 + i * 34, i % 2 == 0 ? 180 : 140, 14, 7, 7, paint);

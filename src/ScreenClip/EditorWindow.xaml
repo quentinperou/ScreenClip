@@ -226,7 +226,8 @@
       </Border>
 
       <!-- Settings of the layout. -->
-      <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
+      <!-- The scroll bar in a lane of its own, not against the cards (asked by the author). -->
+      <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Padding="0,0,14,0">
         <StackPanel x:Name="Panel">
           <Border Style="{StaticResource PanelCard}">
             <StackPanel>
