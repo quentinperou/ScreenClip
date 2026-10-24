@@ -175,9 +175,6 @@
   <data name="EditorReset" xml:space="preserve">
     <value>Reset</value>
   </data>
-  <data name="EditorSaved" xml:space="preserve">
-    <value>Saved: {0}</value>
-  </data>
   <data name="EditorShadow" xml:space="preserve">
     <value>Shadow</value>
   </data>
@@ -645,6 +642,21 @@
   </data>
   <data name="TiltRight" xml:space="preserve">
     <value>Right</value>
+  </data>
+  <data name="ToastCaptureSaved" xml:space="preserve">
+    <value>Capture saved</value>
+  </data>
+  <data name="ToastDetail" xml:space="preserve">
+    <value>{0} · in the “{1}” folder</value>
+  </data>
+  <data name="ToastOpen" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="ToastSaved" xml:space="preserve">
+    <value>Picture saved</value>
+  </data>
+  <data name="ToastShowInFolder" xml:space="preserve">
+    <value>Show in folder</value>
   </data>
   <data name="TrayClickEditor" xml:space="preserve">
     <value>Open the editor</value>

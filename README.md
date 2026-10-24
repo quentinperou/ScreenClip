@@ -71,6 +71,8 @@ look.
   larger window bar and corners, so that a style looks the same on any capture.
 - **Copy** (PNG with its transparency, and a bitmap for the other apps), **Save** as PNG, JPG or WebP (in
   `Pictures\ScreenClip`, apart from the captures; can be changed), or **drag the preview** to an app or a folder.
+  Once a file is written (Save, or a capture saved automatically), a notification at the bottom left opens it or
+  shows it in its folder.
 - **New capture** from the editor: it steps aside while you choose, and comes back with the capture.
 
 ### Windows' Print Screen key
@@ -116,7 +118,7 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
 ### Coming next
 
 - [x] Layout editor, fake windows, laptop and phone.
-- [ ] Your own saved presets.
+- [x] Your own saved presets.
 - [ ] Annotations (arrows, text, blur, numbered steps), video / GIF capture.
 
 ## Installation

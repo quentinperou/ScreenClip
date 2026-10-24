@@ -35,7 +35,8 @@ public partial class EditorWindow : Window
     private bool _renderQueued;
     private bool _draggingOut;
     private Point? _pressedAt;
-    private string? _statusPath;
+    private string? _savedPath;                              // the file of the notification
+    private readonly DispatcherTimer _savedToastTimer = new() { Interval = TimeSpan.FromSeconds(8) };
 
     private readonly Dictionary<string, RadioButton> _presetTiles = [];
     private readonly List<RadioButton> _userTiles = [];
@@ -63,6 +64,7 @@ public partial class EditorWindow : Window
         ShowStyle();
         ShowState();
 
+        _savedToastTimer.Tick += (_, _) => HideSavedToast();
         PreviewKeyDown += Editor_PreviewKeyDown;
         DragOver += Editor_DragOver;
         Drop += Editor_Drop;
@@ -148,7 +150,7 @@ public partial class EditorWindow : Window
         if (Imaging.FromClipboard() is { } image)
             Load(image, DateTime.Now);
         else
-            ShowStatus(Strings.Get("EditorNoImageInClipboard"), null);
+            ShowStatus(Strings.Get("EditorNoImageInClipboard"));
     }
 
     // ---------------------------------------------------------------- New capture
@@ -878,7 +880,7 @@ public partial class EditorWindow : Window
         using (var flat = Composer.OnWhite(picture))
             data.SetImage(Imaging.ToWpf(flat));
         bool copied = ClipActions.Copy(data);
-        ShowStatus(Strings.Get(copied ? "EditorCopied" : "CopyFailed"), null);
+        ShowStatus(Strings.Get(copied ? "EditorCopied" : "CopyFailed"));
         CopyText.Text = Strings.Get(copied ? "Copied" : "Copy");
         await Task.Delay(1500);
         CopyText.Text = Strings.Get("Copy");
@@ -926,7 +928,7 @@ public partial class EditorWindow : Window
         {
             using var picture = RenderFull();
             File.WriteAllBytes(dialog.FileName, Composer.Encode(picture, format));
-            ShowStatus(Strings.Format("EditorSaved", Path.GetFileName(dialog.FileName)), dialog.FileName);
+            ShowSaved(dialog.FileName, capture: false);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -935,21 +937,68 @@ public partial class EditorWindow : Window
     }
 
     /// <summary>What happened last, under the preview; with a link to the file when one was written.</summary>
-    private void ShowStatus(string text, string? path)
+    /// <summary>
+    /// The notification of a file written: by Save, or the capture just saved automatically (<paramref name="capture"/>).
+    /// </summary>
+    internal void ShowSaved(string path, bool capture)
     {
-        _statusPath = path;
+        _savedPath = path;
+        HideStatus();
+        SavedToastTitle.Text = Strings.Get(capture ? "ToastCaptureSaved" : "ToastSaved");
+        SavedToastDetail.Text = Strings.Format("ToastDetail", Path.GetFileName(path), Path.GetFileName(Path.GetDirectoryName(path)) ?? "");
+        SavedToastDetail.ToolTip = path;
+        SavedToast.Visibility = Visibility.Visible;
+        _savedToastTimer.Stop();
+        _savedToastTimer.Start();
+    }
+
+    private void HideSavedToast()
+    {
+        _savedToastTimer.Stop();
+        SavedToast.Visibility = Visibility.Collapsed;
+    }
+
+    // The mouse is on it: it stays until the mouse leaves.
+    private void SavedToast_MouseEnter(object sender, MouseEventArgs e) => _savedToastTimer.Stop();
+
+    private void SavedToast_MouseLeave(object sender, MouseEventArgs e)
+    {
+        if (SavedToast.Visibility == Visibility.Visible)
+            _savedToastTimer.Start();
+    }
+
+    private void SavedToastOpen_Click(object sender, RoutedEventArgs e)
+    {
+        if (_savedPath is { } path && File.Exists(path))
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                // No app for that file type: nothing to open it with.
+            }
+        }
+        HideSavedToast();
+    }
+
+    private void SavedToastShowInFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (_savedPath is { } path)
+            ClipActions.ShowInExplorer(path);
+        HideSavedToast();
+    }
+
+    private void SavedToastClose_Click(object sender, RoutedEventArgs e) => HideSavedToast();
+
+    private void ShowStatus(string text)
+    {
         StatusText.Text = text;
         StatusText.Visibility = Visibility.Visible;
-        StatusLink.Visibility = path is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    private void HideStatus() => StatusText.Visibility = StatusLink.Visibility = Visibility.Collapsed;
-
-    private void StatusLink_Click(object sender, RoutedEventArgs e)
-    {
-        if (_statusPath is not null)
-            ClipActions.ShowInExplorer(_statusPath);
-    }
+    private void HideStatus() => StatusText.Visibility = Visibility.Collapsed;
 
     // ---------------------------------------------------------------- Drag and drop
 

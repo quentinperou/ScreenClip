@@ -187,7 +187,12 @@ public partial class App : Application
             editor.Closed += (_, _) => MemoryTrim.Soon();
         }
         if (clip is not null)
+        {
             editor.Load(clip.Image, clip.TakenAt);
+            // Saved automatically: where it went, to open it or its folder.
+            if (clip.SavedPath is { } saved)
+                editor.ShowSaved(saved, capture: true);
+        }
         else if (picturePath is not null)
             editor.Open(picturePath);
         editor.Show();

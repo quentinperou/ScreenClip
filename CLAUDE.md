@@ -22,7 +22,7 @@ No window, no timer, no polling while waiting; the Fluent theme and every window
 bitmaps are dropped and the working set trimmed after each capture (`MemoryTrim`). Measure a feature that stays
 resident (Task Manager, private working set) before and after it.
 
-## Project status (October 19, 2026)
+## Project status (October 24, 2026)
 
 **v0.1.0 released** (October 19, 2026, stable, tag `v0.1.0`; release notes bilingual like CropPdf 1.0.0). Commits in
 the author's name (`QuentinPerou`, his GitHub noreply address, no Co-Authored-By line, as he asked); **the author
@@ -114,7 +114,18 @@ author's Screenshots folder; moved to the Recycle Bin). The presets' “Reset”
 the author). *Plain* is now the first preset, the default style (on the brand's violet) and what Reset gives (the
 background kept), the author's idea: the editor opens after every capture. 160 tests.
 
-**Next**: the author tries the presets; then annotations, video/GIF.
+October 24, 2026, the two **issues** opened by the author on GitHub: #1, a notification when a file is written, as in
+PageCompose: done (see Technical choices › Editor), checked through UI Automation on the dev build (Save, the save
+dialog's button pressed through Win32, the notification read and hidden after 8 s), not the clicks on its buttons;
+#2, video capture and editing: designed in the mock-up only (no code yet). The mock-up (the author's design canvas on
+claude.ai) now also has a **pointer tool** (asked by the author: a mouse pointer in a style of one's choice, Windows,
+macOS or hand, a size slider, a click halo), a **proposal B** with two tabs, *Édition* (tools in a column, the
+capture alone, the tool's options and the list of annotations on the right) and *Mise en forme* (today's editor)
+(the author's idea, to compare with proposal A, tools in the command bar), and the **video** boards (recording bar;
+editor with a timeline: trim handles, one bar per annotation, a pointer animated from A to B on a curve with a click
+at the end; the real pointer recorded apart, so that it can be restyled). Not chosen yet.
+
+**Next**: the author chooses between proposals A and B, then annotations; video/GIF after.
 
 ## Commands
 
@@ -238,7 +249,10 @@ eadmerame` (a console on Core) lays it out with `Composer`
   PNG stream (transparency kept) + a bitmap flattened on white; save = a save dialog in `AppSettings.EffectiveExportFolder` (`Pictures\ScreenClip`), the format
   of the extension chosen becoming the style's; drag = a temp file in the export format + the bitmap. “New capture”
   hides the editor and goes through `CaptureController.RunForEditor` (the capture comes back to the editor instead of
-  the thumbnail; it is still copied and saved as the settings say).
+  the thumbnail; it is still copied and saved as the settings say). A file written (Save, or a capture saved automatically and
+  then opened in the editor) shows a notification at the bottom left of the preview, as in PageCompose (issue #1):
+  title, file name and folder, Open and Show in folder; it goes after 8 s unless the mouse is on it
+  (`EditorWindow.ShowSaved`). The status line under the preview keeps the short messages (copied, no picture).
 - **TFM `net10.0-windows`** without the Windows SDK projection (a large assembly, nothing uses WinRT yet). The video
   capture will need `net10.0-windows10.0.19041.0` (Windows.Graphics.Capture).
 - **Resident part**: `TrayHost` is an `HwndSource` that is never shown (top-level `WS_POPUP` + `WS_EX_TOOLWINDOW`, not
@@ -371,3 +385,5 @@ while unchanged, so that it follows the language.
 - Annotations, video/GIF.
 - Private bytes after the first capture (see Memory).
 - Optional: an area spanning several monitors.
+- Later (the author's idea, October 24, 2026): a macOS version. Core (SkiaSharp composition, selection, presets) is
+  portable; the UI, the capture, the hotkeys and the notification area are Windows code (WPF, GDI, Win32).

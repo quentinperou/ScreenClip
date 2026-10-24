@@ -74,7 +74,8 @@ pages de présentation d'applications et des posts de réseaux sociaux.
   (écrans haute densité) ont une barre de fenêtre et des coins plus grands, pour qu'un style rende pareil sur toutes.
 - **Copier** (PNG avec sa transparence, et une image pour les autres applications), **Enregistrer** en PNG, JPG ou
   WebP (dans `Images\ScreenClip`, à part des captures ; modifiable), ou **glisser l'aperçu** vers une application ou
-  un dossier.
+  un dossier. Une fois un fichier écrit (Enregistrer, ou une capture enregistrée automatiquement), une notification en
+  bas à gauche l'ouvre ou l'affiche dans son dossier.
 - **Nouvelle capture** depuis l'éditeur : il s'efface le temps de choisir, et revient avec la capture.
 
 ### La touche Impr. écran de Windows
@@ -122,7 +123,7 @@ parfois le changement qu'à la prochaine ouverture de session.
 ### À venir
 
 - [x] Éditeur de mise en forme, fausses fenêtres, ordinateur portable et téléphone.
-- [ ] Vos propres préréglages enregistrés.
+- [x] Vos propres préréglages enregistrés.
 - [ ] Annotations (flèches, texte, flou, étapes numérotées), capture vidéo / GIF.
 
 ## Installation
