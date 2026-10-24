@@ -22,6 +22,54 @@
   <data name="AboutVersion" xml:space="preserve">
     <value>Version {0} · licence MIT</value>
   </data>
+  <data name="AnnotClearAll" xml:space="preserve">
+    <value>Tout effacer</value>
+  </data>
+  <data name="AnnotColor" xml:space="preserve">
+    <value>Couleur</value>
+  </data>
+  <data name="AnnotDelete" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="AnnotFront" xml:space="preserve">
+    <value>Mettre devant</value>
+  </data>
+  <data name="AnnotHalo" xml:space="preserve">
+    <value>Halo de clic</value>
+  </data>
+  <data name="AnnotList" xml:space="preserve">
+    <value>Annotations</value>
+  </data>
+  <data name="AnnotListEmpty" xml:space="preserve">
+    <value>Rien de dessiné : choisissez un outil à gauche.</value>
+  </data>
+  <data name="AnnotListNumber" xml:space="preserve">
+    <value>Numéro {0}</value>
+  </data>
+  <data name="AnnotListText" xml:space="preserve">
+    <value>Texte « {0} »</value>
+  </data>
+  <data name="AnnotNextNumber" xml:space="preserve">
+    <value>Prochain : {0}</value>
+  </data>
+  <data name="AnnotSize" xml:space="preserve">
+    <value>Taille</value>
+  </data>
+  <data name="AnnotStyle" xml:space="preserve">
+    <value>Style</value>
+  </data>
+  <data name="AnnotThickness" xml:space="preserve">
+    <value>Épaisseur</value>
+  </data>
+  <data name="ArrowCurved" xml:space="preserve">
+    <value>Courbe</value>
+  </data>
+  <data name="ArrowDouble" xml:space="preserve">
+    <value>Double</value>
+  </data>
+  <data name="ArrowStraight" xml:space="preserve">
+    <value>Simple</value>
+  </data>
   <data name="BackgroundBlack" xml:space="preserve">
     <value>Noir</value>
   </data>
@@ -91,6 +139,30 @@
   <data name="Close" xml:space="preserve">
     <value>Fermer</value>
   </data>
+  <data name="ColorBlack" xml:space="preserve">
+    <value>Noir</value>
+  </data>
+  <data name="ColorBlue" xml:space="preserve">
+    <value>Bleu</value>
+  </data>
+  <data name="ColorGreen" xml:space="preserve">
+    <value>Vert</value>
+  </data>
+  <data name="ColorOrange" xml:space="preserve">
+    <value>Orange</value>
+  </data>
+  <data name="ColorRed" xml:space="preserve">
+    <value>Rouge</value>
+  </data>
+  <data name="ColorViolet" xml:space="preserve">
+    <value>Violet</value>
+  </data>
+  <data name="ColorWhite" xml:space="preserve">
+    <value>Blanc</value>
+  </data>
+  <data name="ColorYellow" xml:space="preserve">
+    <value>Jaune</value>
+  </data>
   <data name="ComingSoon" xml:space="preserve">
     <value>bientôt</value>
   </data>
@@ -102,6 +174,12 @@
   </data>
   <data name="CopyFailed" xml:space="preserve">
     <value>Presse-papiers occupé, réessayez</value>
+  </data>
+  <data name="CropAll" xml:space="preserve">
+    <value>Toute la capture</value>
+  </data>
+  <data name="CropKept" xml:space="preserve">
+    <value>{0} × {1} px gardés</value>
   </data>
   <data name="DefaultFileName" xml:space="preserve">
     <value>Capture {date} à {time}</value>
@@ -310,6 +388,15 @@
   <data name="LanguageSystem" xml:space="preserve">
     <value>Langue du système (automatique)</value>
   </data>
+  <data name="MaskBlur" xml:space="preserve">
+    <value>Flouter</value>
+  </data>
+  <data name="MaskPixelate" xml:space="preserve">
+    <value>Pixeliser</value>
+  </data>
+  <data name="MaskSolid" xml:space="preserve">
+    <value>Pavé</value>
+  </data>
   <data name="ModeAllScreens" xml:space="preserve">
     <value>Tous les écrans</value>
   </data>
@@ -336,6 +423,15 @@
   </data>
   <data name="OpenFolder" xml:space="preserve">
     <value>Ouvrir</value>
+  </data>
+  <data name="PointerHand" xml:space="preserve">
+    <value>Main</value>
+  </data>
+  <data name="PointerMac" xml:space="preserve">
+    <value>macOS</value>
+  </data>
+  <data name="PointerWindows" xml:space="preserve">
+    <value>Windows</value>
   </data>
   <data name="PresetAdd" xml:space="preserve">
     <value>Enregistrer</value>
@@ -430,8 +526,20 @@
   <data name="RatioAuto" xml:space="preserve">
     <value>Auto</value>
   </data>
+  <data name="Redo" xml:space="preserve">
+    <value>Rétablir</value>
+  </data>
   <data name="Save" xml:space="preserve">
     <value>Enregistrer</value>
+  </data>
+  <data name="ScaleLarge" xml:space="preserve">
+    <value>Grand</value>
+  </data>
+  <data name="ScaleMedium" xml:space="preserve">
+    <value>Moyen</value>
+  </data>
+  <data name="ScaleSmall" xml:space="preserve">
+    <value>Petit</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Paramètres</value>
@@ -550,6 +658,18 @@
   <data name="SettingsTrayClickDescription" xml:space="preserve">
     <value>L'icône de ScreenClip dans la zone de notification. Le clic droit ouvre toujours son menu.</value>
   </data>
+  <data name="ShapeFilled" xml:space="preserve">
+    <value>Plein</value>
+  </data>
+  <data name="ShapeOutline" xml:space="preserve">
+    <value>Contour</value>
+  </data>
+  <data name="ShapeSpotlight" xml:space="preserve">
+    <value>Spot</value>
+  </data>
+  <data name="ShapeSpotlightToolTip" xml:space="preserve">
+    <value>Le reste de la capture assombri</value>
+  </data>
   <data name="ShortcutAllScreens" xml:space="preserve">
     <value>Capturer tous les écrans</value>
   </data>
@@ -601,8 +721,32 @@
   <data name="ShowInExplorer" xml:space="preserve">
     <value>Afficher dans l'Explorateur</value>
   </data>
+  <data name="SizeLarge" xml:space="preserve">
+    <value>Épais</value>
+  </data>
+  <data name="SizeMedium" xml:space="preserve">
+    <value>Moyen</value>
+  </data>
   <data name="SizePixels" xml:space="preserve">
     <value>{0} × {1}</value>
+  </data>
+  <data name="SizeSmall" xml:space="preserve">
+    <value>Fin</value>
+  </data>
+  <data name="TabEdit" xml:space="preserve">
+    <value>Édition</value>
+  </data>
+  <data name="TabLayout" xml:space="preserve">
+    <value>Mise en forme</value>
+  </data>
+  <data name="TextStyleBubble" xml:space="preserve">
+    <value>Bulle</value>
+  </data>
+  <data name="TextStyleLabel" xml:space="preserve">
+    <value>Étiquette</value>
+  </data>
+  <data name="TextStylePlain" xml:space="preserve">
+    <value>Sans fond</value>
   </data>
   <data name="ThemeDark" xml:space="preserve">
     <value>Sombre</value>
@@ -658,11 +802,89 @@
   <data name="ToastShowInFolder" xml:space="preserve">
     <value>Afficher dans le dossier</value>
   </data>
+  <data name="ToolArrow" xml:space="preserve">
+    <value>Flèche</value>
+  </data>
+  <data name="ToolArrowHelp" xml:space="preserve">
+    <value>Glissez du départ vers la pointe. Maj : par pas de 45°.</value>
+  </data>
+  <data name="ToolCrop" xml:space="preserve">
+    <value>Recadrer</value>
+  </data>
+  <data name="ToolCropHelp" xml:space="preserve">
+    <value>Glissez les bords ou les coins, ou tracez un nouveau cadre. Entrée ou un autre outil le garde.</value>
+  </data>
+  <data name="ToolEllipse" xml:space="preserve">
+    <value>Ellipse</value>
+  </data>
+  <data name="ToolEllipseHelp" xml:space="preserve">
+    <value>Glissez pour entourer. Maj : un cercle.</value>
+  </data>
+  <data name="ToolLine" xml:space="preserve">
+    <value>Ligne</value>
+  </data>
+  <data name="ToolLineHelp" xml:space="preserve">
+    <value>Un trait droit. Maj : par pas de 45°.</value>
+  </data>
+  <data name="ToolMarker" xml:space="preserve">
+    <value>Surligneur</value>
+  </data>
+  <data name="ToolMarkerHelp" xml:space="preserve">
+    <value>Surlignez un texte. Maj : en ligne droite.</value>
+  </data>
+  <data name="ToolMask" xml:space="preserve">
+    <value>Masquer</value>
+  </data>
+  <data name="ToolMaskHelp" xml:space="preserve">
+    <value>Glissez sur ce qui ne doit pas se voir (e-mail, nom, montant). Le pavé ne laisse rien deviner.</value>
+  </data>
+  <data name="ToolNumber" xml:space="preserve">
+    <value>Numéro</value>
+  </data>
+  <data name="ToolNumberHelp" xml:space="preserve">
+    <value>Chaque clic pose le numéro suivant : des étapes à suivre.</value>
+  </data>
+  <data name="ToolPen" xml:space="preserve">
+    <value>Stylo</value>
+  </data>
+  <data name="ToolPenHelp" xml:space="preserve">
+    <value>Dessinez à main levée.</value>
+  </data>
+  <data name="ToolPointer" xml:space="preserve">
+    <value>Curseur</value>
+  </data>
+  <data name="ToolPointerHelp" xml:space="preserve">
+    <value>Cliquez là où va le pointeur de la souris ; glissez-le pour le déplacer. Le vrai n'est jamais capturé.</value>
+  </data>
+  <data name="ToolRectangle" xml:space="preserve">
+    <value>Rectangle</value>
+  </data>
+  <data name="ToolRectangleHelp" xml:space="preserve">
+    <value>Glissez pour encadrer. Maj : un carré.</value>
+  </data>
+  <data name="ToolSelect" xml:space="preserve">
+    <value>Sélectionner</value>
+  </data>
+  <data name="ToolSelectHelp" xml:space="preserve">
+    <value>Cliquez une annotation pour la déplacer ; ses poignées la modifient. Suppr l'efface.</value>
+  </data>
+  <data name="ToolText" xml:space="preserve">
+    <value>Texte</value>
+  </data>
+  <data name="ToolTextHelp" xml:space="preserve">
+    <value>Cliquez puis tapez. Entrée : une ligne de plus ; Échap ou un clic ailleurs termine.</value>
+  </data>
+  <data name="ToolToolTip" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
   <data name="TrayClickEditor" xml:space="preserve">
     <value>Ouvrir l'éditeur</value>
   </data>
   <data name="TrayClickMenu" xml:space="preserve">
     <value>Ouvrir le menu</value>
+  </data>
+  <data name="Undo" xml:space="preserve">
+    <value>Annuler</value>
   </data>
   <data name="UpdateBarText" xml:space="preserve">
     <value>ScreenClip {0} est disponible.</value>

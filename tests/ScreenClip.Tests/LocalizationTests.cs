@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using ScreenClip.Core;
+using ScreenClip.Core.Annotations;
 using ScreenClip.Core.Composition;
 
 namespace ScreenClip.Tests;
@@ -81,6 +82,29 @@ public class LocalizationTests
             Assert.Contains("Preset" + Capitalize(id), keys);
         foreach (var frame in Enum.GetValues<FrameKind>())
             Assert.Contains("Frame" + frame, keys);
+        // The annotation tools, their options and colors.
+        foreach (string tool in Enum.GetNames<AnnotationKind>().Append("Select").Append("Crop"))
+        {
+            Assert.Contains("Tool" + tool, keys);
+            Assert.Contains("Tool" + tool + "Help", keys);
+        }
+        foreach (var (name, _) in Palette.All)
+            Assert.Contains("Color" + name, keys);
+        foreach (var size in Enum.GetValues<StrokeSize>())
+        {
+            Assert.Contains("Size" + size, keys);
+            Assert.Contains("Scale" + size, keys);
+        }
+        foreach (var style in Enum.GetValues<ShapeStyle>())
+            Assert.Contains("Shape" + style, keys);
+        foreach (var style in Enum.GetValues<ArrowStyle>())
+            Assert.Contains("Arrow" + style, keys);
+        foreach (var style in Enum.GetValues<TextStyle>())
+            Assert.Contains("TextStyle" + style, keys);
+        foreach (var style in Enum.GetValues<MaskStyle>())
+            Assert.Contains("Mask" + style, keys);
+        foreach (var style in Enum.GetValues<PointerStyle>())
+            Assert.Contains("Pointer" + style, keys);
         // ShortcutText: the keys that read differently in French (modifiers, Print Screen, editing keys).
         foreach (string part in new[] { "Ctrl", "Alt", "Shift", "Win", "PrintScreen", "Space", "Delete", "Insert", "Home", "End", "PageUp", "PageDown", "Pause" })
         {

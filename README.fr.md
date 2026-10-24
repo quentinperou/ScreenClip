@@ -5,8 +5,8 @@
 <h1 align="center">ScreenClip</h1>
 
 <p align="center">
-  Des captures d'écran pour Windows 11, prêtes à partager : une touche, puis une jolie mise en forme autour (fond,
-  cadre de fenêtre, coins arrondis, ombre).
+  Des captures d'écran pour Windows 11, prêtes à partager : une touche, des flèches et du texte si besoin, puis une
+  jolie mise en forme autour (fond, cadre de fenêtre, coins arrondis, ombre).
 </p>
 
 <p align="center">
@@ -19,8 +19,8 @@
 
 ---
 
-> **Début du développement.** La version 0.1 capture et met en forme les captures d'écran. Les annotations et la
-> capture vidéo viendront ensuite.
+> **Début du développement.** La version 0.1 capture et met en forme les captures d'écran ; les annotations arrivent
+> avec la prochaine version, la capture vidéo ensuite.
 
 ## Fonctionnalités
 
@@ -50,11 +50,34 @@
   <img src=".github/selection.fr.png" width="800" alt="La sélection d'une zone : l'écran figé et assombri, une feuille de tirages photo dans une fenêtre encadrée avec sa taille (300 × 420), la loupe qui montre les pixels sous le pointeur, la barre de capture en haut et les indications en bas">
 </p>
 
-### Éditeur de mise en forme
+### Éditeur
 
 Lancé depuis le menu Démarrer, ScreenClip ouvre son **éditeur** : une capture (ou n'importe quelle image : **Importer
-une image**, la coller avec **Ctrl+V**, la glisser sur la fenêtre) est mise en forme en direct, comme les captures des
-pages de présentation d'applications et des posts de réseaux sociaux.
+une image**, la coller avec **Ctrl+V**, la glisser sur la fenêtre) est annotée et mise en forme en direct, comme les
+captures des pages de présentation d'applications, des tutoriels et des posts de réseaux sociaux. Deux onglets,
+**Édition** et **Mise en forme** (`Ctrl+1` / `Ctrl+2`) : les deux copient et enregistrent la même image, annotations
+et mise en forme comprises.
+
+**Édition** : les outils en colonne à gauche, chacun avec sa lettre, et leurs options à droite.
+
+- **Flèche** (`A` : simple, double, ou courbe avec une poignée pour la courber), **rectangle** (`R`) et **ellipse**
+  (`O`) : contour, plein, ou un **spot** qui assombrit le reste de la capture ; **ligne** (`L`), **stylo** (`P`),
+  **surligneur** (`H`), **texte** (`T` : seul, sur une étiquette ou dans une bulle), **étapes numérotées** (`N` : 1, 2,
+  3…).
+- Un **pointeur de souris** (`S`) : Windows, macOS ou une main, à la taille voulue, avec un **halo de clic** jaune. Le
+  vrai pointeur n'est jamais dans les captures : celui-ci va exactement où il faut.
+- **Masquer** (`B`) ce qui ne doit pas se voir : pixeliser, flouter, ou un pavé (le seul qui ne laisse rien deviner).
+- **Recadrer** (`C`) : glissez les bords ou les coins ; **Toute la capture** rend tout.
+- Huit couleurs, trois épaisseurs ou tailles ; **Maj** garde des pas de 45°, des carrés et des cercles.
+- Tout reste modifiable : **sélectionnez** (`V`) une annotation pour la déplacer, la remodeler avec ses poignées,
+  changer ses options, la mettre devant ou la supprimer (`Suppr`) ; la liste à droite les montre toutes. **Ctrl+Z** /
+  **Ctrl+Y** annulent et rétablissent.
+
+<p align="center">
+  <img src=".github/edit.fr.png" width="800" alt="L'onglet Édition : les outils en colonne à gauche ; sur une capture de la fenêtre des paramètres, un cadre rouge autour d'une ligne, une flèche courbe partant d'une bulle « S'ouvre après chaque capture », une ligne surlignée, un nom de dossier pixelisé et un pointeur de souris avec son halo de clic ; à droite, les options du pointeur (Windows, macOS ou main, taille, halo de clic) et la liste des annotations">
+</p>
+
+**Mise en forme** :
 
 - Des **préréglages** en un clic, chacun dessiné tel qu'il rend : *Neutre* (par défaut : juste l'image sur le fond de
   votre choix, ni cadre, ni coins, ni ombre, ni contour), *README* (clair, discret), *Post 1:1*, *Story 9:16*,
@@ -119,12 +142,16 @@ parfois le changement qu'à la prochaine ouverture de session.
 | Refaire la dernière zone | `Maj` + `Impr. écran` |
 | Pendant la sélection : carré / déplacer / annuler | `Maj` / `Espace` / `Échap` ou clic droit |
 | Éditeur : importer / coller / copier / enregistrer | `Ctrl+O` / `Ctrl+V` / `Ctrl+C` / `Ctrl+S` |
+| Éditeur : onglet Édition / Mise en forme | `Ctrl+1` / `Ctrl+2` |
+| Éditeur : annuler / rétablir | `Ctrl+Z` / `Ctrl+Y` |
+| Édition : sélectionner, recadrer, flèche, rectangle, ellipse, ligne, stylo, surligneur, texte, numéro, curseur, masquer | `V` `C` `A` `R` `O` `L` `P` `H` `T` `N` `S` `B` |
 
 ### À venir
 
 - [x] Éditeur de mise en forme, fausses fenêtres, ordinateur portable et téléphone.
 - [x] Vos propres préréglages enregistrés.
-- [ ] Annotations (flèches, texte, flou, étapes numérotées), capture vidéo / GIF.
+- [x] Annotations : flèches, formes, texte, étapes numérotées, surligneur, pointeur de souris, masquage, recadrage.
+- [ ] Capture vidéo / GIF, avec son édition (couper, recadrer, annoter, un pointeur animé).
 
 ## Installation
 
@@ -202,12 +229,12 @@ lancer une autre version.
 ```
 src/
   ScreenClip.Core/    Logique sans interface : raccourcis (Hotkey), géométrie de la sélection, noms de fichiers,
-                      réglage Impr. écran de Windows, liste des releases GitHub (mises à jour), et Composition/ : la
-                      mise en forme d'une capture (styles, fonds, tailles, inclinaison 3D) dessinée avec SkiaSharp,
-                      export PNG / JPG / WebP
+                      réglage Impr. écran de Windows, liste des releases GitHub (mises à jour), Annotations/ : les
+                      annotations (modèle, sélection, dessin, annulation), et Composition/ : la mise en forme d'une
+                      capture (styles, fonds, tailles, inclinaison 3D) dessinée avec SkiaSharp, export PNG / JPG / WebP
   ScreenClip/         Application WPF : icône de notification et raccourcis globaux (TrayHost), capture de l'écran
                       (GDI), écran de sélection (avec les éléments sous le pointeur, par UI Automation), vignette,
-                      éditeur de mise en forme, paramètres, mises à jour, textes de l'interface
+                      éditeur (onglets Édition et Mise en forme), paramètres, mises à jour, textes de l'interface
 installer/            Script Inno Setup de l'installeur
 scripts/              build.ps1 (compilation complète), make-icons.ps1 (régénère les icônes)
 tests/                Tests unitaires (xUnit)

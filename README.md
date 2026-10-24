@@ -5,8 +5,8 @@
 <h1 align="center">ScreenClip</h1>
 
 <p align="center">
-  Screenshots for Windows 11, ready to share: one key, then a nice layout around them (background, window frame,
-  rounded corners, shadow).
+  Screenshots for Windows 11, ready to share: one key, arrows and text if needed, then a nice layout around them
+  (background, window frame, rounded corners, shadow).
 </p>
 
 <p align="center">
@@ -19,8 +19,8 @@
 
 ---
 
-> **Early development.** Version 0.1 captures and lays out screenshots. Annotations and video capture will come
-> after.
+> **Early development.** Version 0.1 captures and lays out screenshots; the annotations come with the next version,
+> video capture after.
 
 ## Features
 
@@ -48,11 +48,32 @@
   <img src=".github/selection.png" width="800" alt="The area selection: the screen frozen and dimmed, a sheet of photo prints in a window outlined with its size (300 × 420), the magnifier showing the pixels under the pointer, the capture bar at the top and the hints at the bottom">
 </p>
 
-### Layout editor
+### Editor
 
 Started from the Start menu, ScreenClip opens its **editor**: a capture (or any picture: **Import a picture**, paste
-it with **Ctrl+V**, drop it on the window) is laid out live, the way the screenshots of app pages and social posts
-look.
+it with **Ctrl+V**, drop it on the window) is annotated and laid out live, the way the screenshots of app pages,
+tutorials and social posts look. Two tabs, **Edit** and **Layout** (`Ctrl+1` / `Ctrl+2`): both copy and save the same
+picture, annotations and layout included.
+
+**Edit**: the tools in a column on the left, each with its letter, and their options on the right.
+
+- **Arrow** (`A`: single, double, or curved with a handle to bend it), **rectangle** (`R`) and **ellipse** (`O`):
+  outline, filled, or a **spotlight** that darkens the rest of the capture; **line** (`L`), **pen** (`P`),
+  **highlighter** (`H`), **text** (`T`: alone, on a label, or in a speech bubble), **numbered steps** (`N`: 1, 2, 3…).
+- A **mouse pointer** (`S`): Windows, macOS or a hand, at the size you want, with a yellow **click halo**. The real
+  pointer is never in the captures: this one goes exactly where it should.
+- **Hide** (`B`) what must not be seen: pixelate, blur, or a solid block (the only one that leaves nothing to guess).
+- **Crop** (`C`): drag the edges or the corners; **Whole capture** gives it all back.
+- Eight colors, three thicknesses or sizes; **Shift** keeps steps of 45°, squares and circles.
+- Everything stays editable: **select** (`V`) an annotation to move it, reshape it with its handles, change its options,
+  bring it to the front or delete it (`Delete`); the list on the right shows them all. **Ctrl+Z** / **Ctrl+Y** undo
+  and redo.
+
+<p align="center">
+  <img src=".github/edit.png" width="800" alt="The Edit tab: the tools in a column on the left; on a capture of the Settings window, a red frame around a row, a curved arrow from a speech bubble “Opens after every capture”, a highlighted line, a pixelated folder name and a mouse pointer with its click halo; on the right, the pointer's options (Windows, macOS or hand, size, click halo) and the list of annotations">
+</p>
+
+**Layout**:
 
 - **Presets** in one click, each drawn as it renders: *Plain* (the default: just the picture on the background you
   choose, no frame, corners, shadow nor outline), *README* (light, discreet), *Post 1:1*, *Story 9:16*, *Slide 16:9*,
@@ -114,12 +135,16 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
 | Capture the last area again | `Shift` + `Print Screen` |
 | While selecting: square / move / cancel | `Shift` / `Space` / `Esc` or right click |
 | Editor: import / paste / copy / save | `Ctrl+O` / `Ctrl+V` / `Ctrl+C` / `Ctrl+S` |
+| Editor: Edit tab / Layout tab | `Ctrl+1` / `Ctrl+2` |
+| Editor: undo / redo | `Ctrl+Z` / `Ctrl+Y` |
+| Edit tab: select, crop, arrow, rectangle, ellipse, line, pen, highlighter, text, number, pointer, hide | `V` `C` `A` `R` `O` `L` `P` `H` `T` `N` `S` `B` |
 
 ### Coming next
 
 - [x] Layout editor, fake windows, laptop and phone.
 - [x] Your own saved presets.
-- [ ] Annotations (arrows, text, blur, numbered steps), video / GIF capture.
+- [x] Annotations: arrows, shapes, text, numbered steps, highlighter, mouse pointer, hide, crop.
+- [ ] Video / GIF capture, with its own editing (trim, crop, annotations, an animated pointer).
 
 ## Installation
 
@@ -194,11 +219,12 @@ session: quit it from its notification menu before starting another build.
 ```
 src/
   ScreenClip.Core/    Logic without UI: shortcuts (Hotkey), area selection geometry, file names, the Print Screen
-                      setting of Windows, list of the GitHub releases (updates), and Composition/: the layout of a
-                      capture (styles, backgrounds, sizes, 3D tilt) drawn with SkiaSharp, PNG / JPG / WebP export
+                      setting of Windows, list of the GitHub releases (updates), Annotations/: the annotations (model,
+                      hit tests, drawing, undo), and Composition/: the layout of a capture (styles, backgrounds,
+                      sizes, 3D tilt) drawn with SkiaSharp, PNG / JPG / WebP export
   ScreenClip/         WPF app: notification icon and global shortcuts (TrayHost), screen capture (GDI), selection
-                      overlay (with the elements under the pointer, from UI Automation), thumbnail, layout editor,
-                      settings, updates, UI strings
+                      overlay (with the elements under the pointer, from UI Automation), thumbnail, editor (Edit and
+                      Layout tabs), settings, updates, UI strings
 installer/            Inno Setup script of the installer
 scripts/              build.ps1 (full build), make-icons.ps1 (regenerates the icons)
 tests/                Unit tests (xUnit)

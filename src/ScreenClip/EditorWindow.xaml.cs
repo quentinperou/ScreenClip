@@ -61,6 +61,7 @@ public partial class EditorWindow : Window
         BuildBackgrounds();
         BuildFrames();
         BuildRatios();
+        BuildEditTab();
         ShowStyle();
         ShowState();
 
@@ -72,17 +73,25 @@ public partial class EditorWindow : Window
         Closed += (_, _) =>
         {
             App.Settings.Save();
+            DropFlattened();
+            _viewBase?.Dispose();
             _capture?.Dispose();
             _backgroundImage?.Dispose();
             _demoCapture?.Dispose();
             foreach (var image in _miniatureBackgrounds.Values)
                 image?.Dispose();
             _miniatureBackgrounds.Clear();
-            _capture = _backgroundImage = _demoCapture = null;
+            _capture = _backgroundImage = _demoCapture = _viewBase = null;
             Preview.Source = null;
             _previewBitmap = null;
         };
         _initialized = true;
+        SetTool(EditTool.Select);
+        SetTab(App.Settings.EditorTab == EditorTab.Edit);
+#if DEBUG
+        if (Environment.GetEnvironmentVariable("SCREENCLIP_EDIT_SCRIPT") is { Length: > 0 } script)
+            Loaded += (_, _) => RunScript(script);
+#endif
     }
 
     // ---------------------------------------------------------------- The picture
@@ -90,6 +99,7 @@ public partial class EditorWindow : Window
     /// <summary>Shows <paramref name="image"/> (a capture, an imported or pasted picture) to be laid out.</summary>
     internal void Load(BitmapSource image, DateTime takenAt)
     {
+        ResetAnnotations();
         _capture?.Dispose();
         _capture = Imaging.ToSkia(image);
         _takenAt = takenAt;
@@ -126,7 +136,8 @@ public partial class EditorWindow : Window
         bool hasPicture = _capture is not null;
         EmptyState.Visibility = hasPicture ? Visibility.Collapsed : Visibility.Visible;
         Preview.Visibility = hasPicture ? Visibility.Visible : Visibility.Collapsed;
-        DragHint.Visibility = hasPicture ? Visibility.Visible : Visibility.Collapsed;
+        DragHint.Visibility = hasPicture && !_editTab ? Visibility.Visible : Visibility.Collapsed;
+        ToolRail.IsEnabled = EditPanel.IsEnabled = hasPicture;
         CopyButton.IsEnabled = SaveButton.IsEnabled = hasPicture;
         if (!hasPicture)
             OutputText.Text = "";
@@ -838,20 +849,30 @@ public partial class EditorWindow : Window
             Preview.Source = null;
             return;
         }
-        var layout = ClipLayout.Measure(_capture.Width, _capture.Height, _style);
         var dpi = VisualTreeHelper.GetDpi(this);
         double width = PreviewHost.ActualWidth * dpi.DpiScaleX, height = PreviewHost.ActualHeight * dpi.DpiScaleY;
         if (width < 16 || height < 16)
             return;
+        // The size of what is exported, in both tabs: the part kept, laid out.
+        var kept = _history.Current.Visible(_capture.Width, _capture.Height);
+        var output = ClipLayout.Measure(kept.Width, kept.Height, _style);
+        OutputText.Text = Strings.Format("EditorOutput", output.Width, output.Height, FormatName(_style.Format));
+        if (_editTab)
+        {
+            RenderEditView(width, height, dpi);
+            return;
+        }
+        Overlay.Children.Clear();
 
         // Drawn at the size it is shown, in screen pixels: sharp, and quick enough to follow a slider.
+        var source = Flattened();
+        var layout = ClipLayout.Measure(source.Width, source.Height, _style);
         float scale = (float)Math.Min(1, Math.Min(width / layout.Width, height / layout.Height));
-        using var picture = Composer.Render(_capture, _style, scale, BackgroundImageFor(_style));
+        using var picture = Composer.Render(source, _style, scale, BackgroundImageFor(_style));
         _previewBitmap = Imaging.CopyTo(picture, _previewBitmap);
         Preview.Source = _previewBitmap;
         Preview.Width = picture.Width / dpi.DpiScaleX;
         Preview.Height = picture.Height / dpi.DpiScaleY;
-        OutputText.Text = Strings.Format("EditorOutput", layout.Width, layout.Height, FormatName(_style.Format));
     }
 
     private static string FormatName(ExportFormat format) => format switch
@@ -863,7 +884,12 @@ public partial class EditorWindow : Window
 
     // ---------------------------------------------------------------- Export
 
-    private SKImage RenderFull() => Composer.Render(_capture!, _style, 1, BackgroundImageFor(_style));
+    // The text being typed counts: it is finished first.
+    private SKImage RenderFull()
+    {
+        CommitText();
+        return Composer.Render(Flattened(), _style, 1, BackgroundImageFor(_style));
+    }
 
     private string FileName => FileNaming.Expand(App.Settings.EffectiveFileNameTemplate, _takenAt);
 
@@ -936,7 +962,6 @@ public partial class EditorWindow : Window
         }
     }
 
-    /// <summary>What happened last, under the preview; with a link to the file when one was written.</summary>
     /// <summary>
     /// The notification of a file written: by Save, or the capture just saved automatically (<paramref name="capture"/>).
     /// </summary>
@@ -1002,7 +1027,8 @@ public partial class EditorWindow : Window
 
     // ---------------------------------------------------------------- Drag and drop
 
-    private void Preview_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => _pressedAt = e.GetPosition(this);
+    // In the Layout tab only: in the Edit tab, the mouse draws.
+    private void Preview_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => _pressedAt = _editTab ? null : e.GetPosition(this);
 
     // The laid-out picture dragged to an app or a folder: a file in the export format, and the picture.
     private void Preview_MouseMove(object sender, MouseEventArgs e)
@@ -1062,11 +1088,37 @@ public partial class EditorWindow : Window
 
     private void Editor_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (Keyboard.Modifiers != ModifierKeys.Control)
-            return;
         bool inTextBox = Keyboard.FocusedElement is TextBox;
+        if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && e.Key == Key.Z && !inTextBox)
+        {
+            Redo();
+            e.Handled = true;
+            return;
+        }
+        if (Keyboard.Modifiers != ModifierKeys.Control)
+        {
+            if (EditKey(e))
+                e.Handled = true;
+            return;
+        }
         switch (e.Key)
         {
+            case Key.Z when !inTextBox:
+                Undo();
+                e.Handled = true;
+                break;
+            case Key.Y when !inTextBox:
+                Redo();
+                e.Handled = true;
+                break;
+            case Key.D1 or Key.NumPad1:
+                SetTab(true);
+                e.Handled = true;
+                break;
+            case Key.D2 or Key.NumPad2:
+                SetTab(false);
+                e.Handled = true;
+                break;
             case Key.O:
                 Import();
                 e.Handled = true;

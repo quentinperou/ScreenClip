@@ -26,8 +26,8 @@ resident (Task Manager, private working set) before and after it.
 
 **v0.1.0 released** (October 19, 2026, stable, tag `v0.1.0`; release notes bilingual like CropPdf 1.0.0). Commits in
 the author's name (`QuentinPerou`, his GitHub noreply address, no Co-Authored-By line, as he asked); **the author
-pushes and publishes himself** unless he asks (he asked for the 0.1.0 tag and release). The annotation tools (mock-up
-boards “Éditeur — annoter / recadrer” and “Les outils”) are for a later version. Framing done with the
+pushes and publishes himself** unless he asks (he asked for the 0.1.0 tag and release). The annotation tools came
+after 0.1.0 (proposal B of the mock-up, see below). Framing done with the
 author on October 19, 2026 (questions, then an HTML mock-up validated by him: editor, area selection, thumbnail, tray
 menu, settings, icon):
 
@@ -123,9 +123,18 @@ macOS or hand, a size slider, a click halo), a **proposal B** with two tabs, *É
 capture alone, the tool's options and the list of annotations on the right) and *Mise en forme* (today's editor)
 (the author's idea, to compare with proposal A, tools in the command bar), and the **video** boards (recording bar;
 editor with a timeline: trim handles, one bar per annotation, a pointer animated from A to B on a curve with a click
-at the end; the real pointer recorded apart, so that it can be restyled). Not chosen yet.
+at the end; the real pointer recorded apart, so that it can be restyled).
 
-**Next**: the author chooses between proposals A and B, then annotations; video/GIF after.
+The author chose **proposal B**, and the **annotations** were made (see Technical choices › Annotations): two tabs,
+Edit and Layout; twelve tools in a column (select, crop, arrow single / double / curved with a handle to bend it,
+rectangle and ellipse outline / filled / spotlight, line, pen, highlighter, text plain / label / bubble, numbered
+steps, a mouse pointer Windows / macOS / hand with a size slider and a click halo, hide by pixelating / blurring / a
+solid block), eight colors, three sizes, handles, the list of annotations, undo and redo, a letter per tool. Checked by
+Claude on the dev build with the Debug script player (`SCREENCLIP_EDIT_SCRIPT`: shapes, curved arrow, text typed in a
+bubble, numbers, pointer, highlighter, mask, spotlight, select and move, crop, Layout tab, export, undo) and UI
+Automation (tabs, tools, panels), light and dark themes; not with the real mouse and keyboard. 188 tests.
+
+**Next**: the author tries the Edit tab; then video/GIF (issue #2, boards in the mock-up).
 
 ## Commands
 
@@ -139,7 +148,9 @@ powershell -File scripts\make-icons.ps1   # regenerate the icons (Windows PowerS
 
 Environment variables: `SCREENCLIP_LANG=en|fr`, `SCREENCLIP_THEME=Light|Dark`, `SCREENCLIP_CAPTURABLE=1` (thumbnails
 stay in screenshots), `SCREENCLIP_TRACE=1` (each element lookup written to `%TEMP%\ScreenClip-trace.txt`),
-`SCREENCLIP_DEMO_SCREEN=<picture>` (a capture freezes that picture instead of the screen: README pictures). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
+`SCREENCLIP_DEMO_SCREEN=<picture>` (a capture freezes that picture instead of the screen: README pictures),
+`SCREENCLIP_EDIT_SCRIPT=<file>` (Debug builds only: plays pointer actions in the Edit tab, see
+`EditorWindow.Script.cs`; writes `<file>.done` at the end). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
 again (and the `HKCU\Software\ScreenClip` key).
 
 ## Working on the project
@@ -171,32 +182,33 @@ the real editor (laying out a capture of the Settings window, `.local\readme\pie
 background, no frame), the notification menu and the capture bar, light theme, on the gradient of the icon with
 rounded corners and shadows. The author first had the Settings window there, then asked for the editor in its place.
 The test `settings.json` of the script also holds the demo style; it is removed afterwards (the author's is put
-aside and back). Made by `.local
-eadme\capture-pieces.ps1` (UI Automation and posted messages, fictitious save
+aside and back). Made by `.local\readme\capture-pieces.ps1` (UI Automation and posted messages, fictitious save
 folder `D:\Captures`; it takes the Settings window's Capture page as `demo-<lang>.png` first, then lays it out in
 the editor; the menu is opened with `WM_CONTEXTMENU`, since a left click on the icon captures) then
-`.local
-eadme\compose.ps1` (System.Drawing); `.local\README.md` lists the local tools. Retake them when the UI
-changes (last: October 19, 2026, with the Plain preset, the Reset button and “All screens”).
+`.local\readme\compose.ps1` (System.Drawing); `.local\README.md` lists the local tools. Retake them when the UI
+changes (last: October 24, 2026, with the Edit and Layout tabs).
+
+`.github/edit.png` / `edit.fr.png` (1600 × 1068, under the Edit tab in the READMEs): the real Edit tab on the
+Settings capture (`pieces\demo-<lang>.png`), annotated by the Debug script player: `.local\readme\edit\edit-<lang>.txt`
+played by `.local\readme\edit\script-run.ps1 -Script … -Lang … -Picture … -Shot …` (test settings, `PrintWindow`
+of the editor), then laid out by `.local\readme\frame` (1600 px). The coordinates are the capture's pixels; the
+French page is taller (its descriptions wrap), so each language has its own script.
 
 `.github/selection.png` / `selection.fr.png` (1600 × 951, under “Capture” in the READMEs; asked by the author from the
 mock-up, made from the real overlay instead since the mock-up's had handles, a delay and keys the app does not have):
-the real area overlay over a made-up desktop, a sheet of prints outlined. `.local
-eadme\scene\scene.html` (`?lang=fr`)
-rendered by headless Chrome to `scene-<lang>.png`; `.local
-eadme\shoot-selection.ps1 -Lang en|fr` starts the dev
+the real area overlay over a made-up desktop, a sheet of prints outlined. `.local\readme\scene\scene.html` (`?lang=fr`)
+rendered by headless Chrome to `scene-<lang>.png`; `.local\readme\shoot-selection.ps1 -Lang en|fr` starts the dev
 build with `SCREENCLIP_DEMO_SCREEN` (that picture frozen on every monitor, one handle-less window per monitor: the
 blocks come from the picture), posts `WM_HOTKEY` then `WM_MOUSEMOVE` at a point to the overlay (WPF takes the posted
-position), `PrintWindow`s it and quits; `.local
-eadmerame` (a console on Core) lays it out with `Composer`
+position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core) lays it out with `Composer`
 (violet, 5 %, corners 14, shadow 55, 1600 px wide).
 
 ## Architecture
 
 | Folder | Role |
 |--------|------|
-| `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `BoxDetector` (blocks drawn on a picture), `ElementChain` (elements and blocks under the pointer as wheel levels), `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). |
-| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow`, `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `NativeMethods`. |
+| `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `BoxDetector` (blocks drawn on a picture), `ElementChain` (elements and blocks under the pointer as wheel levels), `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). `Annotations/`: `Annotation` (+ kinds and styles, `Palette`, `AnnotationOptions`, `AnnotationDefaults`, `AnnotationLayer`, `AnnotationHistory`), `AnnotationGeometry` (sizes, bounds, hit tests, handles), `AnnotationRenderer` (SkiaSharp drawing, `Flatten`, pixelation). `Typefaces` (Segoe UI for both). |
+| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow` (+ `EditorWindow.Annotate.cs`: the Edit tab; `EditorWindow.Script.cs`: the Debug script player), `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `NativeMethods`. |
 | `installer/ScreenClip.iss` | Inno Setup (English/French): Program Files, Start menu, .NET 10 runtime check, closes the running app, gives Print Screen back, cleans HKCU and temp on uninstall. |
 | `scripts/` | `build.ps1`, `make-icons.ps1` (icon; generated files are committed). |
 | `.github/workflows/build.yml` | CI: build + tests on every push; on a `v*` tag, publishes the installer in a Release (pre-release when the tag has a `-`). |
@@ -227,6 +239,25 @@ eadmerame` (a console on Core) lays it out with `Composer`
   Corners up to 80 px (asked by the author: 32 was not enough), never more than half the window. Choosing a window
   frame sets the corners of the real window (`ClipStyle.WithFrame` / `NaturalRadius`: Windows 11 8 px, macOS and
   the browser 10; asked by the author); no frame and the devices keep them; presets bring their own.
+- **Annotations** (the Edit tab; proposal B of the mock-up, chosen by the author on October 24, 2026): two tabs in the
+  middle of the command bar, Edit and Layout (`AppSettings.EditorTab`, the last one used; Ctrl+1 / Ctrl+2). The
+  annotations are records in the capture's pixels (`Core/Annotations`), held by an immutable `AnnotationLayer` (the
+  items in drawing order, the crop, the next id); each change is a new layer, kept by `AnnotationHistory` (100 steps;
+  changes in a row with the same key, a slider dragged or a nudge, make one step). One drawing, `AnnotationRenderer`
+  (SkiaSharp), for the Edit view and the export: the Layout tab lays out `AnnotationRenderer.Flatten` (the capture with
+  its annotations, cut to the crop, cached per layer), so both tabs copy and save the same picture. Sizes follow the
+  capture as the layout does (`ScaleOf`: 1 up to 1600 px, at most 3). The Edit view scales the capture once per size
+  (`_viewBase`) and draws the annotations over it at each change; WPF draws only the selection frame, its handles and
+  the crop frame (`Overlay`), and the text box of the text being typed (`TextLayer`; the annotation is hidden
+  meanwhile). A drag works on a live layer (`_live`), committed at the end (one step to undo; a number or a pointer
+  put and moved at once is one step too). Spotlights darken everything outside them first, so that the other
+  annotations stay bright on top; masks read the capture (pixelate = the average of each block, blur, a solid block:
+  the only one that surely hides); the highlighter multiplies (black text stays black). The tools' options are kept
+  (`AppSettings.Annotations`, `AnnotationDefaults`): a new annotation takes them, and changing the one chosen changes
+  them too. After a shape the tool stays, the shape chosen (its options in the panel, its handles); the pointer,
+  number and text tools pick their own kind (a pointer is moved, a text edited). The mouse code is
+  `PointerDown` / `PointerMove` / `EndDrag` with explicit points, so that the Debug script player can draw without the
+  real mouse (WPF ignores posted buttons, and the author may be using the PC).
 - **Presets**: `StylePresets` (Core, tested). A preset never carries the frame text (it names the page captured) and
   carries a picture only when it is its background: `ApplyTo` keeps the current text and picture otherwise,
   `Matches` says which tile shows chosen (a built-in one first), `ToSave` is what a user preset keeps. The user's are
@@ -382,7 +413,7 @@ while unchanged, so that it follows the language.
 
 ## To do
 
-- Annotations, video/GIF.
+- Video/GIF (issue #2: the mock-up has its boards).
 - Private bytes after the first capture (see Memory).
 - Optional: an area spanning several monitors.
 - Later (the author's idea, October 24, 2026): a macOS version. Core (SkiaSharp composition, selection, presets) is

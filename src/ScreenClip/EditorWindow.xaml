@@ -112,6 +112,147 @@
       <Setter Property="Margin" Value="8,0,0,0" />
       <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
+
+    <!-- The two tabs, Edit and Layout, in the middle of the command bar. -->
+    <Style x:Key="TabSegment" TargetType="RadioButton">
+      <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Back" CornerRadius="5" Height="30" MinWidth="148" Margin="1" Padding="16,0" Background="Transparent"
+                    BorderThickness="1" BorderBrush="Transparent">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+                <Setter TargetName="Back" Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- A tool of the column on the left (Edit tab). -->
+    <Style x:Key="ToolButton" TargetType="RadioButton">
+      <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Back" Width="36" Height="34" CornerRadius="5" Margin="0,1" Background="Transparent" BorderThickness="1"
+                    BorderBrush="Transparent">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+                <Setter TargetName="Back" Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="RailButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Back" Width="36" Height="34" CornerRadius="5" Margin="0,1" Background="Transparent">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorDisabledBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- A color of the annotations: a disc, ringed when chosen. -->
+    <Style x:Key="ColorSwatch" TargetType="RadioButton">
+      <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Margin" Value="0,0,4,0" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Ring" Width="30" Height="30" CornerRadius="15" BorderThickness="2" BorderBrush="Transparent" Padding="2">
+              <Ellipse Fill="{TemplateBinding Background}" Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" StrokeThickness="1" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- A row of the list of annotations. -->
+    <Style x:Key="ListRow" TargetType="RadioButton">
+      <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Back" Height="32" CornerRadius="5" Padding="8,0" Background="Transparent" BorderThickness="1"
+                    BorderBrush="Transparent">
+              <ContentPresenter VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+                <Setter TargetName="Back" Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- The text of an annotation while it is typed: no box of its own, the annotation's look is set from code. -->
+    <Style x:Key="InlineTextBox" TargetType="TextBox">
+      <Setter Property="AcceptsReturn" Value="True" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TextBox">
+            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}" CornerRadius="3">
+              <ScrollViewer x:Name="PART_ContentHost" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
   </Window.Resources>
 
   <Grid>
@@ -120,8 +261,14 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
 
-    <!-- Command bar. -->
-    <DockPanel Margin="12,8,12,8" LastChildFill="False">
+    <!-- Command bar: capture and import on the left, the two tabs in the middle, save and copy on the right. -->
+    <Grid Margin="12,8,12,8">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
       <Button x:Name="NewCaptureButton" Style="{StaticResource BarButton}" Click="NewCapture_Click"
               AutomationProperties.Name="{local:Tr EditorNewCapture}">
         <StackPanel Orientation="Horizontal">
@@ -138,36 +285,77 @@
         </StackPanel>
       </Button>
 
-      <!-- Right to left: Settings at the far right (as in Crop PDF), then Copy (the main action), then Save. -->
-      <Button DockPanel.Dock="Right" Style="{StaticResource BarButton}" Margin="10,0,0,0" Padding="8,5" Background="Transparent"
-              BorderThickness="0" Click="Settings_Click" ToolTip="{local:Tr Settings}" AutomationProperties.Name="{local:Tr Settings}">
-        <TextBlock Style="{StaticResource IconText}" FontSize="16" Text="&#xE713;" />
-      </Button>
-      <Button DockPanel.Dock="Right" x:Name="CopyButton" Style="{DynamicResource AccentButtonStyle}" Padding="14,5"
-              Click="Copy_Click" ToolTip="Ctrl+C" AutomationProperties.Name="{local:Tr Copy}">
+      </StackPanel>
+
+      <!-- Edit (the tools, on the capture alone) and Layout (background, frame, shadow): proposal B of the mock-up,
+           chosen by the author. Both export the same picture. -->
+      <Border x:Name="TabBar" Grid.Column="1" Style="{StaticResource SegmentBar}" CornerRadius="7" Margin="12,0">
         <StackPanel Orientation="Horizontal">
-          <TextBlock Style="{StaticResource IconText}" FontSize="15" Text="&#xE8C8;" />
-          <TextBlock x:Name="CopyText" Style="{StaticResource BarLabel}" Text="{local:Tr Copy}" />
+          <RadioButton x:Name="EditTab" Style="{StaticResource TabSegment}" GroupName="EditorTab" Checked="Tab_Checked"
+                       ToolTip="Ctrl+1" AutomationProperties.Name="{local:Tr TabEdit}">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Style="{StaticResource IconText}" FontSize="14" Text="&#xE70F;" />
+              <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr TabEdit}" />
+            </StackPanel>
+          </RadioButton>
+          <RadioButton x:Name="LayoutTab" Style="{StaticResource TabSegment}" GroupName="EditorTab" Checked="Tab_Checked"
+                       ToolTip="Ctrl+2" AutomationProperties.Name="{local:Tr TabLayout}">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Style="{StaticResource IconText}" FontSize="14" Text="&#xE790;" />
+              <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr TabLayout}" />
+            </StackPanel>
+          </RadioButton>
         </StackPanel>
-      </Button>
-      <Button DockPanel.Dock="Right" x:Name="SaveButton" Style="{StaticResource BarButton}" Click="Save_Click" ToolTip="Ctrl+S"
+      </Border>
+
+      <!-- Right to left: Settings at the far right (as in Crop PDF), then Copy (the main action), then Save. -->
+      <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+      <Button x:Name="SaveButton" Style="{StaticResource BarButton}" Click="Save_Click" ToolTip="Ctrl+S"
               AutomationProperties.Name="{local:Tr Save}">
         <StackPanel Orientation="Horizontal">
           <TextBlock Style="{StaticResource IconText}" FontSize="15" Text="&#xE74E;" />
           <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr Save}" />
         </StackPanel>
       </Button>
-    </DockPanel>
+      <Button x:Name="CopyButton" Style="{DynamicResource AccentButtonStyle}" Padding="14,5"
+              Click="Copy_Click" ToolTip="Ctrl+C" AutomationProperties.Name="{local:Tr Copy}">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Style="{StaticResource IconText}" FontSize="15" Text="&#xE8C8;" />
+          <TextBlock x:Name="CopyText" Style="{StaticResource BarLabel}" Text="{local:Tr Copy}" />
+        </StackPanel>
+      </Button>
+      <Button Style="{StaticResource BarButton}" Margin="10,0,0,0" Padding="8,5" Background="Transparent"
+              BorderThickness="0" Click="Settings_Click" ToolTip="{local:Tr Settings}" AutomationProperties.Name="{local:Tr Settings}">
+        <TextBlock Style="{StaticResource IconText}" FontSize="16" Text="&#xE713;" />
+      </Button>
+      </StackPanel>
+    </Grid>
 
     <Grid Grid.Row="1" Margin="12,0,12,12">
       <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="12" />
         <ColumnDefinition Width="350" />
       </Grid.ColumnDefinitions>
 
+      <!-- Edit tab: the tools, in a column; undo and redo at the bottom. -->
+      <Border x:Name="ToolRail" Style="{StaticResource Card}" Margin="0,0,8,0" Padding="5" Width="48" Visibility="Collapsed">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Bottom">
+            <Button x:Name="UndoButton" Style="{StaticResource RailButton}" Click="Undo_Click">
+              <TextBlock Style="{StaticResource IconText}" FontSize="15" Text="&#xE7A7;" />
+            </Button>
+            <Button x:Name="RedoButton" Style="{StaticResource RailButton}" Click="Redo_Click">
+              <TextBlock Style="{StaticResource IconText}" FontSize="15" Text="&#xE7A6;" />
+            </Button>
+          </StackPanel>
+          <StackPanel x:Name="ToolList" />
+        </DockPanel>
+      </Border>
+
       <!-- Preview. -->
-      <Border x:Name="PreviewArea" CornerRadius="8" BorderThickness="1"
+      <Border x:Name="PreviewArea" Grid.Column="1" CornerRadius="8" BorderThickness="1"
               Background="{DynamicResource LayerFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
         <Grid>
           <Grid.RowDefinitions>
@@ -175,9 +363,15 @@
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <Grid x:Name="PreviewHost" Margin="24,24,24,8" SizeChanged="PreviewHost_SizeChanged">
-            <Image x:Name="Preview" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Fill"
-                   Cursor="Hand" RenderOptions.BitmapScalingMode="HighQuality"
-                   MouseLeftButtonDown="Preview_MouseLeftButtonDown" MouseMove="Preview_MouseMove" />
+            <!-- The picture, and over it what the Edit tab shows while drawing (handles, crop frame, the text typed). -->
+            <Grid x:Name="Stage" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Transparent"
+                  MouseLeftButtonDown="Stage_MouseLeftButtonDown" MouseMove="Stage_MouseMove" MouseLeftButtonUp="Stage_MouseLeftButtonUp"
+                  LostMouseCapture="Stage_LostMouseCapture">
+              <Image x:Name="Preview" Stretch="Fill" Cursor="Hand" RenderOptions.BitmapScalingMode="HighQuality"
+                     MouseLeftButtonDown="Preview_MouseLeftButtonDown" MouseMove="Preview_MouseMove" />
+              <Canvas x:Name="Overlay" IsHitTestVisible="False" />
+              <Canvas x:Name="TextLayer" />
+            </Grid>
 
             <!-- Nothing to lay out yet. -->
             <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440">
@@ -257,7 +451,7 @@
 
       <!-- Settings of the layout. -->
       <!-- The scroll bar in a lane of its own, not against the cards (asked by the author). -->
-      <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Padding="0,0,14,0">
+      <ScrollViewer x:Name="LayoutPanel" Grid.Column="3" VerticalScrollBarVisibility="Auto" Padding="0,0,14,0">
         <StackPanel x:Name="Panel">
           <Border Style="{StaticResource PanelCard}">
             <StackPanel>
@@ -407,6 +601,100 @@
                   </UniformGrid>
                 </Border>
               </DockPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- Edit tab: the options of the tool (or of the annotation chosen), then the annotations of the picture. -->
+      <ScrollViewer x:Name="EditPanel" Grid.Column="3" VerticalScrollBarVisibility="Auto" Padding="0,0,14,0" Visibility="Collapsed">
+        <StackPanel>
+          <Border Style="{StaticResource PanelCard}">
+            <StackPanel>
+              <DockPanel Margin="0,0,0,12">
+                <Border DockPanel.Dock="Right" Style="{StaticResource Keycap}" Margin="0" Padding="7,0" VerticalAlignment="Center">
+                  <TextBlock x:Name="ToolKey" FontSize="12" />
+                </Border>
+                <ContentControl x:Name="ToolIcon" VerticalAlignment="Center" Focusable="False"
+                                Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                <TextBlock x:Name="ToolName" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" />
+              </DockPanel>
+
+              <StackPanel x:Name="ColorRow" Margin="0,0,0,12">
+                <TextBlock Text="{local:Tr AnnotColor}" FontSize="13" Margin="0,0,0,6" />
+                <WrapPanel x:Name="ColorList" />
+              </StackPanel>
+              <DockPanel x:Name="SizeRow" Margin="0,0,0,10">
+                <TextBlock x:Name="SizeLabel" Style="{StaticResource RowLabel}" Width="84" />
+                <Border Style="{StaticResource SegmentBar}">
+                  <UniformGrid x:Name="SizeList" Rows="1" />
+                </Border>
+              </DockPanel>
+              <DockPanel x:Name="StyleRow" Margin="0,0,0,10">
+                <TextBlock Style="{StaticResource RowLabel}" Width="84" Text="{local:Tr AnnotStyle}" />
+                <Border Style="{StaticResource SegmentBar}">
+                  <UniformGrid x:Name="StyleList" Rows="1" />
+                </Border>
+              </DockPanel>
+
+              <StackPanel x:Name="PointerRow">
+                <UniformGrid x:Name="PointerList" Columns="3" Margin="0,0,0,12" />
+                <DockPanel>
+                  <TextBlock Text="{local:Tr AnnotSize}" FontSize="13" />
+                  <TextBlock x:Name="PointerSizeValue" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="13"
+                             Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </DockPanel>
+                <Slider x:Name="PointerSizeSlider" Minimum="24" Maximum="160" SmallChange="4" LargeChange="16" TickFrequency="4"
+                        IsSnapToTickEnabled="True" ValueChanged="PointerSize_ValueChanged" Margin="0,2,0,10"
+                        AutomationProperties.Name="{local:Tr AnnotSize}" />
+                <DockPanel Margin="0,0,0,10">
+                  <CheckBox x:Name="HaloSwitch" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
+                            Checked="Halo_Changed" Unchecked="Halo_Changed" AutomationProperties.Name="{local:Tr AnnotHalo}" />
+                  <TextBlock Text="{local:Tr AnnotHalo}" FontSize="13" VerticalAlignment="Center" />
+                </DockPanel>
+              </StackPanel>
+
+              <TextBlock x:Name="NextNumberText" FontSize="13" Margin="0,0,0,10" />
+
+              <StackPanel x:Name="CropRow" Margin="0,0,0,10">
+                <TextBlock x:Name="CropText" FontSize="13" />
+                <Button x:Name="CropAllButton" Content="{local:Tr CropAll}" Click="CropAll_Click" Margin="0,10,0,0" HorizontalAlignment="Left" />
+              </StackPanel>
+
+              <WrapPanel x:Name="SelectionRow" Margin="0,0,0,10">
+                <Button Click="BringToFront_Click" Margin="0,0,8,0" AutomationProperties.Name="{local:Tr AnnotFront}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource IconText}" FontSize="13" Text="&#xE746;" />
+                    <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr AnnotFront}" />
+                  </StackPanel>
+                </Button>
+                <Button Click="DeleteAnnotation_Click" AutomationProperties.Name="{local:Tr AnnotDelete}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource IconText}" FontSize="13" Text="&#xE74D;" />
+                    <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr AnnotDelete}" />
+                  </StackPanel>
+                </Button>
+              </WrapPanel>
+
+              <TextBlock x:Name="ToolHelp" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource PanelCard}">
+            <StackPanel>
+              <DockPanel>
+                <Button x:Name="ClearAllButton" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-4,0,0"
+                        Padding="10,3" FontSize="12" Click="ClearAll_Click" AutomationProperties.Name="{local:Tr AnnotClearAll}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource IconText}" FontSize="12" Margin="0,0,6,0" Text="&#xE894;" />
+                    <TextBlock Text="{local:Tr AnnotClearAll}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+                <TextBlock Style="{StaticResource PanelTitle}" Text="{local:Tr AnnotList}" />
+              </DockPanel>
+              <StackPanel x:Name="AnnotationList" />
+              <TextBlock x:Name="AnnotationListEmpty" Text="{local:Tr AnnotListEmpty}" FontSize="12" TextWrapping="Wrap"
+                         Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             </StackPanel>
           </Border>
         </StackPanel>

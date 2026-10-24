@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ScreenClip.Core;
+using ScreenClip.Core.Annotations;
 using ScreenClip.Core.Composition;
 
 namespace ScreenClip.Services;
@@ -29,6 +30,13 @@ public enum ThumbnailScreen
     Primary,
     /// <summary>The screen under the pointer when the thumbnail appears.</summary>
     Pointer,
+}
+
+/// <summary>The tabs of the editor: the annotation tools, or the layout.</summary>
+public enum EditorTab
+{
+    Layout,
+    Edit,
 }
 
 /// <summary>A capture shortcut of the settings, in the order of the Settings page and of the tray menu.</summary>
@@ -136,6 +144,13 @@ public sealed class AppSettings
     /// <summary>The styles the user saved under a name, in the order they were made.</summary>
     public List<UserPreset> UserPresets { get; set; } = [];
 
+    /// <summary>The tab the editor opens on: the last one used (Layout the first time).</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<EditorTab>))]
+    public EditorTab EditorTab { get; set; } = EditorTab.Layout;
+
+    /// <summary>The options of the annotation tools, as last used.</summary>
+    public AnnotationDefaults Annotations { get; set; } = new();
+
     // ---------------------------------------------------------------- Other
 
     /// <summary>The last area selected, for “Capture the last area again”.</summary>
@@ -188,6 +203,9 @@ public sealed class AppSettings
                     settings.Language = SystemLanguage;
                 settings.Shortcuts ??= [];
                 settings.EditorStyle = (settings.EditorStyle ?? StylePresets.Default).Normalized();
+                settings.Annotations = (settings.Annotations ?? new AnnotationDefaults()).Normalized();
+                if (!Enum.IsDefined(settings.EditorTab))
+                    settings.EditorTab = EditorTab.Layout;
                 settings.UserPresets = [.. (settings.UserPresets ?? [])
                     .Where(p => p is not null && StylePresets.CleanName(p.Name) is not null)
                     .Select(p => p with { Name = StylePresets.CleanName(p.Name)!, Style = (p.Style ?? StylePresets.Default).Normalized() })];

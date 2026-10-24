@@ -10,8 +10,6 @@ namespace ScreenClip.Core.Composition;
 public static class Composer
 {
     private static readonly SKColor[] TrafficLights = [new(0xFF, 0x5F, 0x57), new(0xFE, 0xBC, 0x2E), new(0x28, 0xC8, 0x40)];
-    private static readonly Lazy<SKTypeface> Regular = new(() => LoadTypeface(SKFontStyle.Normal));
-    private static readonly Lazy<SKTypeface> SemiBold = new(() => LoadTypeface(new SKFontStyle(SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright)));
 
     /// <summary>
     /// The laid-out picture, <paramref name="scale"/> times its real size. <paramref name="backgroundImage"/> is the
@@ -529,7 +527,7 @@ public static class Composer
 
         if (style.Frame == FrameKind.MacWindow)
         {
-            using var font = new SKFont(SemiBold.Value, 12.5f * k);
+            using var font = new SKFont(Typefaces.SemiBold, 12.5f * k);
             using var paint = new SKPaint { IsAntialias = true, Color = text };
             DrawCenteredText(canvas, style.FrameText, bar.MidX, middle, bar.Width - 2 * 90 * k, font, paint);
             return;
@@ -553,7 +551,7 @@ public static class Composer
             canvas.DrawRoundRect(field, 6 * k, 6 * k, fieldPaint);
         if (string.IsNullOrWhiteSpace(style.FrameText))
             return;
-        using var addressFont = new SKFont(Regular.Value, 12 * k);
+        using var addressFont = new SKFont(Typefaces.Regular, 12 * k);
         using var addressPaint = new SKPaint { IsAntialias = true, Color = text };
         float textWidth = Math.Min(addressFont.MeasureText(style.FrameText), field.Width - 40 * k);
         float lockX = field.MidX - textWidth / 2 - 10 * k;
@@ -564,7 +562,7 @@ public static class Composer
     private static void DrawWindowsBar(SKCanvas canvas, SKRect bar, ClipStyle style, float k, SKColor text)
     {
         float middle = bar.MidY;
-        using (var font = new SKFont(Regular.Value, 12 * k))
+        using (var font = new SKFont(Typefaces.Regular, 12 * k))
         using (var paint = new SKPaint { IsAntialias = true, Color = text })
         {
             string title = Ellipsize(style.FrameText, font, bar.Width - 180 * k);
@@ -618,17 +616,6 @@ public static class Composer
                 return shorter;
         }
         return "";
-    }
-
-    private static SKTypeface LoadTypeface(SKFontStyle style)
-    {
-        foreach (string family in new[] { "Segoe UI Variable Text", "Segoe UI" })
-        {
-            var typeface = SKTypeface.FromFamilyName(family, style);
-            if (typeface is not null && typeface.FamilyName.StartsWith("Segoe UI", StringComparison.OrdinalIgnoreCase))
-                return typeface;
-        }
-        return SKTypeface.Default;
     }
 
     private static SKColor ToColor(uint rgb) => new((byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
