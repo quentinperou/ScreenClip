@@ -943,4 +943,19 @@
   <data name="UpdatesTitle" xml:space="preserve">
     <value>Mises à jour</value>
   </data>
+  <data name="ZoomActual" xml:space="preserve">
+    <value>Taille réelle (100 %). Molette : défiler ; bouton du milieu ou Espace + glisser : déplacer l'image.</value>
+  </data>
+  <data name="ZoomFit" xml:space="preserve">
+    <value>Ajuster</value>
+  </data>
+  <data name="ZoomFitToolTip" xml:space="preserve">
+    <value>Toute l'image dans la fenêtre (Ctrl+0)</value>
+  </data>
+  <data name="ZoomIn" xml:space="preserve">
+    <value>Zoom avant (Ctrl + molette)</value>
+  </data>
+  <data name="ZoomOut" xml:space="preserve">
+    <value>Zoom arrière (Ctrl + molette)</value>
+  </data>
 </root>

@@ -129,7 +129,8 @@ The author chose **proposal B**, and the **annotations** were made (see Technica
 Edit and Layout; twelve tools in a column (select, crop, arrow single / double / curved with a handle to bend it,
 rectangle and ellipse outline / filled / spotlight, line, pen, highlighter, text plain / label / bubble, numbered
 steps, a mouse pointer Windows / macOS / hand with a size slider and a click halo, hide by pixelating / blurring / a
-solid block), eight colors, three sizes, handles, the list of annotations, undo and redo, a letter per tool. Checked by
+solid block), eight colors, three sizes, handles, the list of annotations, undo and redo, a letter per tool, and a
+zoom (asked by the author after his first tries: buttons, Ctrl + wheel, scroll and drag). Checked by
 Claude on the dev build with the Debug script player (`SCREENCLIP_EDIT_SCRIPT`: shapes, curved arrow, text typed in a
 bubble, numbers, pointer, highlighter, mask, spotlight, select and move, crop, Layout tab, export, undo) and UI
 Automation (tabs, tools, panels), light and dark themes; not with the real mouse and keyboard. 188 tests.
@@ -257,7 +258,13 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
   them too. After a shape the tool stays, the shape chosen (its options in the panel, its handles); the pointer,
   number and text tools pick their own kind (a pointer is moved, a text edited). The mouse code is
   `PointerDown` / `PointerMove` / `EndDrag` with explicit points, so that the Debug script player can draw without the
-  real mouse (WPF ignores posted buttons, and the author may be using the PC).
+  real mouse (WPF ignores posted buttons, and the author may be using the PC). **Zoom** (asked by the author after his
+  first tries): buttons at the bottom right of the picture (out, the percentage = 100 %, in, Fit), Ctrl + wheel
+  around the pointer, Ctrl+0 / Ctrl++ / Ctrl+-; 5 % to 800 %, fitted by default (never above 100 %) and again for
+  each new picture. Only the part in the window is drawn (`_viewOrigin`: the capture's pixel at its top left; the
+  bitmap is never larger than the window): below 100 % from the capture scaled once per zoom, above from the capture
+  itself, nearest pixel from 200 % (sharp squares, as in image editors). Zoomed in: scroll bars over the picture's
+  edges, the wheel (Shift: sideways), the middle button or Space + drag move it.
 - **Presets**: `StylePresets` (Core, tested). A preset never carries the frame text (it names the page captured) and
   carries a picture only when it is its background: `ApplyTo` keeps the current text and picture otherwise,
   `Matches` says which tile shows chosen (a built-in one first), `ToSave` is what a user preset keeps. The user's are

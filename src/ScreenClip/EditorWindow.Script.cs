@@ -88,6 +88,9 @@ public partial class EditorWindow
                         else
                             ScriptKey(rest);
                         break;
+                    case "zoom":
+                        SetZoom(rest == "fit" ? null : numbers[0] / 100);
+                        break;
                     case "undo":
                         Undo();
                         break;

@@ -138,6 +138,7 @@ public partial class EditorWindow : Window
         Preview.Visibility = hasPicture ? Visibility.Visible : Visibility.Collapsed;
         DragHint.Visibility = hasPicture && !_editTab ? Visibility.Visible : Visibility.Collapsed;
         ToolRail.IsEnabled = EditPanel.IsEnabled = hasPicture;
+        ZoomBar.Visibility = hasPicture && _editTab ? Visibility.Visible : Visibility.Collapsed;
         CopyButton.IsEnabled = SaveButton.IsEnabled = hasPicture;
         if (!hasPicture)
             OutputText.Text = "";
@@ -1113,6 +1114,18 @@ public partial class EditorWindow : Window
                 break;
             case Key.D1 or Key.NumPad1:
                 SetTab(true);
+                e.Handled = true;
+                break;
+            case Key.D0 or Key.NumPad0 when _editTab:
+                SetZoom(null);
+                e.Handled = true;
+                break;
+            case Key.OemPlus or Key.Add when _editTab:
+                ZoomIn();
+                e.Handled = true;
+                break;
+            case Key.OemMinus or Key.Subtract when _editTab:
+                ZoomOut();
                 e.Handled = true;
                 break;
             case Key.D2 or Key.NumPad2:

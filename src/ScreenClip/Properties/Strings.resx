@@ -943,4 +943,19 @@
   <data name="UpdatesTitle" xml:space="preserve">
     <value>Updates</value>
   </data>
+  <data name="ZoomActual" xml:space="preserve">
+    <value>Actual size (100%). Wheel: scroll; middle button or Space + drag: move the picture.</value>
+  </data>
+  <data name="ZoomFit" xml:space="preserve">
+    <value>Fit</value>
+  </data>
+  <data name="ZoomFitToolTip" xml:space="preserve">
+    <value>The whole picture in the window (Ctrl+0)</value>
+  </data>
+  <data name="ZoomIn" xml:space="preserve">
+    <value>Zoom in (Ctrl + wheel)</value>
+  </data>
+  <data name="ZoomOut" xml:space="preserve">
+    <value>Zoom out (Ctrl + wheel)</value>
+  </data>
 </root>

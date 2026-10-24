@@ -188,6 +188,30 @@
       </Setter>
     </Style>
 
+    <!-- The zoom of the Edit tab, at the bottom right of the picture. -->
+    <Style x:Key="ZoomButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="MinWidth" Value="28" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Back" Height="28" CornerRadius="4" Padding="7,0" Background="Transparent">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" TextElement.FontSize="12" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorDisabledBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <!-- A color of the annotations: a disc, ringed when chosen. -->
     <Style x:Key="ColorSwatch" TargetType="RadioButton">
       <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
@@ -362,16 +386,19 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
-          <Grid x:Name="PreviewHost" Margin="24,24,24,8" SizeChanged="PreviewHost_SizeChanged">
+          <Grid x:Name="PreviewHost" Margin="24,24,24,8" SizeChanged="PreviewHost_SizeChanged" PreviewMouseWheel="PreviewHost_PreviewMouseWheel">
             <!-- The picture, and over it what the Edit tab shows while drawing (handles, crop frame, the text typed). -->
             <Grid x:Name="Stage" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Transparent"
                   MouseLeftButtonDown="Stage_MouseLeftButtonDown" MouseMove="Stage_MouseMove" MouseLeftButtonUp="Stage_MouseLeftButtonUp"
-                  LostMouseCapture="Stage_LostMouseCapture">
+                  MouseDown="Stage_MouseDown" MouseUp="Stage_MouseUp" LostMouseCapture="Stage_LostMouseCapture">
               <Image x:Name="Preview" Stretch="Fill" Cursor="Hand" RenderOptions.BitmapScalingMode="HighQuality"
                      MouseLeftButtonDown="Preview_MouseLeftButtonDown" MouseMove="Preview_MouseMove" />
               <Canvas x:Name="Overlay" IsHitTestVisible="False" />
               <Canvas x:Name="TextLayer" />
             </Grid>
+            <!-- Zoomed in, the picture moves under the window: these, the wheel, or the middle button. -->
+            <ScrollBar x:Name="HScroll" Orientation="Horizontal" VerticalAlignment="Bottom" Visibility="Collapsed" Scroll="ViewScroll_Scroll" />
+            <ScrollBar x:Name="VScroll" Orientation="Vertical" HorizontalAlignment="Right" Visibility="Collapsed" Scroll="ViewScroll_Scroll" />
 
             <!-- Nothing to lay out yet. -->
             <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440">
@@ -443,6 +470,27 @@
             <TextBlock x:Name="OutputText" VerticalAlignment="Center" FontSize="12"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             <TextBlock x:Name="StatusText" Margin="16,0,0,0" VerticalAlignment="Center" FontSize="12" Visibility="Collapsed" />
+            <StackPanel x:Name="ZoomBar" DockPanel.Dock="Right" Orientation="Horizontal" Visibility="Collapsed" Margin="0,-4,0,-4">
+              <Button x:Name="ZoomOutButton" Style="{StaticResource ZoomButton}" Click="ZoomOut_Click" ToolTip="{local:Tr ZoomOut}"
+                      AutomationProperties.Name="{local:Tr ZoomOut}">
+                <TextBlock Style="{StaticResource IconText}" FontSize="13" Text="&#xE71F;" />
+              </Button>
+              <Button x:Name="ZoomActualButton" Style="{StaticResource ZoomButton}" MinWidth="54" Click="ZoomActual_Click"
+                      ToolTip="{local:Tr ZoomActual}" AutomationProperties.Name="{local:Tr ZoomActual}">
+                <TextBlock x:Name="ZoomText" />
+              </Button>
+              <Button x:Name="ZoomInButton" Style="{StaticResource ZoomButton}" Click="ZoomIn_Click" ToolTip="{local:Tr ZoomIn}"
+                      AutomationProperties.Name="{local:Tr ZoomIn}">
+                <TextBlock Style="{StaticResource IconText}" FontSize="13" Text="&#xE8A3;" />
+              </Button>
+              <Button x:Name="ZoomFitButton" Style="{StaticResource ZoomButton}" Margin="6,0,0,0" Click="ZoomFit_Click"
+                      ToolTip="{local:Tr ZoomFitToolTip}" AutomationProperties.Name="{local:Tr ZoomFit}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Style="{StaticResource IconText}" FontSize="13" Text="&#xE9A6;" />
+                  <TextBlock Text="{local:Tr ZoomFit}" Margin="6,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </StackPanel>
             <TextBlock x:Name="DragHint" DockPanel.Dock="Right" VerticalAlignment="Center" FontSize="12"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{local:Tr EditorDragHint}" />
           </DockPanel>

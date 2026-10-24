@@ -72,6 +72,9 @@ et mise en forme comprises.
 - Tout reste modifiable : **sélectionnez** (`V`) une annotation pour la déplacer, la remodeler avec ses poignées,
   changer ses options, la mettre devant ou la supprimer (`Suppr`) ; la liste à droite les montre toutes. **Ctrl+Z** /
   **Ctrl+Y** annulent et rétablissent.
+- **Zoom** en bas à droite, ou **Ctrl + molette** autour du pointeur (jusqu'à 800 %, les pixels restent nets) ;
+  **Ajuster** remontre toute l'image (`Ctrl+0`). Zoomée, la molette fait défiler (Maj : en largeur), et le bouton du
+  milieu ou **Espace + glisser** déplace l'image.
 
 <p align="center">
   <img src=".github/edit.fr.png" width="800" alt="L'onglet Édition : les outils en colonne à gauche ; sur une capture de la fenêtre des paramètres, un cadre rouge autour d'une ligne, une flèche courbe partant d'une bulle « S'ouvre après chaque capture », une ligne surlignée, un nom de dossier pixelisé et un pointeur de souris avec son halo de clic ; à droite, les options du pointeur (Windows, macOS ou main, taille, halo de clic) et la liste des annotations">
@@ -144,6 +147,7 @@ parfois le changement qu'à la prochaine ouverture de session.
 | Éditeur : importer / coller / copier / enregistrer | `Ctrl+O` / `Ctrl+V` / `Ctrl+C` / `Ctrl+S` |
 | Éditeur : onglet Édition / Mise en forme | `Ctrl+1` / `Ctrl+2` |
 | Éditeur : annuler / rétablir | `Ctrl+Z` / `Ctrl+Y` |
+| Édition : zoom / ajuster | `Ctrl` + molette, `Ctrl++` / `Ctrl+-` / `Ctrl+0` |
 | Édition : sélectionner, recadrer, flèche, rectangle, ellipse, ligne, stylo, surligneur, texte, numéro, curseur, masquer | `V` `C` `A` `R` `O` `L` `P` `H` `T` `N` `S` `B` |
 
 ### À venir

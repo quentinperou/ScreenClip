@@ -69,7 +69,13 @@ public partial class EditorWindow
     private SKImage? _viewBase;                  // the capture at the size the Edit tab shows it
     private float _viewBaseScale;
     private float _viewScale = 1;
-    private PixelRect _viewArea;
+    private SKPoint _viewOrigin;                 // the capture's pixel at the top left of the view
+    private float? _zoom;                        // null: the picture fits the window
+    private float _viewFit = 1;
+    private bool _syncingScroll;
+    private bool _panning;
+    private Point _panStart;
+    private SKPoint _panOrigin;
     private TextBox? _textEditor;
     private int? _editingTextId;
     private AnnotationLayer? _textBase;
@@ -257,6 +263,8 @@ public partial class EditorWindow
         DropFlattened();
         _viewBase?.Dispose();
         _viewBase = null;
+        _zoom = null;
+        _viewOrigin = default;
         ShowEditPanel();
     }
 
@@ -321,37 +329,48 @@ public partial class EditorWindow
 
     // ---------------------------------------------------------------- The view of the Edit tab
 
-    /// <summary>The capture (all of it while cropping, else the part kept) with its annotations, at the size shown.</summary>
+    /// <summary>
+    /// The capture (all of it while cropping, else the part kept) with its annotations: fitted to the window, or zoomed,
+    /// and then only the part in the window is drawn.
+    /// </summary>
     private void RenderEditView(double width, double height, DpiScale dpi)
     {
         var capture = _capture!;
         var layer = Layer;
         var area = _tool == EditTool.Crop ? new PixelRect(0, 0, capture.Width, capture.Height) : layer.Visible(capture.Width, capture.Height);
-        float scale = (float)Math.Min(1, Math.Min(width / area.Width, height / area.Height));
+        _viewFit = (float)Math.Min(1, Math.Min(width / area.Width, height / area.Height));
+        float scale = _zoom ?? _viewFit;
+        // All of it when it fits; else a window on it, moved by the scroll bars, the wheel or a drag.
+        double shownWidth = Math.Min(area.Width * scale, width), shownHeight = Math.Min(area.Height * scale, height);
+        float spanX = (float)(shownWidth / scale), spanY = (float)(shownHeight / scale);
+        float x = area.Width * scale <= width ? area.X : Math.Clamp(_viewOrigin.X, area.X, area.Right - spanX);
+        float y = area.Height * scale <= height ? area.Y : Math.Clamp(_viewOrigin.Y, area.Y, area.Bottom - spanY);
+        _viewOrigin = new SKPoint(x, y);
 
-        // The capture scaled once per size, not at each stroke drawn.
-        if (_viewBase is null || _viewBaseScale != scale)
+        // Smaller than its pixels, the capture is scaled once per zoom, not at each stroke drawn.
+        if (scale < 1 && (_viewBase is null || _viewBaseScale != scale))
         {
             _viewBase?.Dispose();
             _viewBase = null;
             _viewBaseScale = scale;
-            if (scale < 1)
-            {
-                var info = new SKImageInfo(Math.Max(1, (int)Math.Round(capture.Width * scale)), Math.Max(1, (int)Math.Round(capture.Height * scale)), SKColorType.Bgra8888, SKAlphaType.Premul);
-                using var scaled = SKSurface.Create(info);
-                scaled.Canvas.Clear(SKColors.Transparent);
-                scaled.Canvas.DrawImage(capture, SKRect.Create(info.Width, info.Height), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear));
-                _viewBase = scaled.Snapshot();
-            }
+            var info = new SKImageInfo(Math.Max(1, (int)Math.Round(capture.Width * scale)), Math.Max(1, (int)Math.Round(capture.Height * scale)), SKColorType.Bgra8888, SKAlphaType.Premul);
+            using var scaled = SKSurface.Create(info);
+            scaled.Canvas.Clear(SKColors.Transparent);
+            scaled.Canvas.DrawImage(capture, SKRect.Create(info.Width, info.Height), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear));
+            _viewBase = scaled.Snapshot();
         }
 
-        var target = new SKImageInfo(Math.Max(1, (int)Math.Round(area.Width * scale)), Math.Max(1, (int)Math.Round(area.Height * scale)), SKColorType.Bgra8888, SKAlphaType.Premul);
+        var target = new SKImageInfo(Math.Max(1, (int)Math.Round(shownWidth)), Math.Max(1, (int)Math.Round(shownHeight)), SKColorType.Bgra8888, SKAlphaType.Premul);
         using var surface = SKSurface.Create(target);
         var canvas = surface.Canvas;
         canvas.Clear(SKColors.Transparent);
-        canvas.DrawImage(_viewBase ?? capture, -area.X * scale, -area.Y * scale);
+        if (scale < 1 && _viewBase is not null)
+            canvas.DrawImage(_viewBase, -x * scale, -y * scale);
         canvas.Scale(scale);
-        canvas.Translate(-area.X, -area.Y);
+        canvas.Translate(-x, -y);
+        // Enlarged, the pixels stay sharp squares, as in image editors.
+        if (scale >= 1)
+            canvas.DrawImage(capture, 0, 0, new SKSamplingOptions(scale >= 2 ? SKFilterMode.Nearest : SKFilterMode.Linear));
         // The text being typed is shown by its text box, not drawn twice.
         AnnotationRenderer.Draw(canvas, capture, _editingTextId is { } typing ? layer.Items.Where(a => a.Id != typing) : layer.Items, area);
         using var picture = surface.Snapshot();
@@ -360,7 +379,11 @@ public partial class EditorWindow
         Preview.Width = picture.Width / dpi.DpiScaleX;
         Preview.Height = picture.Height / dpi.DpiScaleY;
         _viewScale = scale;
-        _viewArea = area;
+        ShowScrollBars(area, scale, spanX, spanY, width, height);
+        ZoomText.Text = Strings.Format("EditorPercent", (int)Math.Round(scale * 100));
+        ZoomFitButton.IsEnabled = _zoom is not null;
+        ZoomOutButton.IsEnabled = scale > MinZoom + 0.001f;
+        ZoomInButton.IsEnabled = scale < MaxZoom - 0.001f;
         ShowOverlay(dpi);
         PlaceTextEditor();
     }
@@ -368,13 +391,151 @@ public partial class EditorWindow
     private SKPoint ToCapture(Point point)
     {
         var dpi = VisualTreeHelper.GetDpi(this);
-        return new SKPoint((float)(point.X * dpi.DpiScaleX / _viewScale + _viewArea.X), (float)(point.Y * dpi.DpiScaleY / _viewScale + _viewArea.Y));
+        return new SKPoint((float)(point.X * dpi.DpiScaleX / _viewScale + _viewOrigin.X), (float)(point.Y * dpi.DpiScaleY / _viewScale + _viewOrigin.Y));
     }
 
     private Point ToView(SKPoint point)
     {
         var dpi = VisualTreeHelper.GetDpi(this);
-        return new Point((point.X - _viewArea.X) * _viewScale / dpi.DpiScaleX, (point.Y - _viewArea.Y) * _viewScale / dpi.DpiScaleY);
+        return new Point((point.X - _viewOrigin.X) * _viewScale / dpi.DpiScaleX, (point.Y - _viewOrigin.Y) * _viewScale / dpi.DpiScaleY);
+    }
+
+    // ---------------------------------------------------------------- Zoom
+
+    private static readonly float[] ZoomSteps = [0.1f, 0.25f, 1 / 3f, 0.5f, 2 / 3f, 0.75f, 1, 1.5f, 2, 3, 4, 6, 8];
+    private const float MinZoom = 0.05f, MaxZoom = 8;
+
+    private float CurrentZoom => _zoom ?? _viewFit;
+
+    /// <summary>
+    /// The Edit view at <paramref name="scale"/> (null: fitted to the window), the capture's point under
+    /// <paramref name="at"/> (the middle of the view by default) staying under it.
+    /// </summary>
+    private void SetZoom(float? scale, Point? at = null)
+    {
+        if (_capture is null || !_editTab)
+            return;
+        var dpi = VisualTreeHelper.GetDpi(this);
+        var view = at ?? new Point(Preview.Width / 2, Preview.Height / 2);
+        var anchor = ToCapture(view);
+        _zoom = scale is { } s ? Math.Clamp(s, MinZoom, MaxZoom) : null;
+        float next = _zoom ?? _viewFit;
+        _viewOrigin = new SKPoint((float)(anchor.X - view.X * dpi.DpiScaleX / next), (float)(anchor.Y - view.Y * dpi.DpiScaleY / next));
+        RequestRender();
+    }
+
+    private void ZoomIn() => SetZoom(ZoomSteps.FirstOrDefault(z => z > CurrentZoom + 0.001f, MaxZoom));
+
+    private void ZoomOut() => SetZoom(ZoomSteps.LastOrDefault(z => z < CurrentZoom - 0.001f, MinZoom));
+
+    private void ZoomIn_Click(object sender, RoutedEventArgs e) => ZoomIn();
+
+    private void ZoomOut_Click(object sender, RoutedEventArgs e) => ZoomOut();
+
+    private void ZoomActual_Click(object sender, RoutedEventArgs e) => SetZoom(1);
+
+    private void ZoomFit_Click(object sender, RoutedEventArgs e) => SetZoom(null);
+
+    // Ctrl + wheel zooms around the pointer; the wheel alone scrolls a picture larger than the window (Shift: sideways).
+    private void PreviewHost_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (!_editTab || _capture is null)
+            return;
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        {
+            SetZoom(CurrentZoom * (float)Math.Pow(1.2, e.Delta / 120.0), e.GetPosition(Stage));
+            e.Handled = true;
+            return;
+        }
+        bool sideways = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+        if ((sideways ? HScroll : VScroll).Visibility != Visibility.Visible)
+            return;
+        float step = (float)(e.Delta / 120.0 * 80 * VisualTreeHelper.GetDpi(this).DpiScaleY / _viewScale);
+        _viewOrigin = sideways ? new SKPoint(_viewOrigin.X - step, _viewOrigin.Y) : new SKPoint(_viewOrigin.X, _viewOrigin.Y - step);
+        e.Handled = true;
+        RequestRender();
+    }
+
+    private void ShowScrollBars(PixelRect area, float scale, float spanX, float spanY, double width, double height)
+    {
+        _syncingScroll = true;
+        bool scrollX = area.Width * scale > width + 0.5, scrollY = area.Height * scale > height + 0.5;
+        HScroll.Visibility = Show(scrollX);
+        VScroll.Visibility = Show(scrollY);
+        if (scrollX)
+        {
+            HScroll.Minimum = area.X;
+            HScroll.Maximum = area.Right - spanX;
+            HScroll.ViewportSize = spanX;
+            HScroll.LargeChange = spanX * 0.9;
+            HScroll.SmallChange = 40 / scale;
+            HScroll.Value = _viewOrigin.X;
+        }
+        if (scrollY)
+        {
+            VScroll.Minimum = area.Y;
+            VScroll.Maximum = area.Bottom - spanY;
+            VScroll.ViewportSize = spanY;
+            VScroll.LargeChange = spanY * 0.9;
+            VScroll.SmallChange = 40 / scale;
+            VScroll.Value = _viewOrigin.Y;
+        }
+        _syncingScroll = false;
+    }
+
+    private void ViewScroll_Scroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
+    {
+        if (_syncingScroll)
+            return;
+        _viewOrigin = sender == HScroll ? new SKPoint((float)HScroll.Value, _viewOrigin.Y) : new SKPoint(_viewOrigin.X, (float)VScroll.Value);
+        RequestRender();
+    }
+
+    // The middle button, or Space and the left one, move the view of a zoomed picture.
+    private bool CanPan => HScroll.Visibility == Visibility.Visible || VScroll.Visibility == Visibility.Visible;
+
+    private void Stage_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton == MouseButton.Middle && _editTab && CanPan)
+        {
+            StartPan(e.GetPosition(PreviewHost));
+            e.Handled = true;
+        }
+    }
+
+    private void Stage_MouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton == MouseButton.Middle)
+            EndPan();
+    }
+
+    private void StartPan(Point at)
+    {
+        CommitText();
+        _panning = true;
+        _panStart = at;
+        _panOrigin = _viewOrigin;
+        Stage.CaptureMouse();
+        Stage.Cursor = Cursors.ScrollAll;
+    }
+
+    private void Pan(Point at)
+    {
+        var dpi = VisualTreeHelper.GetDpi(this);
+        _viewOrigin = new SKPoint(
+            (float)(_panOrigin.X - (at.X - _panStart.X) * dpi.DpiScaleX / _viewScale),
+            (float)(_panOrigin.Y - (at.Y - _panStart.Y) * dpi.DpiScaleY / _viewScale));
+        RequestRender();
+    }
+
+    private void EndPan()
+    {
+        if (!_panning)
+            return;
+        _panning = false;
+        if (Stage.IsMouseCaptured)
+            Stage.ReleaseMouseCapture();
+        Stage.Cursor = CursorOf(_tool);
     }
 
     /// <summary>A few screen pixels, in the capture's pixels: how near the pointer must be.</summary>
@@ -437,12 +598,28 @@ public partial class EditorWindow
 
     private void Stage_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (_editTab && Keyboard.IsKeyDown(Key.Space) && CanPan)
+        {
+            StartPan(e.GetPosition(PreviewHost));
+            e.Handled = true;
+            return;
+        }
         if (PointerDown(e.GetPosition(Stage), e.ClickCount, capture: true))
             e.Handled = true;
     }
 
-    private void Stage_MouseMove(object sender, MouseEventArgs e) =>
+    private void Stage_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (_panning)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed || e.MiddleButton == MouseButtonState.Pressed)
+                Pan(e.GetPosition(PreviewHost));
+            else
+                EndPan();
+            return;
+        }
         PointerMove(e.GetPosition(Stage), e.LeftButton == MouseButtonState.Pressed, Keyboard.Modifiers.HasFlag(ModifierKeys.Shift));
+    }
 
     /// <summary>
     /// The button pressed at <paramref name="at"/> (in the picture's DIPs): draws, picks or reshapes, after the tool.
@@ -639,11 +816,19 @@ public partial class EditorWindow
         RequestRender();
     }
 
-    private void Stage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) => EndDrag();
+    private void Stage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_panning)
+            EndPan();
+        else
+            EndDrag();
+    }
 
     private void Stage_LostMouseCapture(object sender, MouseEventArgs e)
     {
-        if (_drag is not null)
+        if (_panning)
+            EndPan();
+        else if (_drag is not null)
             EndDrag();
     }
 
@@ -1142,6 +1327,8 @@ public partial class EditorWindow
                     SetTool(EditTool.Select);
                 else
                     return false;
+                return true;
+            case Key.Space when modifiers == ModifierKeys.None:
                 return true;
             case Key.Enter when _tool == EditTool.Crop:
                 SetTool(EditTool.Select);

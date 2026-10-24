@@ -68,6 +68,9 @@ picture, annotations and layout included.
 - Everything stays editable: **select** (`V`) an annotation to move it, reshape it with its handles, change its options,
   bring it to the front or delete it (`Delete`); the list on the right shows them all. **Ctrl+Z** / **Ctrl+Y** undo
   and redo.
+- **Zoom** at the bottom right, or **Ctrl + wheel** around the pointer (up to 800 %, the pixels stay sharp);
+  **Fit** shows the whole picture again (`Ctrl+0`). Zoomed in, the wheel scrolls (Shift: sideways), and the middle
+  button or **Space + drag** moves the picture.
 
 <p align="center">
   <img src=".github/edit.png" width="800" alt="The Edit tab: the tools in a column on the left; on a capture of the Settings window, a red frame around a row, a curved arrow from a speech bubble “Opens after every capture”, a highlighted line, a pixelated folder name and a mouse pointer with its click halo; on the right, the pointer's options (Windows, macOS or hand, size, click halo) and the list of annotations">
@@ -137,6 +140,7 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
 | Editor: import / paste / copy / save | `Ctrl+O` / `Ctrl+V` / `Ctrl+C` / `Ctrl+S` |
 | Editor: Edit tab / Layout tab | `Ctrl+1` / `Ctrl+2` |
 | Editor: undo / redo | `Ctrl+Z` / `Ctrl+Y` |
+| Edit tab: zoom / fit | `Ctrl` + wheel, `Ctrl++` / `Ctrl+-` / `Ctrl+0` |
 | Edit tab: select, crop, arrow, rectangle, ellipse, line, pen, highlighter, text, number, pointer, hide | `V` `C` `A` `R` `O` `L` `P` `H` `T` `N` `S` `B` |
 
 ### Coming next
