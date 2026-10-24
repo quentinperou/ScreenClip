@@ -19,8 +19,8 @@
 
 ---
 
-> **Début du développement.** La version 0.1 capture et met en forme les captures d'écran ; les annotations arrivent
-> avec la prochaine version, la capture vidéo ensuite.
+> **Début du développement.** La version 0.2 capture, annote et met en forme les captures d'écran. La capture vidéo
+> viendra ensuite.
 
 ## Fonctionnalités
 

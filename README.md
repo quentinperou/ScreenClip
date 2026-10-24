@@ -19,8 +19,7 @@
 
 ---
 
-> **Early development.** Version 0.1 captures and lays out screenshots; the annotations come with the next version,
-> video capture after.
+> **Early development.** Version 0.2 captures, annotates and lays out screenshots. Video capture will come after.
 
 ## Features
 
