@@ -3,6 +3,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using ScreenClip.Core;
+using ScreenClip.Video;
 
 namespace ScreenClip.Services;
 
@@ -67,7 +68,23 @@ internal sealed class CaptureController
             case ShortcutAction.RepeatArea:
                 RepeatLastArea();
                 break;
+            case ShortcutAction.Video:
+                RunVideo();
+                break;
         }
+    }
+
+    public bool IsRecording => RecordingSession.Current is not null;
+
+    // The video shortcut starts a recording, switches the bar to Video while choosing, or stops the recording.
+    private void RunVideo()
+    {
+        if (RecordingSession.Current is { } recording)
+            recording.Stop();
+        else if (_session is not null)
+            _session.SetVideo(true);
+        else
+            Start(CaptureMode.Area, video: true);
     }
 
     /// <summary>From the tray menu: the menu fades out first, so that it is not in the picture.</summary>
@@ -82,12 +99,18 @@ internal sealed class CaptureController
         timer.Start();
     }
 
-    private void Start(CaptureMode mode)
+    private void Start(CaptureMode mode, bool video = false)
     {
         // A shortcut pressed again while choosing switches the mode.
         if (_session is not null)
         {
             _session.SetMode(mode);
+            return;
+        }
+        // No picture while a video is recorded: the shortcut of an area, a window or a screen stops it instead.
+        if (RecordingSession.Current is { } recording)
+        {
+            recording.Stop();
             return;
         }
 
@@ -96,7 +119,8 @@ internal sealed class CaptureController
         var monitors = ScreenGrabber.Monitors();
         var image = DemoScreen.IsOn ? DemoScreen.Grab(screen, monitors) : ScreenGrabber.Grab(screen);
         var windows = DemoScreen.IsOn ? DemoScreen.Windows(monitors) : ScreenGrabber.VisibleWindows();
-        _session = new CaptureSession(image, screen, monitors, windows, mode);
+        _session = new CaptureSession(image, screen, monitors, windows, mode, video);
+        DevLog.Write($"capture: {mode}{(video ? ", video" : "")}, screen {screen}");
         _session.Finished += Session_Finished;
         _session.Show();
     }
@@ -105,6 +129,20 @@ internal sealed class CaptureController
     {
         var session = _session!;
         _session = null;
+        DevLog.Write(result is { } choice ? $"capture: chosen {choice.Area} ({session.Mode}{(session.IsVideo ? ", video" : "")})" : "capture: cancelled");
+        if (session.IsVideo)
+        {
+            if (result is { } area)
+            {
+                // An editor that asked stays hidden while it records: the video opens it.
+                _forEditor = null;
+                RecordingSession.Begin(area.Area, area.Monitor);
+            }
+            else
+                TakeEditorRequest()?.Invoke(null);
+            MemoryTrim.Soon();
+            return;
+        }
         if (result is { } chosen)
         {
             if (chosen.IsDraggedArea)
@@ -163,6 +201,7 @@ internal sealed class CaptureController
     {
         var settings = App.Settings;
         var clip = new Clip(image, DateTime.Now, monitor);
+        DevLog.Write($"capture: {image.PixelWidth} x {image.PixelHeight}, copied {settings.CopyToClipboard}, saved {settings.SaveAutomatically && !DemoScreen.IsOn}");
         // Copy and save follow the settings for every capture, the ones made from the editor too; then the editor, or
         // the thumbnail.
         if (settings.CopyToClipboard)
@@ -185,6 +224,35 @@ internal sealed class CaptureController
             App.OpenEditor(clip: clip);
         else if (settings.ShowThumbnail)
             ClipThumbnail.Show(clip);
+    }
+
+    /// <summary>
+    /// A video just recorded: saved in the videos folder and put on the clipboard (as a file) as the settings say,
+    /// then opened in the editor.
+    /// </summary>
+    public void DeliverVideo(string path, DateTime takenAt, MonitorInfo monitor)
+    {
+        var settings = App.Settings;
+        string? saved = null;
+        if (settings.SaveAutomatically)
+        {
+            try
+            {
+                string folder = settings.EffectiveVideoFolder;
+                Directory.CreateDirectory(folder);
+                saved = FileNaming.UniquePath(folder, Path.GetFileNameWithoutExtension(path), ".mp4");
+                File.Copy(path, saved);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                saved = null;
+                MessageBox.Show(Strings.Format("ErrorSave", ex.Message), "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+        if (settings.CopyToClipboard)
+            ClipActions.CopyFile(saved ?? path);
+        DevLog.Write($"video: {new FileInfo(path).Length / 1024} KB, saved {saved is not null}, copied {settings.CopyToClipboard}");
+        App.OpenEditor(video: new VideoClip(path, takenAt, saved));
     }
 
     // Screens of different sizes or placed apart leave gaps in the rectangle around them: transparent rather than

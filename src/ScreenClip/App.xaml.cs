@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Threading;
 using ScreenClip.Services;
+using ScreenClip.Video;
 
 namespace ScreenClip;
 
@@ -43,8 +44,10 @@ public partial class App : Application
         else
             ApplyLanguage(Settings.Language);
 
+        DevLog.Enabled = Settings.DeveloperMode;
         DispatcherUnhandledException += (_, args) =>
         {
+            DevLog.Write($"error: {args.Exception}");
             MessageBox.Show(args.Exception.Message, "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Error);
             args.Handled = true;
         };
@@ -55,7 +58,10 @@ public partial class App : Application
         Tray.IconClicked += (_, _) => IconClicked();
         Tray.MenuRequested += (_, _) => TrayMenu.Show();
         Tray.ShortcutPressed += (_, action) => Capture.Run(action);
-        Tray.RegisterShortcuts(Settings);
+        var refused = Tray.RegisterShortcuts(Settings);
+        DevLog.Write($"ScreenClip {Updater.CurrentVersion} started, Windows {Environment.OSVersion.Version}, "
+            + $"screens {string.Join(" ", ScreenGrabber.Monitors().Select(m => m.Bounds + (m.IsPrimary ? " (primary)" : "")))}"
+            + (refused.Count > 0 ? $", shortcuts refused: {string.Join(", ", refused)}" : ""));
 
         // Start with Windows: on by default for the installed app, once; the user can turn it off in Settings.
         if (!Settings.StartupConfigured && WindowsSettings.IsInstalled)
@@ -76,6 +82,10 @@ public partial class App : Application
 
         _ = Updater.CheckAtStartupAsync();
         MemoryTrim.Soon();
+#if DEBUG
+        if (double.TryParse(Environment.GetEnvironmentVariable("SCREENCLIP_RECORD_TEST"), NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds))
+            Dispatcher.BeginInvoke(() => RecordingTest.Run(seconds), DispatcherPriority.ApplicationIdle);
+#endif
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -163,6 +173,12 @@ public partial class App : Application
     // flyout of hidden icons the click came from is gone from the screen.
     private static void IconClicked()
     {
+        // While a video is recorded, a click on the icon stops it.
+        if (Video.RecordingSession.Current is { } recording)
+        {
+            recording.Stop();
+            return;
+        }
         switch (Settings.TrayClick)
         {
             case TrayClick.Menu:
@@ -177,7 +193,7 @@ public partial class App : Application
         }
     }
 
-    internal static void OpenEditor(string? picturePath = null, Clip? clip = null)
+    internal static void OpenEditor(string? picturePath = null, Clip? clip = null, VideoClip? video = null)
     {
         EnsureTheme();
         var editor = Current.Windows.OfType<EditorWindow>().FirstOrDefault();
@@ -193,12 +209,43 @@ public partial class App : Application
             if (clip.SavedPath is { } saved)
                 editor.ShowSaved(saved, capture: true);
         }
+        else if (video is not null)
+        {
+            editor.LoadVideo(video);
+            if (video.SavedPath is { } saved)
+                editor.ShowSaved(saved, capture: true);
+        }
         else if (picturePath is not null)
             editor.Open(picturePath);
         editor.Show();
         if (editor.WindowState == WindowState.Minimized)
             editor.WindowState = WindowState.Normal;
         editor.Activate();
+    }
+
+    /// <summary>
+    /// What ScreenClip hides from captures (the thumbnail, the recording's bar and line) stays visible: developer mode,
+    /// or SCREENCLIP_CAPTURABLE=1 (README pictures, scripts).
+    /// </summary>
+    internal static bool CapturableWindows =>
+        Settings.DeveloperMode || Environment.GetEnvironmentVariable("SCREENCLIP_CAPTURABLE") == "1";
+
+    internal static void SetDeveloperMode(bool on)
+    {
+        if (!on)
+            DevLog.Write("developer mode off");
+        Settings.DeveloperMode = on;
+        Settings.Save();
+        DevLog.Enabled = on;
+        if (on)
+            DevLog.Write($"developer mode on, ScreenClip {Updater.CurrentVersion}, Windows {Environment.OSVersion.Version}");
+    }
+
+    /// <summary>An editor hidden for a recording that was discarded comes back.</summary>
+    internal static void ShowHiddenEditor()
+    {
+        if (Current.Windows.OfType<EditorWindow>().FirstOrDefault() is { IsVisible: false } editor)
+            editor.Show();
     }
 
     /// <summary>Quits ScreenClip: the notification icon and the shortcuts go with it.</summary>

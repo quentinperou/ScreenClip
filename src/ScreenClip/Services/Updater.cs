@@ -66,6 +66,7 @@ public static class Updater
         catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or JsonException)
         {
             Debug.WriteLine($"Update check failed: {ex.Message}");
+            DevLog.Write($"updates: check failed: {ex.Message}");
         }
     }
 

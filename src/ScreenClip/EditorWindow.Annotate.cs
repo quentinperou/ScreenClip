@@ -66,6 +66,8 @@ public partial class EditorWindow
     private bool _editTab;
     private SKImage? _flattened;                 // the capture with its annotations, for the Layout tab and the export
     private AnnotationLayer? _flattenedFor;
+    private SKImage? _flattenedFrom;             // the picture it was made from (a video changes it at each frame)
+    private SKImage? _viewBaseFrom;
     private SKImage? _viewBase;                  // the capture at the size the Edit tab shows it
     private float _viewBaseScale;
     private float _viewScale = 1;
@@ -273,6 +275,7 @@ public partial class EditorWindow
         _flattened?.Dispose();
         _flattened = null;
         _flattenedFor = null;
+        _flattenedFrom = null;
     }
 
     /// <summary>The capture with its annotations and crop: what the Layout tab lays out.</summary>
@@ -281,11 +284,12 @@ public partial class EditorWindow
         var layer = _history.Current;
         if (layer.IsEmpty)
             return _capture!;
-        if (_flattened is null || !ReferenceEquals(_flattenedFor, layer))
+        if (_flattened is null || !ReferenceEquals(_flattenedFor, layer) || !ReferenceEquals(_flattenedFrom, _capture))
         {
             DropFlattened();
             _flattened = AnnotationRenderer.Flatten(_capture!, layer);
             _flattenedFor = layer;
+            _flattenedFrom = _capture;
         }
         return _flattened;
     }
@@ -348,11 +352,12 @@ public partial class EditorWindow
         _viewOrigin = new SKPoint(x, y);
 
         // Smaller than its pixels, the capture is scaled once per zoom, not at each stroke drawn.
-        if (scale < 1 && (_viewBase is null || _viewBaseScale != scale))
+        if (scale < 1 && (_viewBase is null || _viewBaseScale != scale || !ReferenceEquals(_viewBaseFrom, capture)))
         {
             _viewBase?.Dispose();
             _viewBase = null;
             _viewBaseScale = scale;
+            _viewBaseFrom = capture;
             var info = new SKImageInfo(Math.Max(1, (int)Math.Round(capture.Width * scale)), Math.Max(1, (int)Math.Round(capture.Height * scale)), SKColorType.Bgra8888, SKAlphaType.Premul);
             using var scaled = SKSurface.Create(info);
             scaled.Canvas.Clear(SKColors.Transparent);

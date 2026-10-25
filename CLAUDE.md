@@ -137,7 +137,17 @@ Claude on the dev build with the Debug script player (`SCREENCLIP_EDIT_SCRIPT`: 
 bubble, numbers, pointer, highlighter, mask, spotlight, select and move, crop, Layout tab, export, undo) and UI
 Automation (tabs, tools, panels), light and dark themes; not with the real mouse and keyboard. 188 tests.
 
-**Next**: the author tries the Edit tab; then video/GIF (issue #2, boards in the mock-up).
+Then the **video**, step 1 of issue #2 (see Technical choices › Video): record an area, a window or a screen with the
+sound of the computer and the microphone, then cut, crop, annotate, lay out and export it as MP4 or GIF in the editor.
+New packages (Vortice.Direct3D11 / MediaFoundation 3.8.3, NAudio.Wasapi 2.2.1, all MIT), the Windows SDK target. 199
+tests. After the author's first look: *Quit ScreenClip* moved from About to the end of General, and a **developer
+mode** in About, both as in TextCase (see Technical choices › Developer mode); the recording bar's countdown shows
+the number alone (“Recording in 3…” pushed the number out of sight) and the bar is centered again when its width
+changes. Checked through UI Automation (both pages, the toggle, the log button, the log written) and the Debug
+recording test (the bar during the countdown and the recording).
+
+**Next**: the author tries the video; step 2 (annotations in time, the pointer redrawn, click effects, an animated
+pointer), step 3 if needed (sound levels).
 
 ## Commands
 
@@ -150,10 +160,11 @@ powershell -File scripts\make-icons.ps1   # regenerate the icons (Windows PowerS
 ```
 
 Environment variables: `SCREENCLIP_LANG=en|fr`, `SCREENCLIP_THEME=Light|Dark`, `SCREENCLIP_CAPTURABLE=1` (thumbnails
-stay in screenshots), `SCREENCLIP_TRACE=1` (each element lookup written to `%TEMP%\ScreenClip-trace.txt`),
+and the recording's bar and line stay in screenshots, as in developer mode), `SCREENCLIP_TRACE=1` (each element lookup written to `%TEMP%\ScreenClip-trace.txt`),
 `SCREENCLIP_DEMO_SCREEN=<picture>` (a capture freezes that picture instead of the screen: README pictures),
 `SCREENCLIP_EDIT_SCRIPT=<file>` (Debug builds only: plays pointer actions in the Edit tab, see
-`EditorWindow.Script.cs`; writes `<file>.done` at the end). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
+`EditorWindow.Script.cs`; writes `<file>.done` at the end), `SCREENCLIP_RECORD_TEST=<seconds>` (Debug builds only:
+records a moving window of its own through the real recording, then opens it in the editor). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
 again (and the `HKCU\Software\ScreenClip` key).
 
 ## Working on the project
@@ -210,8 +221,8 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
 
 | Folder | Role |
 |--------|------|
-| `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `BoxDetector` (blocks drawn on a picture), `ElementChain` (elements and blocks under the pointer as wheel levels), `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). `Annotations/`: `Annotation` (+ kinds and styles, `Palette`, `AnnotationOptions`, `AnnotationDefaults`, `AnnotationLayer`, `AnnotationHistory`), `AnnotationGeometry` (sizes, bounds, hit tests, handles), `AnnotationRenderer` (SkiaSharp drawing, `Flatten`, pixelation). `Typefaces` (Segoe UI for both). |
-| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow` (+ `EditorWindow.Annotate.cs`: the Edit tab; `EditorWindow.Script.cs`: the Debug script player), `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `NativeMethods`. |
+| `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `BoxDetector` (blocks drawn on a picture), `ElementChain` (elements and blocks under the pointer as wheel levels), `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). `Video/`: `GifEncoder` (+ median cut, LZW), `Timecode`, `TrimRange`, `GifPacer`. `Annotations/`: `Annotation` (+ kinds and styles, `Palette`, `AnnotationOptions`, `AnnotationDefaults`, `AnnotationLayer`, `AnnotationHistory`), `AnnotationGeometry` (sizes, bounds, hit tests, handles), `AnnotationRenderer` (SkiaSharp drawing, `Flatten`, pixelation). `Typefaces` (Segoe UI for both). |
+| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow` (+ `EditorWindow.Annotate.cs`: the Edit tab; `EditorWindow.Video.cs`: a video, its timeline and export; `EditorWindow.Script.cs`: the Debug script player), `RecordingBar`, `RecordingFrame`, `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `NativeMethods`. |
 | `installer/ScreenClip.iss` | Inno Setup (English/French): Program Files, Start menu, .NET 10 runtime check, closes the running app, gives Print Screen back, cleans HKCU and temp on uninstall. |
 | `scripts/` | `build.ps1`, `make-icons.ps1` (icon; generated files are committed). |
 | `.github/workflows/build.yml` | CI: build + tests on every push; on a `v*` tag, publishes the installer in a Release (pre-release when the tag has a `-`). |
@@ -293,8 +304,39 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
   then opened in the editor) shows a notification at the bottom left of the preview, as in PageCompose (issue #1):
   title, file name and folder, Open and Show in folder; it goes after 8 s unless the mouse is on it
   (`EditorWindow.ShowSaved`). The status line under the preview keeps the short messages (copied, no picture).
-- **TFM `net10.0-windows`** without the Windows SDK projection (a large assembly, nothing uses WinRT yet). The video
-  capture will need `net10.0-windows10.0.19041.0` (Windows.Graphics.Capture).
+- **TFM `net10.0-windows10.0.22621.0`** (since the video): the Windows SDK projection for Windows.Graphics.Capture
+  (`IsBorderRequired` needs the 22621 SDK; the app still runs from 19041). Its assembly (and Vortice, NAudio) is only
+  loaded when a video is recorded or opened: measured at rest with them in, 4.3 MB working set, none of them loaded.
+- **Video** (issue #2, step 1, October 25, 2026; the author's answers: sound of the computer and microphone at once,
+  built in steps, Ctrl+Alt+Print Screen, MP4 and GIF): the capture bar's **Video** toggle (`CaptureSession.IsVideo`,
+  the overlay's choice of area / window / screen, no “All screens”) starts a `RecordingSession`: a dashed red line
+  around the area (`RecordingFrame`, click-through) and a bar under it (`RecordingBar`: time, pause, stop, start
+  again, discard; never active, so the app filmed keeps the focus), both excluded from capture
+  (`WDA_EXCLUDEFROMCAPTURE`); a 3 s countdown during which the `ScreenRecorder` is made on a worker thread (the first
+  Media Foundation start takes ~2 s: made after the countdown, the first videos lost their first seconds). Area and
+  window are recorded as the area of their monitor (menus and popups over them are filmed; a window followed by
+  Windows.Graphics.Capture would lose its menus): `Direct3D.ForMonitor`, frames only when something changes, at most
+  30 a second, the pointer included (`IsCursorCaptureEnabled`; drawn again in step 2), no yellow border, cut on the
+  graphics card (`CopySubresourceRegion` into a texture of the area, even sizes for H.264) and given to a Media
+  Foundation sink writer with the device manager (H.264 by the graphics card when it can, a key frame every second
+  for the editor's seeking, 0.12 bit per pixel and frame), the last frame repeated at the stop when nothing moved.
+  Sound: `AudioRecorder` (NAudio 2.2.1: WASAPI loopback and the default communications microphone, resampled and mixed
+  to 48 kHz stereo; a thread clocked on the recording hands out 20 ms chunks 120 ms behind, so that both devices'
+  packets are in; silence where the loopback sends nothing; paused time left out), AAC 160 kbit/s. Stop (the bar, the
+  shortcut, a click on the icon) → `CaptureController.DeliverVideo`: saved (when the captures are) in
+  `AppSettings.EffectiveVideoFolder` (Videos\Screen Recordings, Settings › Saving), put on the clipboard as a file,
+  opened in the editor (always). The editor: `EditorWindow.Video.cs`; the frame at the playhead becomes `_capture`
+  (so the Edit tab, the crop and the Layout tab work on every frame; their caches follow the picture), read by
+  `VideoReader` on a worker (seek to the key frame before, decode up to the time; RGB32's fourth byte is set opaque, or
+  SkiaSharp copies it as alpha 0 and the frame is invisible); a timeline (strip of frames, yellow trim handles,
+  playhead; `TrimRange` in Core); playing with `VideoPlayer` (frames decoded ahead, the sound through WASAPI and its
+  position as the clock); Save → MP4 (`VideoExporter`: every frame of the part kept flattened with the annotations,
+  laid out by `Composer`, on white, H.264 + the sound cut to the part) or GIF (`GifEncoder` in Core: per-frame median
+  cut, only the rectangle that changed, unchanged frames merged; 15 fps, 960 px wide at most) or a picture of the frame
+  shown; Copy → the MP4 in the temp folder, on the clipboard as a file. Checked by Claude with a Debug-only test
+  (`SCREENCLIP_RECORD_TEST=<seconds>`: a moving window of its own recorded through the real session, then the script
+  player in the editor: seek, trim, export MP4 and GIF, play; with and without the sound), the capture bar in Video
+  mode through a posted `WM_HOTKEY`; not with the author's own screen, mouse and microphone.
 - **Resident part**: `TrayHost` is an `HwndSource` that is never shown (top-level `WS_POPUP` + `WS_EX_TOOLWINDOW`, not
   message-only, so that the Restart Manager's `WM_CLOSE` and the end-of-session messages reach it). Notification icon
   through `Shell_NotifyIcon` (`NOTIFYICON_VERSION_4`, re-added on `TaskbarCreated`), no WinForms. The app icon comes
@@ -365,6 +407,14 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
     background of a window gives the whole window: moving onto a card inside must find the card); the level is kept
     when the smallest did not change. `SCREENCLIP_TRACE=1` writes every lookup to `%TEMP%\ScreenClip-trace.txt`
     (measured in the author's Chrome: 37 elements and 7 blocks, 144 ms the first lookup, ~30 ms the next ones).
+- **Developer mode** (Settings › About, asked by the author, as in TextCase; `AppSettings.DeveloperMode`, off by
+  default): what ScreenClip hides from captures stays visible (`App.CapturableWindows`: the thumbnail, the
+  recording's bar and line; they then show in the videos too, the description says so), the thumbnail stays until
+  closed, and `DevLog` writes `%LOCALAPPDATA%\ScreenClip\screenclip.log` (cut back to its last half beyond 200 KB;
+  nothing written while off; *Open the log* greyed while off): start (version, Windows, screens, refused shortcuts),
+  captures (mode, screen, area chosen or cancelled, size, copied / saved), element lookups (only when the result
+  changes), recordings (size, sound devices, length, errors), videos opened and exported, update check failures,
+  unhandled errors. Never what a capture shows.
 - **Thumbnail**: layered window (`AllowsTransparency`) with `WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW` (never takes the
   focus) and `WDA_EXCLUDEFROMCAPTURE` (not in the next captures). Placed in physical pixels at the bottom left of the
   work area of a monitor, one stack per monitor, the newest at the bottom, at most 4. Which monitor:
@@ -422,7 +472,9 @@ while unchanged, so that it follows the language.
 
 ## To do
 
-- Video/GIF (issue #2: the mock-up has its boards).
+- Video, step 2 (issue #2, the mock-up has its boards): annotations with a time on the timeline, the real pointer
+  recorded apart (positions, clicks) and drawn again in a style and size of one's choice, click effects, a pointer
+  animated from A to B.
 - Private bytes after the first capture (see Memory).
 - Optional: an area spanning several monitors.
 - Later (the author's idea, October 24, 2026): a macOS version. Core (SkiaSharp composition, selection, presets) is

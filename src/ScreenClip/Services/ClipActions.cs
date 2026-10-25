@@ -26,6 +26,14 @@ internal static class ClipActions
         return Copy(data);
     }
 
+    /// <summary>Puts a file on the clipboard (a video): pasted in a folder, a mail or a chat, it comes as the file.</summary>
+    public static bool CopyFile(string path)
+    {
+        var data = new DataObject();
+        data.SetFileDropList(new System.Collections.Specialized.StringCollection { path });
+        return Copy(data);
+    }
+
     /// <summary>Puts <paramref name="data"/> on the clipboard, trying again while another app holds it.</summary>
     public static bool Copy(DataObject data)
     {

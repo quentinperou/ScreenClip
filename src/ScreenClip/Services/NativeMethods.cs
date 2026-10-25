@@ -146,6 +146,11 @@ internal static class NativeMethods
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern bool GetMonitorInfo(IntPtr monitor, ref MONITORINFO info);
 
+    public const int MONITOR_DEFAULTTONEAREST = 2;
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr MonitorFromPoint(POINT point, int flags);
+
     // ---------------------------------------------------------------- Screen capture (GDI)
 
     public const int SRCCOPY = 0x00CC0020;

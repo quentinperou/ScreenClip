@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ScreenClip.Core.Annotations;
+using ScreenClip.Core.Video;
 using SkiaSharp;
 
 namespace ScreenClip;
@@ -90,6 +91,23 @@ public partial class EditorWindow
                         break;
                     case "zoom":
                         SetZoom(rest == "fit" ? null : numbers[0] / 100);
+                        break;
+                    case "play":
+                        StartPlayback();
+                        break;
+                    case "pause":
+                        StopPlayback();
+                        break;
+                    case "seek":
+                        RequestFrame(TimeSpan.FromSeconds(numbers[0]));
+                        break;
+                    case "trim":
+                        _trim = TrimRange.All(_duration).WithEnd(TimeSpan.FromSeconds(numbers[1]), _duration).WithStart(TimeSpan.FromSeconds(numbers[0]));
+                        RequestFrame(_trim.Start);
+                        RequestRender();
+                        break;
+                    case "exportvideo":
+                        await ExportVideo(rest, gif: rest.EndsWith(".gif", StringComparison.OrdinalIgnoreCase));
                         break;
                     case "undo":
                         Undo();

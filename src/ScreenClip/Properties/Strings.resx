@@ -70,6 +70,12 @@
   <data name="ArrowStraight" xml:space="preserve">
     <value>Single</value>
   </data>
+  <data name="AudioOff" xml:space="preserve">
+    <value>{0}: off</value>
+  </data>
+  <data name="AudioOn" xml:space="preserve">
+    <value>{0}: on</value>
+  </data>
   <data name="BackgroundBlack" xml:space="preserve">
     <value>Black</value>
   </data>
@@ -184,6 +190,24 @@
   <data name="DefaultFileName" xml:space="preserve">
     <value>Screenshot {date} at {time}</value>
   </data>
+  <data name="DefaultVideoFileName" xml:space="preserve">
+    <value>Recording {date} at {time}</value>
+  </data>
+  <data name="DeveloperLog" xml:space="preserve">
+    <value>The log</value>
+  </data>
+  <data name="DeveloperLogDescription" xml:space="preserve">
+    <value>To send when something does not work.</value>
+  </data>
+  <data name="DeveloperLogOpen" xml:space="preserve">
+    <value>Open the log</value>
+  </data>
+  <data name="DeveloperMode" xml:space="preserve">
+    <value>Developer mode</value>
+  </data>
+  <data name="DeveloperModeDescription" xml:space="preserve">
+    <value>The thumbnail and the recording's bar and line stay in screenshots (and in the videos recorded meanwhile), the thumbnail stays until closed, and a log notes what ScreenClip does (never what the captures show).</value>
+  </data>
   <data name="EditorAddress" xml:space="preserve">
     <value>Address</value>
   </data>
@@ -271,8 +295,17 @@
   <data name="EditorWindowTitle" xml:space="preserve">
     <value>Title</value>
   </data>
+  <data name="ErrorExport" xml:space="preserve">
+    <value>The video could not be exported: {0}</value>
+  </data>
   <data name="ErrorOpenImage" xml:space="preserve">
     <value>This file could not be opened as a picture: {0}</value>
+  </data>
+  <data name="ErrorOpenVideo" xml:space="preserve">
+    <value>The video could not be opened: {0}</value>
+  </data>
+  <data name="ErrorRecording" xml:space="preserve">
+    <value>The video could not be recorded: {0}</value>
   </data>
   <data name="ErrorSave" xml:space="preserve">
     <value>The capture could not be saved: {0}</value>
@@ -289,14 +322,29 @@
   <data name="ErrorUpdateRateLimited" xml:space="preserve">
     <value>GitHub limits the number of checks, try again in a while.</value>
   </data>
+  <data name="ExportingGif" xml:space="preserve">
+    <value>Making the GIF…</value>
+  </data>
+  <data name="ExportingVideo" xml:space="preserve">
+    <value>Exporting the video…</value>
+  </data>
+  <data name="FilterGif" xml:space="preserve">
+    <value>Animated GIF</value>
+  </data>
   <data name="FilterImages" xml:space="preserve">
     <value>Pictures</value>
   </data>
   <data name="FilterJpeg" xml:space="preserve">
     <value>JPEG picture</value>
   </data>
+  <data name="FilterMp4" xml:space="preserve">
+    <value>MP4 video</value>
+  </data>
   <data name="FilterPng" xml:space="preserve">
     <value>PNG picture</value>
+  </data>
+  <data name="FilterThisFrame" xml:space="preserve">
+    <value>{0}, this frame only</value>
   </data>
   <data name="FilterWebp" xml:space="preserve">
     <value>WebP picture</value>
@@ -339,6 +387,9 @@
   </data>
   <data name="HintSquare" xml:space="preserve">
     <value>square</value>
+  </data>
+  <data name="HintVideoStart" xml:space="preserve">
+    <value>Recording starts 3 seconds after your choice</value>
   </data>
   <data name="HintWheel" xml:space="preserve">
     <value>Wheel: larger or smaller</value>
@@ -396,6 +447,9 @@
   </data>
   <data name="MaskSolid" xml:space="preserve">
     <value>Solid</value>
+  </data>
+  <data name="Microphone" xml:space="preserve">
+    <value>Microphone</value>
   </data>
   <data name="ModeAllScreens" xml:space="preserve">
     <value>All screens</value>
@@ -525,6 +579,27 @@
   </data>
   <data name="RatioAuto" xml:space="preserve">
     <value>Auto</value>
+  </data>
+  <data name="RecordingDiscard" xml:space="preserve">
+    <value>Discard: nothing is kept</value>
+  </data>
+  <data name="RecordingPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="RecordingRestart" xml:space="preserve">
+    <value>Start again</value>
+  </data>
+  <data name="RecordingResume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="RecordingSaving" xml:space="preserve">
+    <value>Saving…</value>
+  </data>
+  <data name="RecordingStop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="RecordingStopKey" xml:space="preserve">
+    <value>Stop ({0})</value>
   </data>
   <data name="Redo" xml:space="preserve">
     <value>Redo</value>
@@ -658,6 +733,15 @@
   <data name="SettingsTrayClickDescription" xml:space="preserve">
     <value>The icon of ScreenClip in the notification area. A right click always opens its menu.</value>
   </data>
+  <data name="SettingsVideoFolder" xml:space="preserve">
+    <value>Videos folder</value>
+  </data>
+  <data name="SettingsVideoFolderDescription" xml:space="preserve">
+    <value>Where the videos recorded go when they are saved automatically.</value>
+  </data>
+  <data name="SettingsVideoFolderReset" xml:space="preserve">
+    <value>Back to the default folder (Videos\Screen Recordings)</value>
+  </data>
   <data name="ShapeFilled" xml:space="preserve">
     <value>Filled</value>
   </data>
@@ -715,6 +799,9 @@
   <data name="ShortcutUsedByAction" xml:space="preserve">
     <value>Already used for “{0}”.</value>
   </data>
+  <data name="ShortcutVideo" xml:space="preserve">
+    <value>Record a video</value>
+  </data>
   <data name="ShortcutWindow" xml:space="preserve">
     <value>Capture a window</value>
   </data>
@@ -732,6 +819,12 @@
   </data>
   <data name="SizeSmall" xml:space="preserve">
     <value>Thin</value>
+  </data>
+  <data name="StopRecording" xml:space="preserve">
+    <value>Stop the recording</value>
+  </data>
+  <data name="SystemSound" xml:space="preserve">
+    <value>Sound of the computer</value>
   </data>
   <data name="TabEdit" xml:space="preserve">
     <value>Edit</value>
@@ -801,6 +894,9 @@
   </data>
   <data name="ToastShowInFolder" xml:space="preserve">
     <value>Show in folder</value>
+  </data>
+  <data name="ToastVideoSaved" xml:space="preserve">
+    <value>Video saved</value>
   </data>
   <data name="ToolArrow" xml:space="preserve">
     <value>Arrow</value>
@@ -942,6 +1038,24 @@
   </data>
   <data name="UpdatesTitle" xml:space="preserve">
     <value>Updates</value>
+  </data>
+  <data name="VideoCopied" xml:space="preserve">
+    <value>Video copied: paste it in a folder, a mail or a chat</value>
+  </data>
+  <data name="VideoModeToolTip" xml:space="preserve">
+    <value>Record a video of the area, the window or the screen you choose</value>
+  </data>
+  <data name="VideoOutput" xml:space="preserve">
+    <value>{0} × {1} px · MP4 · {2}</value>
+  </data>
+  <data name="VideoPause" xml:space="preserve">
+    <value>Pause (Space)</value>
+  </data>
+  <data name="VideoPlay" xml:space="preserve">
+    <value>Play (Space)</value>
+  </data>
+  <data name="VideoTimelineToolTip" xml:space="preserve">
+    <value>Click or drag to move in the video; the yellow handles cut the start and the end</value>
   </data>
   <data name="ZoomActual" xml:space="preserve">
     <value>Actual size (100%). Wheel: scroll; middle button or Space + drag: move the picture.</value>

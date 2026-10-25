@@ -33,6 +33,53 @@
       </Setter>
     </Style>
 
+    <!-- Video: on, the bar records instead of taking a picture (red, as recording is everywhere). -->
+    <Style x:Key="VideoToggle" TargetType="ToggleButton">
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToggleButton">
+            <Border x:Name="Back" CornerRadius="4" Padding="12,0" Height="36" Background="Transparent">
+              <ContentPresenter VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="#C42B1C" />
+                <Setter Property="Foreground" Value="White" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- The sound of a video: struck through when off. -->
+    <Style x:Key="AudioToggle" TargetType="ToggleButton">
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToggleButton">
+            <Border x:Name="Back" CornerRadius="4" Width="36" Height="36" Background="Transparent">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <Style x:Key="BarIcon" TargetType="Path" BasedOn="{StaticResource IconPath}">
       <Setter Property="Stroke" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Control}}" />
       <Setter Property="Margin" Value="0,0,8,0" />
@@ -121,13 +168,20 @@
           </StackPanel>
         </RadioButton>
         <Rectangle Style="{StaticResource BarDivider}" />
-        <StackPanel Orientation="Horizontal" Margin="12,0" Opacity="0.55" ToolTip="{local:Tr ComingSoon}">
-          <Path Style="{StaticResource IconPath}" Data="{StaticResource IconVideo}" Margin="0,0,8,0" />
-          <TextBlock Text="{local:Tr ModeVideo}" VerticalAlignment="Center" />
-          <Border CornerRadius="8" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center"
-                  Background="{DynamicResource SubtleFillColorSecondaryBrush}">
-            <TextBlock Text="{local:Tr ComingSoon}" FontSize="10" />
-          </Border>
+        <ToggleButton x:Name="VideoButton" Style="{StaticResource VideoToggle}" Click="Video_Click"
+                      ToolTip="{local:Tr VideoModeToolTip}" AutomationProperties.Name="{local:Tr ModeVideo}">
+          <StackPanel Orientation="Horizontal">
+            <Path Style="{StaticResource BarIcon}" Data="{StaticResource IconVideo}" />
+            <TextBlock Text="{local:Tr ModeVideo}" VerticalAlignment="Center" />
+          </StackPanel>
+        </ToggleButton>
+        <StackPanel x:Name="AudioOptions" Orientation="Horizontal" Margin="4,0,0,0" Visibility="Collapsed">
+          <ToggleButton x:Name="SystemSoundButton" Style="{StaticResource AudioToggle}" Click="Audio_Click">
+            <TextBlock x:Name="SystemSoundGlyph" Style="{StaticResource IconText}" FontSize="15" />
+          </ToggleButton>
+          <ToggleButton x:Name="MicrophoneButton" Style="{StaticResource AudioToggle}" Click="Audio_Click">
+            <TextBlock x:Name="MicrophoneGlyph" Style="{StaticResource IconText}" FontSize="15" />
+          </ToggleButton>
         </StackPanel>
         <Rectangle Style="{StaticResource BarDivider}" />
         <Button Width="36" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Cancel_Click"

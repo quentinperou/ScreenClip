@@ -19,8 +19,9 @@ internal sealed class CaptureSession
     private ElementFinder? _finder;
 
     public CaptureSession(BitmapSource image, PixelRect screen, IReadOnlyList<MonitorInfo> monitors,
-        IReadOnlyList<VisibleWindow> windows, CaptureMode mode)
+        IReadOnlyList<VisibleWindow> windows, CaptureMode mode, bool video = false)
     {
+        IsVideo = video;
         Image = image;
         Screen = screen;
         Monitors = monitors;
@@ -80,6 +81,16 @@ internal sealed class CaptureSession
     }
 
     public CaptureMode Mode { get; private set; }
+
+    /// <summary>The choice starts a video recording instead of taking a picture.</summary>
+    public bool IsVideo { get; private set; }
+
+    public void SetVideo(bool video)
+    {
+        IsVideo = video;
+        foreach (var overlay in _overlays)
+            overlay.ModeChanged();
+    }
 
     /// <summary>The choice, or null when cancelled. Raised once, after the overlays are closed.</summary>
     public event EventHandler<CaptureResult?>? Finished;

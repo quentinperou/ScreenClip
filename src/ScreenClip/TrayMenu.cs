@@ -83,10 +83,10 @@ internal static class TrayMenu
             () => App.Capture.RunAfterMenu(ShortcutAction.RepeatArea));
         repeat.IsEnabled = App.Capture.HasLastArea;
         menu.Items.Add(repeat);
-        var video = Item(Strings.Get("CaptureVideo"), PathIcon("IconVideo"), Hotkey.None, () => { });
-        video.InputGestureText = Strings.Get("ComingSoon");
-        video.IsEnabled = false;
-        menu.Items.Add(video);
+        menu.Items.Add(App.Capture.IsRecording
+            ? Item(Strings.Get("StopRecording"), GlyphIcon("\uE71A"), settings.GetShortcut(ShortcutAction.Video), () => Video.RecordingSession.Current?.Stop())
+            : Item(Strings.Get("CaptureVideo"), PathIcon("IconVideo"), settings.GetShortcut(ShortcutAction.Video),
+                () => App.Capture.RunAfterMenu(ShortcutAction.Video)));
 
         menu.Items.Add(new Separator());
         menu.Items.Add(Item(Strings.Get("OpenEditor"), GlyphIcon(""), Hotkey.None, () => App.OpenEditor()));

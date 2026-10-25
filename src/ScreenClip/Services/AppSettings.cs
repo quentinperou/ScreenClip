@@ -46,7 +46,8 @@ public enum ShortcutAction
     Window,
     Screen,
     RepeatArea,
-    AllScreens, // last: the hotkey ids are the values + 1
+    AllScreens,
+    Video, // last: the hotkey ids are the values + 1
 }
 
 /// <summary>
@@ -69,6 +70,7 @@ public sealed class AppSettings
         [ShortcutAction.Screen] = new(HotkeyModifiers.Control, Hotkey.PrintScreen),
         [ShortcutAction.RepeatArea] = new(HotkeyModifiers.Shift, Hotkey.PrintScreen),
         [ShortcutAction.AllScreens] = new(HotkeyModifiers.Control | HotkeyModifiers.Shift, Hotkey.PrintScreen),
+        [ShortcutAction.Video] = new(HotkeyModifiers.Control | HotkeyModifiers.Alt, Hotkey.PrintScreen),
     };
 
     private static readonly string FilePath = Path.Combine(
@@ -136,6 +138,20 @@ public sealed class AppSettings
     /// <summary>Name of the saved captures, with {date} and {time}; null: the default of the UI language.</summary>
     public string? FileNameTemplate { get; set; }
 
+    /// <summary>
+    /// Folder of the videos recorded, when they are saved automatically; null: Videos\Screen Recordings, where Windows'
+    /// Snipping Tool puts its recordings.
+    /// </summary>
+    public string? VideoFolder { get; set; }
+
+    // ---------------------------------------------------------------- Video
+
+    /// <summary>The recording takes the sound of the computer (a video, an alert). Chosen on the capture bar.</summary>
+    public bool RecordSystemSound { get; set; } = true;
+
+    /// <summary>The recording takes the microphone (to comment). Chosen on the capture bar.</summary>
+    public bool RecordMicrophone { get; set; }
+
     // ---------------------------------------------------------------- Editor
 
     /// <summary>The layout of the editor, as last used: the next capture opens with it.</summary>
@@ -161,6 +177,12 @@ public sealed class AppSettings
     /// </summary>
     public bool StartupConfigured { get; set; }
 
+    /// <summary>
+    /// Developer mode (About, as in TextCase; off by default): the thumbnail and the recording's bar and line stay in
+    /// screenshots, the thumbnail stays until closed, and <see cref="DevLog"/> writes what ScreenClip does.
+    /// </summary>
+    public bool DeveloperMode { get; set; }
+
     /// <summary>Ask GitHub for a newer version when the app starts.</summary>
     public bool CheckForUpdatesAtStartup { get; set; } = true;
 
@@ -180,8 +202,25 @@ public sealed class AppSettings
     [JsonIgnore]
     public string EffectiveExportFolder => string.IsNullOrWhiteSpace(ExportFolder) ? DefaultExportFolder : ExportFolder;
 
+    /// <summary>Where the editor saves a video: the export folder when one was chosen, else Videos\ScreenClip.</summary>
+    [JsonIgnore]
+    public string EffectiveVideoExportFolder => string.IsNullOrWhiteSpace(ExportFolder)
+        ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "ScreenClip")
+        : ExportFolder;
+
     public static string DefaultExportFolder =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "ScreenClip");
+
+    [JsonIgnore]
+    public string EffectiveVideoFolder => string.IsNullOrWhiteSpace(VideoFolder) ? DefaultVideoFolder : VideoFolder;
+
+    public static string DefaultVideoFolder =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "Screen Recordings");
+
+    /// <summary>The name of a video: the captures' own, when the user set one; else “Recording {date}…”.</summary>
+    [JsonIgnore]
+    public string EffectiveVideoFileNameTemplate =>
+        string.IsNullOrWhiteSpace(FileNameTemplate) ? Strings.Get("DefaultVideoFileName") : FileNameTemplate;
 
     [JsonIgnore]
     public string EffectiveFileNameTemplate =>

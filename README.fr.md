@@ -19,8 +19,8 @@
 
 ---
 
-> **Début du développement.** La version 0.2 capture, annote et met en forme les captures d'écran. La capture vidéo
-> viendra ensuite.
+> **Début du développement.** La version 0.2 capture, annote et met en forme les captures d'écran ; l'enregistrement
+> vidéo arrive avec la prochaine version.
 
 ## Fonctionnalités
 
@@ -104,6 +104,20 @@ et mise en forme comprises.
   bas à gauche l'ouvre ou l'affiche dans son dossier.
 - **Nouvelle capture** depuis l'éditeur : il s'efface le temps de choisir, et revient avec la capture.
 
+### Vidéo
+
+- **Ctrl + Alt + Impr. écran** (ou **Vidéo** dans la barre de capture, ou le menu de l'icône) : choisissez une zone,
+  une fenêtre ou un écran comme pour une image, et l'enregistrement démarre après un compte à rebours de 3 secondes.
+  Le **son de l'ordinateur** et le **micro** s'activent ou se coupent chacun dans la barre de capture.
+- Pendant l'enregistrement, un trait rouge pointillé entoure la zone et une petite barre montre la durée :
+  **pause**, **arrêter**, **recommencer**, **abandonner**. Ni l'un ni l'autre n'est jamais dans la vidéo. Le même
+  raccourci, ou un clic sur l'icône, l'arrête aussi.
+- La vidéo s'ouvre dans l'**éditeur** : lisez-la (**Espace**), coupez son début et sa fin avec les **poignées jaunes**
+  de la timeline, recadrez-la, annotez-la et mettez-la en forme comme une image (tout s'applique à chaque image).
+  **Enregistrer** écrit un **MP4** (avec le son) ou un **GIF** animé (léger, sans son), ou une image de l'instant
+  montré ; **Copier** met le MP4 dans le presse-papiers, prêt à coller dans un dossier, un mail ou une discussion.
+- Enregistrée automatiquement quand les captures le sont, dans **Vidéos\Enregistrements d'écran** (modifiable).
+
 ### La touche Impr. écran de Windows
 
 Windows 11 garde la touche **Impr. écran** pour son Outil Capture. Au premier lancement, ScreenClip propose de changer
@@ -133,6 +147,9 @@ parfois le changement qu'à la prochaine ouverture de session.
 - **Démarre avec Windows** (désactivable dans les paramètres).
 - **Mises à jour en un clic** : au démarrage, l'application consulte les Releases GitHub et propose la nouvelle
   version dans les paramètres, qui s'installe et relance l'application. Canal **Bêta** disponible.
+- **Mode développeur** (Paramètres → À propos) : la vignette et la barre d'enregistrement restent visibles dans les
+  captures d'écran, et un journal note ce que fait ScreenClip (jamais ce que montrent les captures), à envoyer quand
+  quelque chose ne marche pas.
 
 ### Raccourcis
 
@@ -143,11 +160,13 @@ parfois le changement qu'à la prochaine ouverture de session.
 | Capturer l'écran entier | `Ctrl` + `Impr. écran` |
 | Capturer tous les écrans | `Ctrl` + `Maj` + `Impr. écran` |
 | Refaire la dernière zone | `Maj` + `Impr. écran` |
+| Enregistrer une vidéo / l'arrêter | `Ctrl` + `Alt` + `Impr. écran` |
 | Pendant la sélection : carré / déplacer / annuler | `Maj` / `Espace` / `Échap` ou clic droit |
 | Éditeur : importer / coller / copier / enregistrer | `Ctrl+O` / `Ctrl+V` / `Ctrl+C` / `Ctrl+S` |
 | Éditeur : onglet Édition / Mise en forme | `Ctrl+1` / `Ctrl+2` |
 | Éditeur : annuler / rétablir | `Ctrl+Z` / `Ctrl+Y` |
 | Édition : zoom / ajuster | `Ctrl` + molette, `Ctrl++` / `Ctrl+-` / `Ctrl+0` |
+| Une vidéo : lire / pause | `Espace` |
 | Édition : sélectionner, recadrer, flèche, rectangle, ellipse, ligne, stylo, surligneur, texte, numéro, curseur, masquer | `V` `C` `A` `R` `O` `L` `P` `H` `T` `N` `S` `B` |
 
 ### À venir
@@ -155,7 +174,10 @@ parfois le changement qu'à la prochaine ouverture de session.
 - [x] Éditeur de mise en forme, fausses fenêtres, ordinateur portable et téléphone.
 - [x] Vos propres préréglages enregistrés.
 - [x] Annotations : flèches, formes, texte, étapes numérotées, surligneur, pointeur de souris, masquage, recadrage.
-- [ ] Capture vidéo / GIF, avec son édition (couper, recadrer, annoter, un pointeur animé).
+- [x] Vidéo : une zone, une fenêtre ou un écran, avec le son de l'ordinateur et le micro ; couper, recadrer, annoter,
+  mettre en forme ; MP4 ou GIF.
+- [ ] Vidéo, ensuite : des annotations qui apparaissent et disparaissent sur la timeline, le pointeur redessiné, des
+  effets de clic, un pointeur animé.
 
 ## Installation
 
@@ -223,7 +245,7 @@ dotnet run --project src\ScreenClip       # lance l'application (elle ouvre l'é
 Définissez `SCREENCLIP_LANG` à `en` ou `fr`, ou `SCREENCLIP_THEME` à `Light` ou `Dark`, avant de lancer l'application
 pour voir l'autre langue ou l'autre thème sans changer de réglage. `SCREENCLIP_CAPTURABLE=1` laisse les vignettes
 apparaître dans les captures d'écran (elles en sont normalement exclues, pour ne jamais se retrouver dans la capture
-suivante). `SCREENCLIP_TRACE=1` écrit ce que le mode Zone trouve sous le pointeur dans `%TEMP%\ScreenClip-trace.txt`.
+suivante), comme le mode développeur. `SCREENCLIP_TRACE=1` écrit ce que le mode Zone trouve sous le pointeur dans `%TEMP%\ScreenClip-trace.txt`.
 `SCREENCLIP_DEMO_SCREEN=<image>` fait figer cette image au lieu de l'écran lors d'une capture (pour les images du
 README). ScreenClip ne tourne qu'une fois par session : quittez-le depuis son menu de notification avant d'en
 lancer une autre version.

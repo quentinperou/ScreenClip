@@ -2,10 +2,10 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <!-- No Windows SDK projection yet: it adds a large assembly and nothing uses WinRT so far (the video capture
-         will need Windows.Graphics.Capture: net10.0-windows10.0.19041.0 then). Windows 10 2004 at least is
-         required by the installer (MinVersion). -->
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- The Windows SDK projection, for the video capture (Windows.Graphics.Capture: borderless capture needs the
+         22621 SDK). Its assembly is only loaded when a video is recorded. -->
+    <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <UseWPF>true</UseWPF>
     <AssemblyName>ScreenClip</AssemblyName>
     <RootNamespace>ScreenClip</RootNamespace>
@@ -21,6 +21,8 @@
          waiting for the JIT). -->
     <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
     <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- Frames copied between Media Foundation buffers and SkiaSharp without extra copies. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,6 +37,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ScreenClip.Core\ScreenClip.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Video: Direct3D 11 for the frames, Media Foundation to encode and decode H.264 / AAC (Vortice, MIT), WASAPI
+         for the sound of the computer and the microphone (NAudio, MIT; 2.2.1, the long-used one). Loaded only when a
+         video is recorded or opened. -->
+    <PackageReference Include="Vortice.Direct3D11" Version="3.8.3" />
+    <PackageReference Include="Vortice.MediaFoundation" Version="3.8.3" />
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
   </ItemGroup>
 
 </Project>

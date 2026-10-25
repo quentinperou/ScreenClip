@@ -70,6 +70,12 @@
   <data name="ArrowStraight" xml:space="preserve">
     <value>Simple</value>
   </data>
+  <data name="AudioOff" xml:space="preserve">
+    <value>{0} : désactivé</value>
+  </data>
+  <data name="AudioOn" xml:space="preserve">
+    <value>{0} : activé</value>
+  </data>
   <data name="BackgroundBlack" xml:space="preserve">
     <value>Noir</value>
   </data>
@@ -184,6 +190,24 @@
   <data name="DefaultFileName" xml:space="preserve">
     <value>Capture {date} à {time}</value>
   </data>
+  <data name="DefaultVideoFileName" xml:space="preserve">
+    <value>Enregistrement {date} à {time}</value>
+  </data>
+  <data name="DeveloperLog" xml:space="preserve">
+    <value>Le journal</value>
+  </data>
+  <data name="DeveloperLogDescription" xml:space="preserve">
+    <value>À envoyer quand quelque chose ne marche pas.</value>
+  </data>
+  <data name="DeveloperLogOpen" xml:space="preserve">
+    <value>Ouvrir le journal</value>
+  </data>
+  <data name="DeveloperMode" xml:space="preserve">
+    <value>Mode développeur</value>
+  </data>
+  <data name="DeveloperModeDescription" xml:space="preserve">
+    <value>La vignette, la barre et le cadre d'enregistrement restent visibles dans les captures d'écran (et dans les vidéos enregistrées pendant ce temps), la vignette reste jusqu'à ce qu'on la ferme, et un journal note ce que fait ScreenClip (jamais ce que montrent les captures).</value>
+  </data>
   <data name="EditorAddress" xml:space="preserve">
     <value>Adresse</value>
   </data>
@@ -271,8 +295,17 @@
   <data name="EditorWindowTitle" xml:space="preserve">
     <value>Titre</value>
   </data>
+  <data name="ErrorExport" xml:space="preserve">
+    <value>Impossible d'exporter la vidéo : {0}</value>
+  </data>
   <data name="ErrorOpenImage" xml:space="preserve">
     <value>Ce fichier n'a pas pu être ouvert comme image : {0}</value>
+  </data>
+  <data name="ErrorOpenVideo" xml:space="preserve">
+    <value>Impossible d'ouvrir la vidéo : {0}</value>
+  </data>
+  <data name="ErrorRecording" xml:space="preserve">
+    <value>Impossible d'enregistrer la vidéo : {0}</value>
   </data>
   <data name="ErrorSave" xml:space="preserve">
     <value>La capture n'a pas pu être enregistrée : {0}</value>
@@ -289,14 +322,29 @@
   <data name="ErrorUpdateRateLimited" xml:space="preserve">
     <value>GitHub limite le nombre de vérifications, réessayez dans un moment.</value>
   </data>
+  <data name="ExportingGif" xml:space="preserve">
+    <value>Création du GIF…</value>
+  </data>
+  <data name="ExportingVideo" xml:space="preserve">
+    <value>Export de la vidéo…</value>
+  </data>
+  <data name="FilterGif" xml:space="preserve">
+    <value>GIF animé</value>
+  </data>
   <data name="FilterImages" xml:space="preserve">
     <value>Images</value>
   </data>
   <data name="FilterJpeg" xml:space="preserve">
     <value>Image JPEG</value>
   </data>
+  <data name="FilterMp4" xml:space="preserve">
+    <value>Vidéo MP4</value>
+  </data>
   <data name="FilterPng" xml:space="preserve">
     <value>Image PNG</value>
+  </data>
+  <data name="FilterThisFrame" xml:space="preserve">
+    <value>{0}, cette image seulement</value>
   </data>
   <data name="FilterWebp" xml:space="preserve">
     <value>Image WebP</value>
@@ -339,6 +387,9 @@
   </data>
   <data name="HintSquare" xml:space="preserve">
     <value>carré</value>
+  </data>
+  <data name="HintVideoStart" xml:space="preserve">
+    <value>L'enregistrement démarre 3 s après le choix</value>
   </data>
   <data name="HintWheel" xml:space="preserve">
     <value>Molette : plus grand ou plus petit</value>
@@ -396,6 +447,9 @@
   </data>
   <data name="MaskSolid" xml:space="preserve">
     <value>Pavé</value>
+  </data>
+  <data name="Microphone" xml:space="preserve">
+    <value>Micro</value>
   </data>
   <data name="ModeAllScreens" xml:space="preserve">
     <value>Tous les écrans</value>
@@ -525,6 +579,27 @@
   </data>
   <data name="RatioAuto" xml:space="preserve">
     <value>Auto</value>
+  </data>
+  <data name="RecordingDiscard" xml:space="preserve">
+    <value>Abandonner : rien n'est gardé</value>
+  </data>
+  <data name="RecordingPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="RecordingRestart" xml:space="preserve">
+    <value>Recommencer</value>
+  </data>
+  <data name="RecordingResume" xml:space="preserve">
+    <value>Reprendre</value>
+  </data>
+  <data name="RecordingSaving" xml:space="preserve">
+    <value>Enregistrement…</value>
+  </data>
+  <data name="RecordingStop" xml:space="preserve">
+    <value>Arrêter</value>
+  </data>
+  <data name="RecordingStopKey" xml:space="preserve">
+    <value>Arrêter ({0})</value>
   </data>
   <data name="Redo" xml:space="preserve">
     <value>Rétablir</value>
@@ -658,6 +733,15 @@
   <data name="SettingsTrayClickDescription" xml:space="preserve">
     <value>L'icône de ScreenClip dans la zone de notification. Le clic droit ouvre toujours son menu.</value>
   </data>
+  <data name="SettingsVideoFolder" xml:space="preserve">
+    <value>Dossier des vidéos</value>
+  </data>
+  <data name="SettingsVideoFolderDescription" xml:space="preserve">
+    <value>Là où vont les vidéos enregistrées, quand elles sont enregistrées automatiquement.</value>
+  </data>
+  <data name="SettingsVideoFolderReset" xml:space="preserve">
+    <value>Revenir au dossier par défaut (Vidéos\Enregistrements d'écran)</value>
+  </data>
   <data name="ShapeFilled" xml:space="preserve">
     <value>Plein</value>
   </data>
@@ -715,6 +799,9 @@
   <data name="ShortcutUsedByAction" xml:space="preserve">
     <value>Déjà utilisé pour « {0} ».</value>
   </data>
+  <data name="ShortcutVideo" xml:space="preserve">
+    <value>Enregistrer une vidéo</value>
+  </data>
   <data name="ShortcutWindow" xml:space="preserve">
     <value>Capturer une fenêtre</value>
   </data>
@@ -732,6 +819,12 @@
   </data>
   <data name="SizeSmall" xml:space="preserve">
     <value>Fin</value>
+  </data>
+  <data name="StopRecording" xml:space="preserve">
+    <value>Arrêter l'enregistrement</value>
+  </data>
+  <data name="SystemSound" xml:space="preserve">
+    <value>Son de l'ordinateur</value>
   </data>
   <data name="TabEdit" xml:space="preserve">
     <value>Édition</value>
@@ -801,6 +894,9 @@
   </data>
   <data name="ToastShowInFolder" xml:space="preserve">
     <value>Afficher dans le dossier</value>
+  </data>
+  <data name="ToastVideoSaved" xml:space="preserve">
+    <value>Vidéo enregistrée</value>
   </data>
   <data name="ToolArrow" xml:space="preserve">
     <value>Flèche</value>
@@ -942,6 +1038,24 @@
   </data>
   <data name="UpdatesTitle" xml:space="preserve">
     <value>Mises à jour</value>
+  </data>
+  <data name="VideoCopied" xml:space="preserve">
+    <value>Vidéo copiée : collez-la dans un dossier, un mail ou une discussion</value>
+  </data>
+  <data name="VideoModeToolTip" xml:space="preserve">
+    <value>Filmer la zone, la fenêtre ou l'écran choisi</value>
+  </data>
+  <data name="VideoOutput" xml:space="preserve">
+    <value>{0} × {1} px · MP4 · {2}</value>
+  </data>
+  <data name="VideoPause" xml:space="preserve">
+    <value>Pause (Espace)</value>
+  </data>
+  <data name="VideoPlay" xml:space="preserve">
+    <value>Lire (Espace)</value>
+  </data>
+  <data name="VideoTimelineToolTip" xml:space="preserve">
+    <value>Cliquez ou glissez pour aller dans la vidéo ; les poignées jaunes coupent le début et la fin</value>
   </data>
   <data name="ZoomActual" xml:space="preserve">
     <value>Taille réelle (100 %). Molette : défiler ; bouton du milieu ou Espace + glisser : déplacer l'image.</value>

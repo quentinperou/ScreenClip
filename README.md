@@ -19,7 +19,8 @@
 
 ---
 
-> **Early development.** Version 0.2 captures, annotates and lays out screenshots. Video capture will come after.
+> **Early development.** Version 0.2 captures, annotates and lays out screenshots; video recording comes with the next
+> version.
 
 ## Features
 
@@ -98,6 +99,19 @@ picture, annotations and layout included.
   shows it in its folder.
 - **New capture** from the editor: it steps aside while you choose, and comes back with the capture.
 
+### Video
+
+- **Ctrl + Alt + Print Screen** (or **Video** on the capture bar, or the menu of the icon): choose an area, a window
+  or a screen as for a picture, and the recording starts after a 3 second countdown. The **sound of the computer**
+  and the **microphone** are each turned on or off on the capture bar.
+- While it records, a dashed red line marks the area and a small bar shows the time: **pause**, **stop**, **start
+  again**, **discard**. Neither is ever in the video. The same shortcut, or a click on the icon, stops it too.
+- The video opens in the **editor**: play it (**Space**), cut its start and end with the **yellow handles** of the
+  timeline, crop it, annotate it and lay it out as a picture (everything applies to every frame). **Save** writes an
+  **MP4** (with the sound) or an animated **GIF** (small, without sound), or a picture of the frame shown; **Copy**
+  puts the MP4 on the clipboard, ready to paste in a folder, a mail or a chat.
+- Saved automatically when the captures are, in **Videos\Screen Recordings** (can be changed).
+
 ### Windows' Print Screen key
 
 Windows 11 keeps the **Print Screen** key for its Snipping Tool. At the first start, ScreenClip offers to change that
@@ -125,6 +139,8 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
 - **Starts with Windows** (can be turned off in Settings).
 - **Updates in one click**: at startup the app checks the GitHub Releases and offers the new version in Settings,
   which installs itself and restarts the app. **Beta** channel available.
+- **Developer mode** (Settings → About): the thumbnail and the recording's bar stay visible in screenshots, and a
+  log notes what ScreenClip does (never what the captures show), to send when something does not work.
 
 ### Shortcuts
 
@@ -135,11 +151,13 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
 | Capture the full screen | `Ctrl` + `Print Screen` |
 | Capture all the screens | `Ctrl` + `Shift` + `Print Screen` |
 | Capture the last area again | `Shift` + `Print Screen` |
+| Record a video / stop it | `Ctrl` + `Alt` + `Print Screen` |
 | While selecting: square / move / cancel | `Shift` / `Space` / `Esc` or right click |
 | Editor: import / paste / copy / save | `Ctrl+O` / `Ctrl+V` / `Ctrl+C` / `Ctrl+S` |
 | Editor: Edit tab / Layout tab | `Ctrl+1` / `Ctrl+2` |
 | Editor: undo / redo | `Ctrl+Z` / `Ctrl+Y` |
 | Edit tab: zoom / fit | `Ctrl` + wheel, `Ctrl++` / `Ctrl+-` / `Ctrl+0` |
+| A video: play / pause | `Space` |
 | Edit tab: select, crop, arrow, rectangle, ellipse, line, pen, highlighter, text, number, pointer, hide | `V` `C` `A` `R` `O` `L` `P` `H` `T` `N` `S` `B` |
 
 ### Coming next
@@ -147,7 +165,10 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
 - [x] Layout editor, fake windows, laptop and phone.
 - [x] Your own saved presets.
 - [x] Annotations: arrows, shapes, text, numbered steps, highlighter, mouse pointer, hide, crop.
-- [ ] Video / GIF capture, with its own editing (trim, crop, annotations, an animated pointer).
+- [x] Video: an area, a window or a screen, with the sound of the computer and the microphone; cut, crop, annotate,
+  lay out; MP4 or GIF.
+- [ ] Video, next: annotations that come and go on the timeline, the pointer redrawn, click effects, an animated
+  pointer.
 
 ## Installation
 
@@ -212,7 +233,7 @@ dotnet run --project src\ScreenClip       # run the app (it opens the editor; --
 
 Set `SCREENCLIP_LANG` to `en` or `fr`, or `SCREENCLIP_THEME` to `Light` or `Dark`, before starting the app to check
 the other language or theme without changing any setting. `SCREENCLIP_CAPTURABLE=1` leaves the thumbnails in
-screenshots (they are normally excluded, so that they never show in the next capture). `SCREENCLIP_TRACE=1` writes
+screenshots (they are normally excluded, so that they never show in the next capture), as the developer mode does. `SCREENCLIP_TRACE=1` writes
 what the Area mode finds under the pointer to `%TEMP%\ScreenClip-trace.txt`. `SCREENCLIP_DEMO_SCREEN=<picture>`
 makes a capture freeze that picture instead of the screen (for the README pictures). ScreenClip runs once per
 session: quit it from its notification menu before starting another build.

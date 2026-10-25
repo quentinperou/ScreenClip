@@ -113,8 +113,8 @@ internal sealed class ElementFinder : IDisposable
                 : detector.BoxesAt(request.X - request.Region.X, request.Y - request.Region.Y)
                     .Select(b => new PixelRect(b.X + request.Region.X, b.Y + request.Region.Y, b.Width, b.Height)).ToList();
 
-            if (TracePath is { } trace)
-                Trace(trace, request, elements, boxes, clock.Elapsed - started);
+            if (TracePath is not null || DevLog.Enabled)
+                Trace(request, elements, boxes, clock.Elapsed - started);
             if (!_stopped)
                 _dispatcher.BeginInvoke(() => _found(request, elements, boxes));
         }
@@ -125,15 +125,26 @@ internal sealed class ElementFinder : IDisposable
     private static readonly string? TracePath =
         Environment.GetEnvironmentVariable("SCREENCLIP_TRACE") == "1" ? Path.Combine(Path.GetTempPath(), "ScreenClip-trace.txt") : null;
 
-    private static void Trace(string path, Request request, IReadOnlyList<PixelRect> elements, IReadOnlyList<PixelRect> boxes, TimeSpan took)
+    private static string? s_lastFound;
+
+    // Also in the log of developer mode.
+    private static void Trace(Request request, IReadOnlyList<PixelRect> elements, IReadOnlyList<PixelRect> boxes, TimeSpan took)
     {
+        static string Smallest(IReadOnlyList<PixelRect> rects) =>
+            rects.Count == 0 ? "-" : rects.MinBy(r => (long)r.Width * r.Height).ToString();
+        string found = $"{elements.Count} elements (smallest {Smallest(elements)}), {boxes.Count} blocks (smallest {Smallest(boxes)})";
+        string line = $"elements: window {request.Window.Handle} at {request.X},{request.Y}: {found}, {took.TotalMilliseconds:0} ms";
+        // The log notes a lookup only when it found something else: the pointer moving over the same element, or the
+        // same point looked at again while Chrome builds its tree, would fill it.
+        string key = $"{request.Window.Handle} {found}";
+        if (key != s_lastFound)
+            DevLog.Write(line);
+        s_lastFound = key;
+        if (TracePath is not { } path)
+            return;
         try
         {
-            static string Smallest(IReadOnlyList<PixelRect> rects) =>
-                rects.Count == 0 ? "-" : rects.MinBy(r => (long)r.Width * r.Height).ToString();
-            File.AppendAllText(path, $"{DateTime.Now:HH:mm:ss.fff} window {request.Window.Handle} at {request.X},{request.Y}: "
-                + $"{elements.Count} elements (smallest {Smallest(elements)}), {boxes.Count} blocks (smallest {Smallest(boxes)}), "
-                + $"{took.TotalMilliseconds:0} ms{Environment.NewLine}");
+            File.AppendAllText(path, $"{DateTime.Now:HH:mm:ss.fff} {line}{Environment.NewLine}");
         }
         catch (IOException)
         {

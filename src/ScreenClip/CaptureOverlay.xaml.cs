@@ -65,7 +65,6 @@ public partial class CaptureOverlay : Window
             Children = { new RectangleGeometry(new Rect(0, 0, 100_000, 100_000)), _hole },
         };
         Toolbar.Visibility = showBars ? Visibility.Visible : Visibility.Collapsed;
-        AllScreensButton.Visibility = session.HasSeveralScreens ? Visibility.Visible : Visibility.Collapsed;
         Hints.Visibility = showBars ? Visibility.Visible : Visibility.Collapsed;
 
         SourceInitialized += (_, _) => Place();
@@ -132,6 +131,11 @@ public partial class CaptureOverlay : Window
         AreaButton.IsChecked = _session.Mode == CaptureMode.Area;
         WindowButton.IsChecked = _session.Mode == CaptureMode.Window;
         ScreenButton.IsChecked = _session.Mode == CaptureMode.Screen;
+        // A video films one screen: all of them at once is for pictures.
+        AllScreensButton.Visibility = _session.HasSeveralScreens && !_session.IsVideo ? Visibility.Visible : Visibility.Collapsed;
+        VideoButton.IsChecked = _session.IsVideo;
+        AudioOptions.Visibility = _session.IsVideo ? Visibility.Visible : Visibility.Collapsed;
+        ShowAudio();
         _syncingMode = false;
         ResetDrag();
         FillHints();
@@ -153,6 +157,32 @@ public partial class CaptureOverlay : Window
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => _session.Cancel();
 
+    private void Video_Click(object sender, RoutedEventArgs e) => _session.SetVideo(VideoButton.IsChecked == true);
+
+    // The sound of the video, kept for the next one.
+    private void Audio_Click(object sender, RoutedEventArgs e)
+    {
+        App.Settings.RecordSystemSound = SystemSoundButton.IsChecked == true;
+        App.Settings.RecordMicrophone = MicrophoneButton.IsChecked == true;
+        App.Settings.Save();
+        ShowAudio();
+    }
+
+    private void ShowAudio()
+    {
+        bool sound = App.Settings.RecordSystemSound, microphone = App.Settings.RecordMicrophone;
+        SystemSoundButton.IsChecked = sound;
+        MicrophoneButton.IsChecked = microphone;
+        SystemSoundGlyph.Text = sound ? "\uE767" : "\uE74F";
+        MicrophoneGlyph.Text = microphone ? "\uE720" : "\uEC54";
+        string soundText = Strings.Format(sound ? "AudioOn" : "AudioOff", Strings.Get("SystemSound"));
+        string microphoneText = Strings.Format(microphone ? "AudioOn" : "AudioOff", Strings.Get("Microphone"));
+        SystemSoundButton.ToolTip = soundText;
+        MicrophoneButton.ToolTip = microphoneText;
+        System.Windows.Automation.AutomationProperties.SetName(SystemSoundButton, Strings.Get("SystemSound"));
+        System.Windows.Automation.AutomationProperties.SetName(MicrophoneButton, Strings.Get("Microphone"));
+    }
+
     private void FillHints()
     {
         HintsPanel.Children.Clear();
@@ -172,6 +202,8 @@ public partial class CaptureOverlay : Window
                 AddHint(null, Strings.Get("HintClickScreen"));
                 break;
         }
+        if (_session.IsVideo)
+            AddHint(null, Strings.Get("HintVideoStart"));
         AddHint(Strings.Find("KeyEscape") ?? "Esc", Strings.Get("HintCancel"));
     }
 

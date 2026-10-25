@@ -80,6 +80,8 @@ public partial class SettingsWindow : Window
         Closed += (_, _) => Updater.Checked -= Updater_Checked;
 
         VersionText.Text = Strings.Format("AboutVersion", Updater.CurrentVersion);
+        DeveloperModeBox.IsChecked = _settings.DeveloperMode;
+        OpenLogButton.IsEnabled = _settings.DeveloperMode;
         _initialized = true;
     }
 
@@ -205,6 +207,8 @@ public partial class SettingsWindow : Window
                     ShortcutAction.Window => "IconWindow",
                     ShortcutAction.Screen => "IconScreen",
                     ShortcutAction.RepeatArea => "IconRepeat",
+                    ShortcutAction.AllScreens => "IconAllScreens",
+                    ShortcutAction.Video => "IconVideo",
                     _ => "IconArea",
                 }),
                 Margin = new Thickness(2, 0, 18, 0),
@@ -310,6 +314,28 @@ public partial class SettingsWindow : Window
         ExportFolderText.Text = _settings.EffectiveExportFolder;
         ExportFolderText.ToolTip = _settings.EffectiveExportFolder;
         ResetExportFolderLink.Visibility = string.IsNullOrWhiteSpace(_settings.ExportFolder) ? Visibility.Collapsed : Visibility.Visible;
+        VideoFolderText.Text = _settings.EffectiveVideoFolder;
+        VideoFolderText.ToolTip = _settings.EffectiveVideoFolder;
+        ResetVideoFolderLink.Visibility = string.IsNullOrWhiteSpace(_settings.VideoFolder) ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void BrowseVideoFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog { Title = Strings.Get("SettingsVideoFolder"), InitialDirectory = _settings.EffectiveVideoFolder };
+        if (dialog.ShowDialog(this) != true)
+            return;
+        _settings.VideoFolder = dialog.FolderName;
+        _settings.Save();
+        ShowSaveFolder();
+    }
+
+    private void OpenVideoFolder_Click(object sender, RoutedEventArgs e) => ClipActions.OpenFolder(_settings.EffectiveVideoFolder);
+
+    private void ResetVideoFolder_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.VideoFolder = null;
+        _settings.Save();
+        ShowSaveFolder();
     }
 
     private void BrowseExportFolder_Click(object sender, RoutedEventArgs e)
@@ -470,6 +496,30 @@ public partial class SettingsWindow : Window
     // ---------------------------------------------------------------- Other
 
     private void Quit_Click(object sender, RoutedEventArgs e) => App.Quit();
+
+    private void DeveloperMode_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_initialized)
+            return;
+        bool on = DeveloperModeBox.IsChecked == true;
+        App.SetDeveloperMode(on);
+        OpenLogButton.IsEnabled = on;
+    }
+
+    // The log in the app that opens text files (Notepad), created empty if there is none yet.
+    private void OpenLog_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(DevLog.FilePath)!);
+            if (!File.Exists(DevLog.FilePath))
+                File.WriteAllText(DevLog.FilePath, "");
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(DevLog.FilePath) { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+        }
+    }
 
     private void Link_RequestNavigate(object sender, RequestNavigateEventArgs e)
     {

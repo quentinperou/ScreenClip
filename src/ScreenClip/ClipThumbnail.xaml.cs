@@ -48,8 +48,8 @@ public partial class ClipThumbnail : Window
             // Never activated (the app in use keeps the keyboard), no taskbar button, not in the next captures.
             long style = (long)GetWindowLongPtr(hwnd, GWL_EXSTYLE);
             SetWindowLongPtr(hwnd, GWL_EXSTYLE, new IntPtr(style | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW));
-            // SCREENCLIP_CAPTURABLE=1 leaves it in the screenshots (README pictures, checking it from a script).
-            if (Environment.GetEnvironmentVariable("SCREENCLIP_CAPTURABLE") != "1")
+            // Developer mode (or SCREENCLIP_CAPTURABLE=1) leaves it in the screenshots (README pictures, scripts).
+            if (!App.CapturableWindows)
                 SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE);
         };
         DpiChanged += (_, _) => Dispatcher.BeginInvoke(Arrange, DispatcherPriority.Loaded);
@@ -121,7 +121,8 @@ public partial class ClipThumbnail : Window
     private void RestartTimer()
     {
         _timer.Stop();
-        if (!_pinned && !_closing && !IsMouseOver)
+        // Developer mode: it stays until closed, for a screenshot.
+        if (!_pinned && !_closing && !IsMouseOver && !App.Settings.DeveloperMode)
             _timer.Start();
     }
 

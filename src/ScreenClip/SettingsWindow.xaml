@@ -160,6 +160,19 @@
             </StackPanel>
           </DockPanel>
         </Border>
+
+        <!-- Quitting: the app has no window of its own to close (as in TextCase, at the end of General). -->
+        <Border Style="{StaticResource Card}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xE711;" />
+            <Button DockPanel.Dock="Right" Content="{local:Tr Quit}" MinWidth="160" VerticalAlignment="Center"
+                    Margin="16,0,0,0" Click="Quit_Click" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{local:Tr SettingsQuit}" />
+              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsQuitDescription}" />
+            </StackPanel>
+          </DockPanel>
+        </Border>
       </StackPanel>
     </ScrollViewer>
 
@@ -302,6 +315,25 @@
           </DockPanel>
         </Border>
 
+        <!-- The videos recorded, when they are saved automatically: where Windows' Snipping Tool puts its own. -->
+        <Border Style="{StaticResource Card}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xE714;" VerticalAlignment="Top" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+              <Button Content="{local:Tr Browse}" Margin="0,0,8,0" Click="BrowseVideoFolder_Click" />
+              <Button Content="{local:Tr OpenFolder}" Click="OpenVideoFolder_Click" />
+            </StackPanel>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{local:Tr SettingsVideoFolder}" />
+              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsVideoFolderDescription}" />
+              <TextBlock x:Name="VideoFolderText" Style="{StaticResource CardDescription}" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" />
+              <TextBlock x:Name="ResetVideoFolderLink" Style="{StaticResource CardDescription}" Margin="0,6,0,0">
+                <Hyperlink Click="ResetVideoFolder_Click"><Run Text="{local:Tr SettingsVideoFolderReset}" /></Hyperlink>
+              </TextBlock>
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
         <Border Style="{StaticResource Card}">
           <DockPanel>
             <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xE8AC;" VerticalAlignment="Top" />
@@ -361,7 +393,7 @@
       </Border>
     </ScrollViewer>
 
-    <!-- About, and quitting the app (it has no window of its own to close). -->
+    <!-- About, and developer mode. -->
     <ScrollViewer x:Name="AboutPage" Grid.Row="2" Grid.Column="1" Style="{StaticResource Page}" Margin="16,0,0,0">
       <StackPanel>
         <Border Style="{StaticResource Card}">
@@ -382,16 +414,30 @@
             </StackPanel>
           </DockPanel>
         </Border>
-        <Border Style="{StaticResource Card}">
-          <DockPanel>
-            <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xE7E8;" />
-            <Button DockPanel.Dock="Right" Content="{local:Tr Quit}" MinWidth="160" VerticalAlignment="Center"
-                    Margin="16,0,0,0" Click="Quit_Click" />
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="{local:Tr SettingsQuit}" />
-              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsQuitDescription}" />
-            </StackPanel>
-          </DockPanel>
+        <!-- Developer mode (as in TextCase): what ScreenClip hides from captures stays visible, and a log. -->
+        <Border Style="{StaticResource Card}" Padding="0">
+          <StackPanel>
+            <DockPanel Margin="16,14">
+              <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xEC7A;" />
+              <CheckBox x:Name="DeveloperModeBox" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
+                        VerticalAlignment="Center" Margin="16,0,0,0"
+                        Checked="DeveloperMode_Changed" Unchecked="DeveloperMode_Changed"
+                        AutomationProperties.Name="{local:Tr DeveloperMode}" />
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{local:Tr DeveloperMode}" />
+                <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr DeveloperModeDescription}" />
+              </StackPanel>
+            </DockPanel>
+            <Rectangle Style="{StaticResource CardDivider}" />
+            <DockPanel Style="{StaticResource CardSubRow}">
+              <Button x:Name="OpenLogButton" DockPanel.Dock="Right" Content="{local:Tr DeveloperLogOpen}" MinWidth="160"
+                      VerticalAlignment="Center" Margin="16,0,0,0" Click="OpenLog_Click" />
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{local:Tr DeveloperLog}" />
+                <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr DeveloperLogDescription}" />
+              </StackPanel>
+            </DockPanel>
+          </StackPanel>
         </Border>
       </StackPanel>
     </ScrollViewer>

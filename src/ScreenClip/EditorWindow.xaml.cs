@@ -10,6 +10,7 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 using ScreenClip.Core;
 using ScreenClip.Core.Composition;
+using ScreenClip.Core.Video;
 using ScreenClip.Services;
 using SkiaSharp;
 
@@ -70,6 +71,7 @@ public partial class EditorWindow : Window
         DragOver += Editor_DragOver;
         Drop += Editor_Drop;
         DpiChanged += (_, _) => RequestRender();
+        Closing += (_, _) => CloseVideo();
         Closed += (_, _) =>
         {
             App.Settings.Save();
@@ -99,9 +101,16 @@ public partial class EditorWindow : Window
     /// <summary>Shows <paramref name="image"/> (a capture, an imported or pasted picture) to be laid out.</summary>
     internal void Load(BitmapSource image, DateTime takenAt)
     {
+        CloseVideo();
+        SetCapture(Imaging.ToSkia(image), takenAt);
+    }
+
+    /// <summary>A new picture (or the first frame of a video): nothing drawn on it yet.</summary>
+    private void SetCapture(SKImage capture, DateTime takenAt)
+    {
         ResetAnnotations();
         _capture?.Dispose();
-        _capture = Imaging.ToSkia(image);
+        _capture = capture;
         _takenAt = takenAt;
         // The “blurred capture” swatch shows this capture blurred: what it gives is seen at once.
         if (_blurSwatch is not null)
@@ -136,7 +145,8 @@ public partial class EditorWindow : Window
         bool hasPicture = _capture is not null;
         EmptyState.Visibility = hasPicture ? Visibility.Collapsed : Visibility.Visible;
         Preview.Visibility = hasPicture ? Visibility.Visible : Visibility.Collapsed;
-        DragHint.Visibility = hasPicture && !_editTab ? Visibility.Visible : Visibility.Collapsed;
+        DragHint.Visibility = hasPicture && !_editTab && !IsVideo ? Visibility.Visible : Visibility.Collapsed;
+        VideoBar.Visibility = IsVideo ? Visibility.Visible : Visibility.Collapsed;
         ToolRail.IsEnabled = EditPanel.IsEnabled = hasPicture;
         ZoomBar.Visibility = hasPicture && _editTab ? Visibility.Visible : Visibility.Collapsed;
         CopyButton.IsEnabled = SaveButton.IsEnabled = hasPicture;
@@ -178,6 +188,7 @@ public partial class EditorWindow : Window
         };
         if (ScreenGrabber.Monitors().Count > 1)
             actions.Add((ShortcutAction.AllScreens, "CaptureAllScreens", "IconAllScreens"));
+        actions.Add((ShortcutAction.Video, "CaptureVideo", "IconVideo"));
         foreach (var (action, text, icon) in actions)
         {
             var item = new MenuItem
@@ -194,9 +205,10 @@ public partial class EditorWindow : Window
 
     private void CaptureArea_Click(object sender, RoutedEventArgs e) => StartCapture(ShortcutAction.Area);
 
-    // The editor steps aside while the screen is frozen, and comes back with the capture.
+    // The editor steps aside while the screen is frozen, and comes back with the capture (a video: once recorded).
     private void StartCapture(ShortcutAction action)
     {
+        StopPlayback();
         Hide();
         App.Capture.RunForEditor(action, clip =>
         {
@@ -857,7 +869,9 @@ public partial class EditorWindow : Window
         // The size of what is exported, in both tabs: the part kept, laid out.
         var kept = _history.Current.Visible(_capture.Width, _capture.Height);
         var output = ClipLayout.Measure(kept.Width, kept.Height, _style);
-        OutputText.Text = Strings.Format("EditorOutput", output.Width, output.Height, FormatName(_style.Format));
+        OutputText.Text = IsVideo
+            ? Strings.Format("VideoOutput", output.Width & ~1, output.Height & ~1, Timecode.Format(_trim.Length, Decimal))
+            : Strings.Format("EditorOutput", output.Width, output.Height, FormatName(_style.Format));
         if (_editTab)
         {
             RenderEditView(width, height, dpi);
@@ -894,7 +908,13 @@ public partial class EditorWindow : Window
 
     private string FileName => FileNaming.Expand(App.Settings.EffectiveFileNameTemplate, _takenAt);
 
-    private void Copy_Click(object sender, RoutedEventArgs e) => Copy();
+    private void Copy_Click(object sender, RoutedEventArgs e)
+    {
+        if (IsVideo)
+            CopyVideo();
+        else
+            Copy();
+    }
 
     // PNG for the apps that read it (transparency kept), and a bitmap on white for the others.
     private async void Copy()
@@ -913,7 +933,13 @@ public partial class EditorWindow : Window
         CopyText.Text = Strings.Get("Copy");
     }
 
-    private void Save_Click(object sender, RoutedEventArgs e) => Save();
+    private void Save_Click(object sender, RoutedEventArgs e)
+    {
+        if (IsVideo)
+            SaveVideo();
+        else
+            Save();
+    }
 
     private void Save()
     {
@@ -970,7 +996,8 @@ public partial class EditorWindow : Window
     {
         _savedPath = path;
         HideStatus();
-        SavedToastTitle.Text = Strings.Get(capture ? "ToastCaptureSaved" : "ToastSaved");
+        bool video = Path.GetExtension(path).ToLowerInvariant() is ".mp4" or ".gif";
+        SavedToastTitle.Text = Strings.Get(video ? "ToastVideoSaved" : capture ? "ToastCaptureSaved" : "ToastSaved");
         SavedToastDetail.Text = Strings.Format("ToastDetail", Path.GetFileName(path), Path.GetFileName(Path.GetDirectoryName(path)) ?? "");
         SavedToastDetail.ToolTip = path;
         SavedToast.Visibility = Visibility.Visible;
@@ -1034,7 +1061,7 @@ public partial class EditorWindow : Window
     // The laid-out picture dragged to an app or a folder: a file in the export format, and the picture.
     private void Preview_MouseMove(object sender, MouseEventArgs e)
     {
-        if (_pressedAt is not { } start || e.LeftButton != MouseButtonState.Pressed || _capture is null)
+        if (_pressedAt is not { } start || e.LeftButton != MouseButtonState.Pressed || _capture is null || IsVideo)
         {
             _pressedAt = null;
             return;
@@ -1090,6 +1117,13 @@ public partial class EditorWindow : Window
     private void Editor_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         bool inTextBox = Keyboard.FocusedElement is TextBox;
+        // A video: Space plays and pauses, in both tabs.
+        if (IsVideo && e.Key == Key.Space && Keyboard.Modifiers == ModifierKeys.None && !inTextBox && _export is null)
+        {
+            TogglePlay();
+            e.Handled = true;
+            return;
+        }
         if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && e.Key == Key.Z && !inTextBox)
         {
             Redo();
@@ -1141,11 +1175,17 @@ public partial class EditorWindow : Window
                 e.Handled = true;
                 break;
             case Key.C when !inTextBox:
-                Copy();
+                if (IsVideo)
+                    CopyVideo();
+                else
+                    Copy();
                 e.Handled = true;
                 break;
             case Key.S:
-                Save();
+                if (IsVideo)
+                    SaveVideo();
+                else
+                    Save();
                 e.Handled = true;
                 break;
         }

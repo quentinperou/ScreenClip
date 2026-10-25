@@ -72,7 +72,7 @@ public class LocalizationTests
     {
         var keys = ReadStrings("Strings.resx").Keys.ToHashSet();
         // Strings.Get("Shortcut" + action): one per capture action.
-        foreach (string action in new[] { "Area", "Window", "Screen", "RepeatArea" })
+        foreach (string action in new[] { "Area", "Window", "Screen", "RepeatArea", "AllScreens", "Video" })
             Assert.Contains("Shortcut" + action, keys);
         // The editor: a name per background swatch, preset and window frame.
         static string Capitalize(string id) => char.ToUpperInvariant(id[0]) + id[1..];
