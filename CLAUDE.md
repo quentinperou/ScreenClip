@@ -312,8 +312,8 @@ and posted messages, fictitious save folder `D:\Captures`; it takes the Settings
 `demo-<lang>.png` first, then lays it out in the editor's Layout tab; the menu is opened with `WM_CONTEXTMENU`, since
 a left click on the icon captures; the capture bar over the made-up desktop of `SCREENCLIP_DEMO_SCREEN`, not the real
 screen) then `.local\readme\compose.ps1` (System.Drawing); `.local\README.md` lists the local tools. Retake them
-when the UI changes (last: October 26, 2026, all six and the new video one: Export, Copy as PNG, the Video mode,
-Open ScreenClip in the menu).
+when the UI changes (last: October 26, 2026, evening, all of them and the demo GIF after step 3: the capture bar's
+Picture | Video switch, Animate, the microphone card; the capture bar is cut from its switch, `Picture` / `Image`).
 
 `.github/edit.png` / `edit.fr.png` (1600 × 1068, under the Edit tab in the READMEs): the real Edit tab on the
 Settings capture (`pieces\demo-<lang>.png`), annotated by the Debug script player: `.local\readme\edit\edit-<lang>.txt`
@@ -343,7 +343,8 @@ with the repository). `dotnet run -c Release` writes `.local\readme\demo\out\scr
 30 fps, 3 Mbit/s, ~7 MB, Media Foundation: for GitHub's own video player, uploaded by the author, under 10 MB) then
 the GIF with Core's `GifEncoder`, its frames drawn at full size and halved (small text stays readable) and brought
 to 5 bits a channel by an ordered dither first (the author found the first GIF banded: the gradients now mix two
-steps; ~3 MB → ~5 MB); `--preview 3.75 9.6 …` writes frames as PNG, `--mp4` the MP4 alone. Retake the
+steps; ~3 MB → ~5 MB); `--preview 3.75 9.6 …` writes frames as PNG, `--mp4` the MP4 alone. The demo written
+before is copied to `.local\readme\demo\archive` (dated) first (asked by the author: kept just in case). Retake the
 pieces first when the UI changes.
 
 `.github/selection.png` / `selection.fr.png` (1600 × 951, under “Capture” in the READMEs; asked by the author from the
