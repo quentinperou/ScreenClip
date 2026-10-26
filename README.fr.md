@@ -19,8 +19,8 @@
 
 ---
 
-> **Début du développement.** La version 0.3 capture, annote et met en forme les captures d'écran, et enregistre des
-> vidéos à couper, annoter et mettre en forme.
+> **Début du développement.** La version 0.4 capture, annote, met en forme et anime les captures d'écran, et
+> enregistre des vidéos à couper, annoter et mettre en forme, leurs sons à part.
 
 ## Fonctionnalités
 

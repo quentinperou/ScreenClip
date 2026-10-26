@@ -10,7 +10,7 @@ spirit of CleanShot X, ScreenSnap and shots.so: capture with one key, then (to c
 layout (background, rounded corners, shadow, fake macOS-style browser or window). UI in English and French,
 light/dark/system theme. The name “ScreenClip” is never translated. Author: [QuentinPerou](https://github.com/quentinperou).
 Repository: https://github.com/quentinperou/ScreenClip (public; the author pushes and publishes himself, unless he
-asks: he asked Claude to tag and release v0.1.0, v0.2.0 and v0.3.0).
+asks: he asked Claude to tag and release v0.1.0, v0.2.0, v0.3.0 and v0.4.0).
 Sister projects with the same stack and conventions: CropPdf, PageCompose, FolderTools (their CLAUDE.md files hold
 the history of the shared pieces: updater, installer, Fluent theme, localization). Credits wording: “Developed by
 QuentinPerou, with Claude Code (Anthropic)”.
@@ -24,13 +24,16 @@ resident (Task Manager, private working set) before and after it.
 
 ## Project status (October 26, 2026)
 
-**v0.3.0 released** (October 26, 2026, stable, tag `v0.3.0`: video recording and editing, issue #2, steps 1 and 2;
+**v0.4.0 released** (October 26, 2026, stable, tag `v0.4.0`: video step 3, the sounds apart and the pieces; the
+animated picture and the pointer ways with steps; several editors; the microphone chosen; release notes in English;
+0.4.0 rather than 0.3.5, the author's question: new features, the middle number). **v0.3.0** (October 26, 2026,
+stable, tag `v0.3.0`: video recording and editing, issue #2, steps 1 and 2;
 the Export window, Copy as PNG, the in-app dialogs, Open ScreenClip in the menu; release notes **in English only**,
 asked by the author). **v0.2.0** (October 25, 2026, stable, tag `v0.2.0`: the Edit tab and its annotations, the zoom,
 the notification after saving; bilingual release notes, as for 0.1.0). **v0.1.0** (October 19, 2026, stable, tag
 `v0.1.0`; release notes bilingual like CropPdf 1.0.0). Commits in
 the author's name (`QuentinPerou`, his GitHub noreply address, no Co-Authored-By line, as he asked); **the author
-pushes and publishes himself** unless he asks (he asked for the 0.1.0, 0.2.0 and 0.3.0 tags and releases). The annotation tools came
+pushes and publishes himself** unless he asks (he asked for the 0.1.0, 0.2.0, 0.3.0 and 0.4.0 tags and releases). The annotation tools came
 after 0.1.0 (proposal B of the mock-up, see below). Framing done with the
 author on October 19, 2026 (questions, then an HTML mock-up validated by him: editor, area selection, thumbnail, tray
 menu, settings, icon):
@@ -242,7 +245,9 @@ overlay's magnifier shows it, without copying it), and a text extractor (OCR).
 
 Step 3 and all these changes committed together (not released).
 
-**Next**: the author tries all this; then a release when he asks.
+Released as 0.4.0 the same evening, with the README pictures retaken.
+
+**Next**: the author's next ideas (kept: a color picker that copies the hex code, a text extractor).
 
 ## Commands
 

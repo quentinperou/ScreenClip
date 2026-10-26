@@ -19,8 +19,8 @@
 
 ---
 
-> **Early development.** Version 0.3 captures, annotates and lays out screenshots, and records videos to cut, annotate
-> and lay out.
+> **Early development.** Version 0.4 captures, annotates, lays out and animates screenshots, and records videos to cut,
+> annotate and lay out, their sounds apart.
 
 ## Features
 
