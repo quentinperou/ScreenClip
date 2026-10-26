@@ -19,8 +19,8 @@
 
 ---
 
-> **Early development.** Version 0.2 captures, annotates and lays out screenshots; video recording comes with the next
-> version.
+> **Early development.** Version 0.3 captures, annotates and lays out screenshots, and records videos to cut, annotate
+> and lay out.
 
 ## Features
 
