@@ -230,9 +230,17 @@ internal sealed class CaptureController
     /// A video just recorded: saved in the videos folder and put on the clipboard (as a file) as the settings say,
     /// then opened in the editor.
     /// </summary>
-    public void DeliverVideo(string path, DateTime takenAt, MonitorInfo monitor)
+    public void DeliverVideo(string path, DateTime takenAt, Core.Video.PointerTrack? pointer)
     {
         var settings = App.Settings;
+        if (pointer is not null)
+        {
+            // The pointer recorded apart: the video becomes whole in the editor, which copies and saves it (the
+            // author's choice: nothing to wait for at the stop).
+            DevLog.Write($"video: {new FileInfo(path).Length / 1024} KB, pointer apart ({pointer.Samples.Count} samples, {pointer.Shapes.Count} shapes, {pointer.Clicks.Count} clicks)");
+            App.OpenEditor(video: new VideoClip(path, takenAt, null, pointer));
+            return;
+        }
         string? saved = null;
         if (settings.SaveAutomatically)
         {
@@ -249,10 +257,9 @@ internal sealed class CaptureController
                 MessageBox.Show(Strings.Format("ErrorSave", ex.Message), "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
-        if (settings.CopyToClipboard)
-            ClipActions.CopyFile(saved ?? path);
-        DevLog.Write($"video: {new FileInfo(path).Length / 1024} KB, saved {saved is not null}, copied {settings.CopyToClipboard}");
-        App.OpenEditor(video: new VideoClip(path, takenAt, saved));
+        bool copied = settings.CopyToClipboard && ClipActions.CopyFile(saved ?? path);
+        DevLog.Write($"video: {new FileInfo(path).Length / 1024} KB, saved {saved is not null}, copied {copied}");
+        App.OpenEditor(video: new VideoClip(path, takenAt, saved, Kept: saved is not null || copied));
     }
 
     // Screens of different sizes or placed apart leave gaps in the rectangle around them: transparent rather than

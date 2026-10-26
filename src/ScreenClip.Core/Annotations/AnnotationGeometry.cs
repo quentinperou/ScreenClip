@@ -12,6 +12,11 @@ public enum HandleKind
     TopRight,
     BottomLeft,
     BottomRight,
+    /// <summary>An A → B pointer: where it leaves from, the two handles that bend its way, where it arrives.</summary>
+    MotionFrom,
+    MotionControl1,
+    MotionControl2,
+    MotionTo,
 }
 
 /// <summary>
@@ -106,13 +111,17 @@ public static class AnnotationGeometry
     // ---------------------------------------------------------------- Pointers
 
     /// <summary>The drawing of a pointer, scaled and placed with its tip on the annotation's point.</summary>
-    public static SKPath PointerPath(Annotation pointer, float scale, out bool dark)
+    public static SKPath PointerPath(Annotation pointer, float scale, out bool dark) =>
+        PointerPath(pointer.Pointer, pointer.Start, PointerHeight(pointer, scale), out dark);
+
+    /// <summary>The drawing of a pointer <paramref name="height"/> pixels high, its tip at <paramref name="at"/>.</summary>
+    public static SKPath PointerPath(PointerStyle style, SKPoint at, float height, out bool dark)
     {
-        var (data, tip, isDark) = Pointers[Enum.IsDefined(pointer.Pointer) ? pointer.Pointer : PointerStyle.Windows];
+        var (data, tip, isDark) = Pointers[Enum.IsDefined(style) ? style : PointerStyle.Windows];
         dark = isDark;
         var path = SKPath.ParseSvgPathData(data);
-        float k = PointerHeight(pointer, scale) / 24;
-        path.Transform(SKMatrix.CreateScaleTranslation(k, k, pointer.Start.X - tip.X * k, pointer.Start.Y - tip.Y * k));
+        float k = height / 24;
+        path.Transform(SKMatrix.CreateScaleTranslation(k, k, at.X - tip.X * k, at.Y - tip.Y * k));
         return path;
     }
 
@@ -145,7 +154,7 @@ public static class AnnotationGeometry
             {
                 using var path = PointerPath(annotation, scale, out _);
                 var bounds = path.Bounds;
-                if (annotation.Halo)
+                if (annotation.Halo && annotation.Motion is null)
                 {
                     float r = HaloRadius(annotation, scale);
                     bounds.Union(new SKRect(annotation.Start.X - r, annotation.Start.Y - r, annotation.Start.X + r, annotation.Start.Y + r));
@@ -276,6 +285,11 @@ public static class AnnotationGeometry
                 return IsCurved(annotation)
                     ? [(HandleKind.Start, annotation.Start), (HandleKind.Bend, CurveMiddle(annotation)), (HandleKind.End, annotation.End)]
                     : [(HandleKind.Start, annotation.Start), (HandleKind.End, annotation.End)];
+            case AnnotationKind.Pointer when annotation.Motion is { } motion:
+                return motion.Curved
+                    ? [(HandleKind.MotionFrom, motion.From), (HandleKind.MotionControl1, motion.Control1),
+                        (HandleKind.MotionControl2, motion.Control2), (HandleKind.MotionTo, annotation.Start)]
+                    : [(HandleKind.MotionFrom, motion.From), (HandleKind.MotionTo, annotation.Start)];
             case AnnotationKind.Rectangle or AnnotationKind.Ellipse or AnnotationKind.Mask:
                 var r = annotation.Rect;
                 return
@@ -297,6 +311,14 @@ public static class AnnotationGeometry
                 return annotation with { Points = [Constrain(annotation.End, point, constrain), annotation.End] };
             case HandleKind.End:
                 return annotation with { Points = [annotation.Start, Constrain(annotation.Start, point, constrain)] };
+            case HandleKind.MotionFrom when annotation.Motion is { } motion:
+                return annotation with { Motion = motion with { From = point } };
+            case HandleKind.MotionControl1 when annotation.Motion is { } motion:
+                return annotation with { Motion = motion with { Control1 = point } };
+            case HandleKind.MotionControl2 when annotation.Motion is { } motion:
+                return annotation with { Motion = motion with { Control2 = point } };
+            case HandleKind.MotionTo:
+                return annotation with { Points = [point] };
             case HandleKind.Bend:
             {
                 // The middle of the curve is half way to the control point: the bend from where the handle is.

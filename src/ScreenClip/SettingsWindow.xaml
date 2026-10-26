@@ -237,6 +237,22 @@
           </StackPanel>
         </Border>
 
+        <TextBlock Style="{StaticResource SectionTitle}" Text="{local:Tr SettingsVideo}" />
+        <!-- The 3 second countdown before a recording (it can also be skipped from the recording's bar). -->
+        <Border Style="{StaticResource Card}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xE916;" />
+            <CheckBox x:Name="CountdownBox" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
+                      VerticalAlignment="Center" Margin="16,0,0,0"
+                      Checked="Countdown_Changed" Unchecked="Countdown_Changed"
+                      AutomationProperties.Name="{local:Tr SettingsCountdown}" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{local:Tr SettingsCountdown}" />
+              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsCountdownDescription}" />
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
         <TextBlock Style="{StaticResource SectionTitle}" Text="{local:Tr SettingsShortcuts}" />
         <!-- All the shortcuts on or off; off, ScreenClip takes no key (the notification menu still captures). -->
         <Border Style="{StaticResource Card}">
@@ -311,6 +327,20 @@
               <TextBlock x:Name="ResetExportFolderLink" Style="{StaticResource CardDescription}" Margin="0,6,0,0">
                 <Hyperlink Click="ResetExportFolder_Click"><Run Text="{local:Tr SettingsExportFolderReset}" /></Hyperlink>
               </TextBlock>
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
+        <!-- The format of the editor's Copy (Export has its own). -->
+        <Border Style="{StaticResource Card}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xE8C8;" />
+            <ComboBox x:Name="CopyFormatBox" DockPanel.Dock="Right" MinWidth="220" VerticalAlignment="Center"
+                      Margin="16,0,0,0" SelectionChanged="CopyFormatBox_SelectionChanged"
+                      AutomationProperties.Name="{local:Tr SettingsCopyFormat}" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{local:Tr SettingsCopyFormat}" />
+              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsCopyFormatDescription}" />
             </StackPanel>
           </DockPanel>
         </Border>

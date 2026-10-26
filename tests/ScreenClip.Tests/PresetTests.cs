@@ -11,11 +11,19 @@ public class PresetTests
     };
 
     [Fact]
-    public void ApplyingAPreset_KeepsTheFrameTextAndThePicture()
+    public void ApplyingAPreset_KeepsTheFrameTextThePictureAndTheFormat()
     {
-        var current = new ClipStyle { FrameText = "example.com/app", BackgroundImage = @"C:\pictures\wall.jpg" };
+        var current = new ClipStyle { FrameText = "example.com/app", BackgroundImage = @"C:\pictures\wall.jpg", Format = ExportFormat.Jpeg };
         var applied = StylePresets.ApplyTo(Mine, current);
-        Assert.Equal(Mine with { FrameText = "example.com/app", BackgroundImage = @"C:\pictures\wall.jpg" }, applied);
+        Assert.Equal(Mine with { FrameText = "example.com/app", BackgroundImage = @"C:\pictures\wall.jpg", Format = ExportFormat.Jpeg }, applied);
+    }
+
+    [Fact]
+    public void APreset_StillMatches_WhateverTheFormat()
+    {
+        var applied = StylePresets.ApplyTo(Mine, new ClipStyle());
+        Assert.True(StylePresets.Matches(Mine, applied with { Format = ExportFormat.Jpeg }));
+        Assert.Equal("none", StylePresets.IdOf(StylePresets.Default with { Format = ExportFormat.Webp }));
     }
 
     [Fact]
@@ -39,13 +47,16 @@ public class PresetTests
     }
 
     [Fact]
-    public void ThePlainPreset_IsTheDefault_AndWhatResetGives()
+    public void TheNonePreset_IsTheDefault_AndWhatResetGives()
     {
-        Assert.Equal("plain", StylePresets.All[0].Id);
-        Assert.Equal("plain", StylePresets.IdOf(StylePresets.Default));
+        Assert.Equal("none", StylePresets.All[0].Id);
+        Assert.Equal("none", StylePresets.IdOf(StylePresets.Default));
         Assert.Equal("violet", StylePresets.Default.Background);
-        var reset = StylePresets.Reset(new ClipStyle { Background = "ocean", Frame = FrameKind.Browser, Shadow = 90 });
-        Assert.Equal(("ocean", FrameKind.None, 0), (reset.Background, reset.Frame, reset.Shadow));
+        var reset = StylePresets.Reset(new ClipStyle { Background = "ocean", Frame = FrameKind.Browser, Shadow = 90, Padding = 12, TurnDegrees = 10 });
+        Assert.Equal(("ocean", FrameKind.None, 0, 0, 0, 0), (reset.Background, reset.Frame, reset.Shadow, reset.Padding, reset.Radius, reset.TurnDegrees));
+        // Nothing added: the picture is the capture itself.
+        var layout = ClipLayout.Measure(400, 300, StylePresets.Default);
+        Assert.Equal((400, 300), (layout.Width, layout.Height));
     }
 
     [Fact]

@@ -33,6 +33,17 @@ public class AnnotationLayerTests
     }
 
     [Fact]
+    public void MoveTo_ReordersTheLayers()
+    {
+        var layer = AnnotationLayer.Empty.Add(Rect(0, 0, 10, 10), out var a).Add(Rect(20, 0, 10, 10), out var b).Add(Rect(40, 0, 10, 10), out var c);
+        Assert.Equal([b.Id, c.Id, a.Id], layer.MoveTo(a.Id, 2).Items.Select(x => x.Id));
+        Assert.Equal([c.Id, a.Id, b.Id], layer.MoveTo(c.Id, 0).Items.Select(x => x.Id));
+        Assert.Equal([a.Id, c.Id, b.Id], layer.MoveTo(b.Id, 9).Items.Select(x => x.Id));
+        Assert.Same(layer, layer.MoveTo(b.Id, 1));
+        Assert.Same(layer, layer.MoveTo(99, 0));
+    }
+
+    [Fact]
     public void NextNumber_IsOneMoreThanTheHighest()
     {
         var defaults = new AnnotationDefaults();

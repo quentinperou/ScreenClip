@@ -12,7 +12,7 @@ internal static class ClipActions
     private const int ClipboardBusy = unchecked((int)0x800401D0); // CLIPBRD_E_CANT_OPEN
 
     /// <summary>Files handed to other apps by drag and drop (they need a real file); emptied at each start.</summary>
-    public static readonly string TempFolder = Path.Combine(Path.GetTempPath(), "ScreenClip");
+    public static readonly string TempFolder = Path.Combine(Path.GetTempPath(), "ScreenClip" + TestInstance.Suffix);
 
     /// <summary>
     /// Puts the capture on the clipboard as a bitmap (for every app) and as PNG (lossless, for the apps that read it:

@@ -32,6 +32,14 @@ public enum ThumbnailScreen
     Pointer,
 }
 
+/// <summary>What the editor saves and copies a video as: the video, an animated GIF, or the frame shown as a picture.</summary>
+public enum VideoFormat
+{
+    Mp4,
+    Gif,
+    Frame,
+}
+
 /// <summary>The tabs of the editor: the annotation tools, or the layout.</summary>
 public enum EditorTab
 {
@@ -73,7 +81,7 @@ public sealed class AppSettings
         [ShortcutAction.Video] = new(HotkeyModifiers.Control | HotkeyModifiers.Alt, Hotkey.PrintScreen),
     };
 
-    private static readonly string FilePath = Path.Combine(
+    private static readonly string FilePath = TestInstance.SettingsFile ?? Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ScreenClip", "settings.json");
 
     /// <summary><see cref="SystemLanguage"/> or one of <see cref="SupportedLanguages"/>.</summary>
@@ -149,8 +157,23 @@ public sealed class AppSettings
     /// <summary>The recording takes the sound of the computer (a video, an alert). Chosen on the capture bar.</summary>
     public bool RecordSystemSound { get; set; } = true;
 
+    /// <summary>
+    /// A 3 second countdown before a recording (Settings › Capture, asked by the author: it can be skipped from the
+    /// recording's bar, or turned off).
+    /// </summary>
+    public bool RecordCountdown { get; set; } = true;
+
     /// <summary>The recording takes the microphone (to comment). Chosen on the capture bar.</summary>
     public bool RecordMicrophone { get; set; }
+
+    /// <summary>
+    /// The pointer is recorded apart, to be restyled or hidden in the editor (which then copies and saves the video);
+    /// off, it is filmed with the screen and the video is copied and saved at once (asked by the author: both ways, then
+    /// apart by default). Chosen on the capture bar. Named so since it became on by default: the false that the first
+    /// name kept in the author's settings (never chosen, only the old default) is left behind.
+    /// </summary>
+    [JsonPropertyName("PointerApart")]
+    public bool RecordPointerApart { get; set; } = true;
 
     // ---------------------------------------------------------------- Editor
 
@@ -159,6 +182,23 @@ public sealed class AppSettings
 
     /// <summary>The styles the user saved under a name, in the order they were made.</summary>
     public List<UserPreset> UserPresets { get; set; } = [];
+
+    /// <summary>
+    /// What Save and Copy make apply the layout of the Layout tab, else the capture with its annotations alone (the
+    /// Export window's switch, asked by the author: exporting from the Edit tab a layout it does not show misled).
+    /// </summary>
+    public bool ExportLayout { get; set; } = true;
+
+    /// <summary>
+    /// The editor's Copy makes a picture in this format, whatever Export says (asked by the author: “Copy as PNG”,
+    /// Settings › Saving). JPG and WebP go on the clipboard as a file, PNG as itself.
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<ExportFormat>))]
+    public ExportFormat CopyFormat { get; set; } = ExportFormat.Png;
+
+    /// <summary>A video is saved as an MP4, a GIF or its frame (the Export window): the last one chosen.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<VideoFormat>))]
+    public VideoFormat VideoFormat { get; set; } = VideoFormat.Mp4;
 
     /// <summary>The tab the editor opens on: the last one used (Layout the first time).</summary>
     [JsonConverter(typeof(JsonStringEnumConverter<EditorTab>))]

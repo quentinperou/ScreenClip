@@ -66,6 +66,107 @@ public enum PointerStyle
     Hand,
 }
 
+/// <summary>What a click of a pointer shows in a video: a yellow halo, a ring that spreads, or the pointer pressed.</summary>
+public enum ClickEffect
+{
+    None,
+    Halo,
+    Ripple,
+    Press,
+}
+
+/// <summary>
+/// How the pointer recorded with a video is drawn: as it was (its real shapes: arrow, text beam, hand…), in one of the
+/// drawn styles, or not at all.
+/// </summary>
+public enum RecordedPointerStyle
+{
+    AsRecorded,
+    Windows,
+    Mac,
+    Hand,
+    Hidden,
+}
+
+/// <summary>When an annotation of a video shows, in the video's time: from <see cref="Start"/> until <see cref="End"/>.</summary>
+public readonly record struct ShowTime(TimeSpan Start, TimeSpan End)
+{
+    /// <summary>The shortest time an annotation shows.</summary>
+    public static readonly TimeSpan MinLength = TimeSpan.FromMilliseconds(100);
+
+    public TimeSpan Length => End - Start;
+
+    public bool Contains(TimeSpan time) => time >= Start && time < End;
+}
+
+/// <summary>
+/// A pointer of a video that moves (the A → B pointer of the mock-up): from <see cref="From"/> to the annotation's own
+/// point, leaving at <see cref="Leave"/> and arriving at <see cref="Arrive"/>, along a curve bent by two handles or
+/// straight, eased or steady, with a click when it arrives.
+/// </summary>
+public sealed record PointerMotion
+{
+    public SKPoint From { get; init; }
+
+    public SKPoint Control1 { get; init; }
+
+    public SKPoint Control2 { get; init; }
+
+    public bool Curved { get; init; } = true;
+
+    /// <summary>Slow at both ends (as a hand moves), else at the same speed all the way.</summary>
+    public bool Eased { get; init; } = true;
+
+    public TimeSpan Leave { get; init; }
+
+    public TimeSpan Arrive { get; init; }
+
+    public ClickEffect Click { get; init; } = ClickEffect.Halo;
+
+    public PointerMotion MovedBy(float dx, float dy) => this with
+    {
+        From = new SKPoint(From.X + dx, From.Y + dy),
+        Control1 = new SKPoint(Control1.X + dx, Control1.Y + dy),
+        Control2 = new SKPoint(Control2.X + dx, Control2.Y + dy),
+    };
+}
+
+/// <summary>Where a click is in its effect: seconds since the button went down, and since it went up (null: still down).</summary>
+public readonly record struct ClickPhase(double SinceDown, double? SinceUp);
+
+/// <summary>The options of the pointer recorded with a video (its own layer in the editor).</summary>
+public sealed record RecordedPointerOptions
+{
+    public const int MinSize = 50, MaxSize = 400;
+
+    [JsonConverter(typeof(JsonStringEnumConverter<RecordedPointerStyle>))]
+    public RecordedPointerStyle Style { get; init; }
+
+    /// <summary>Its size, in percent of the size it had on the screen.</summary>
+    public int Size { get; init; } = 100;
+
+    /// <summary>The small shakes of the hand smoothed out (as Screen Studio does).</summary>
+    public bool Smooth { get; init; }
+
+    [JsonConverter(typeof(JsonStringEnumConverter<ClickEffect>))]
+    public ClickEffect Click { get; init; } = ClickEffect.Halo;
+
+    /// <summary>Hidden by its eye in the list, its style kept for when it shows again.</summary>
+    public bool Hidden { get; init; }
+
+    /// <summary>It is drawn: not hidden by its eye nor by the hidden style of old.</summary>
+    [JsonIgnore]
+    public bool Shows => !Hidden && Style != RecordedPointerStyle.Hidden;
+
+    public RecordedPointerOptions Normalized() => this with
+    {
+        Style = Enum.IsDefined(Style) && Style != RecordedPointerStyle.Hidden ? Style : RecordedPointerStyle.AsRecorded,
+        Hidden = Hidden || Style == RecordedPointerStyle.Hidden,
+        Size = Math.Clamp(Size, MinSize, MaxSize),
+        Click = Enum.IsDefined(Click) ? Click : ClickEffect.Halo,
+    };
+}
+
 /// <summary>
 /// One annotation, in the pixels of the whole capture (a crop only hides what is outside). Immutable: an edit makes a
 /// new one, which keeps the undo history simple.
@@ -111,6 +212,21 @@ public sealed record Annotation
     /// <summary>A yellow ring under the pointer's tip: “click here”.</summary>
     public bool Halo { get; init; } = true;
 
+    /// <summary>In a video, when it shows; null: all the time.</summary>
+    public ShowTime? Time { get; init; }
+
+    /// <summary>Hidden by its eye in the list (asked by the author): kept, but neither drawn nor picked.</summary>
+    public bool Hidden { get; init; }
+
+    /// <summary>In a video, a pointer that moves to its point (<see cref="Start"/>) from another one.</summary>
+    public PointerMotion? Motion { get; init; }
+
+    /// <summary>
+    /// Only on a pointer posed at a moment of a video (<see cref="VideoTiming.Posed"/>): its click then, drawn with the
+    /// effect of its motion.
+    /// </summary>
+    public ClickPhase? Click { get; init; }
+
     public SKPoint Start => Points.Length > 0 ? Points[0] : default;
 
     public SKPoint End => Points.Length > 0 ? Points[^1] : default;
@@ -118,7 +234,13 @@ public sealed record Annotation
     /// <summary>The rectangle of a two-point annotation (its corners in any order).</summary>
     public SKRect Rect => AnnotationGeometry.RectOf(Start, End);
 
-    public Annotation MovedBy(float dx, float dy) => this with { Points = [.. Points.Select(p => new SKPoint(p.X + dx, p.Y + dy))] };
+    public bool IsShownAt(TimeSpan time) => !Hidden && (Time is not { } shown || shown.Contains(time));
+
+    public Annotation MovedBy(float dx, float dy) => this with
+    {
+        Points = [.. Points.Select(p => new SKPoint(p.X + dx, p.Y + dy))],
+        Motion = Motion?.MovedBy(dx, dy),
+    };
 }
 
 /// <summary>The colors offered for annotations, ARGB.</summary>
@@ -212,9 +334,18 @@ public sealed record AnnotationDefaults
 
     public bool Halo { get; init; } = true;
 
+    /// <summary>The A → B pointer of a video: a curve or straight, eased or steady, and its click.</summary>
+    public bool MotionCurved { get; init; } = true;
+
+    public bool MotionEased { get; init; } = true;
+
+    [JsonConverter(typeof(JsonStringEnumConverter<ClickEffect>))]
+    public ClickEffect MotionClick { get; init; } = ClickEffect.Halo;
+
     /// <summary>Values out of range (an old or edited settings file) back to something drawable.</summary>
     public AnnotationDefaults Normalized() => this with
     {
+        MotionClick = Valid(MotionClick, ClickEffect.Halo),
         Size = Valid(Size, StrokeSize.Medium),
         MarkerSize = Valid(MarkerSize, StrokeSize.Medium),
         TextSize = Valid(TextSize, StrokeSize.Medium),
@@ -262,6 +393,11 @@ public sealed record AnnotationDefaults
         AnnotationKind.Arrow => this with { Color = annotation.Color, Size = annotation.Size, Arrow = annotation.Arrow },
         AnnotationKind.Rectangle or AnnotationKind.Ellipse => this with { Color = annotation.Color, Size = annotation.Size, Shape = annotation.Shape },
         AnnotationKind.Mask => this with { Mask = annotation.Mask },
+        AnnotationKind.Pointer when annotation.Motion is { } motion => this with
+        {
+            Pointer = annotation.Pointer, PointerSize = annotation.PointerSize,
+            MotionCurved = motion.Curved, MotionEased = motion.Eased, MotionClick = motion.Click,
+        },
         AnnotationKind.Pointer => this with { Pointer = annotation.Pointer, PointerSize = annotation.PointerSize, Halo = annotation.Halo },
         _ => this with { Color = annotation.Color, Size = annotation.Size },
     };
@@ -282,6 +418,9 @@ public sealed record AnnotationLayer
 
     /// <summary>The id the next annotation gets.</summary>
     public int NextId { get; init; } = 1;
+
+    /// <summary>A video's recorded pointer: how it is drawn (here, so that its changes are undone as the others).</summary>
+    public RecordedPointerOptions Cursor { get; init; } = new();
 
     public bool IsEmpty => Items.IsEmpty && Crop is null;
 
@@ -317,6 +456,19 @@ public sealed record AnnotationLayer
         return index < 0 ? this : this with { Items = Items.RemoveAt(index) };
     }
 
+    /// <summary>
+    /// The annotation moved to <paramref name="index"/> in the drawing order (0: under all the others), the others
+    /// keeping theirs.
+    /// </summary>
+    public AnnotationLayer MoveTo(int id, int index)
+    {
+        int from = Items.FindIndex(a => a.Id == id);
+        if (from < 0)
+            return this;
+        index = Math.Clamp(index, 0, Items.Count - 1);
+        return index == from ? this : this with { Items = Items.RemoveAt(from).Insert(index, Items[from]) };
+    }
+
     /// <summary>The annotation moved on top of the others.</summary>
     public AnnotationLayer BringToFront(int id)
     {
@@ -332,7 +484,7 @@ public sealed record AnnotationLayer
     {
         for (int i = Items.Count - 1; i >= 0; i--)
         {
-            if (AnnotationGeometry.HitTest(Items[i], point, scale, tolerance))
+            if (!Items[i].Hidden && AnnotationGeometry.HitTest(Items[i], point, scale, tolerance))
                 return Items[i];
         }
         return null;

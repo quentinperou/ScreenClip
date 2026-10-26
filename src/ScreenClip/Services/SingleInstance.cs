@@ -7,11 +7,11 @@ namespace ScreenClip.Services;
 /// </summary>
 internal sealed class SingleInstance : IDisposable
 {
-    private const string MutexName = @"Local\ScreenClip.Instance";
-    private const string EventName = @"Local\ScreenClip.Activate";
+    private static readonly string MutexName = @"Local\ScreenClip.Instance" + TestInstance.Suffix;
+    private static readonly string EventName = @"Local\ScreenClip.Activate" + TestInstance.Suffix;
 
     // The arguments of the new start, handed over through a small file (a second start is rare and never concurrent).
-    private static readonly string ArgumentsFile = Path.Combine(Path.GetTempPath(), "ScreenClip-activate.txt");
+    private static readonly string ArgumentsFile = Path.Combine(Path.GetTempPath(), $"ScreenClip-activate{TestInstance.Suffix}.txt");
 
     private readonly Mutex _mutex;
     private readonly EventWaitHandle _event;

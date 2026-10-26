@@ -16,17 +16,23 @@ internal static class VideoExporter
     private const int Fps = ScreenRecorder.Fps;
     private const long FrameTime = 10_000_000 / Fps;
 
-    /// <param name="render">Draws a frame (the scale for a smaller GIF): the picture is the caller's to free.</param>
+    /// <param name="render">
+    /// Draws a frame at its time in the video (the scale for a smaller GIF): the picture is the caller's to free.
+    /// </param>
+    /// <param name="overlay">
+    /// What is drawn over the frames at a time, as a number that changes when it does (null: nothing changes with the
+    /// time): a frame is written when the video or that changes.
+    /// </param>
     /// <param name="width">The width of a frame drawn at scale 1 (the GIF is made smaller from it).</param>
-    public static void Export(string source, string target, bool gif, TrimRange range, Func<SKImage, float, SKImage> render, int width,
-        IProgress<double>? progress, CancellationToken cancel)
+    public static void Export(string source, string target, bool gif, TrimRange range, Func<SKImage, TimeSpan, float, SKImage> render,
+        Func<TimeSpan, int>? overlay, int width, IProgress<double>? progress, CancellationToken cancel)
     {
         try
         {
             if (gif)
-                WriteGif(source, target, range, render, Math.Min(1f, GifMaxWidth / (float)Math.Max(1, width)), progress, cancel);
+                WriteGif(source, target, range, render, overlay, Math.Min(1f, GifMaxWidth / (float)Math.Max(1, width)), progress, cancel);
             else
-                WriteMp4(source, target, range, render, progress, cancel);
+                WriteMp4(source, target, range, render, overlay, progress, cancel);
         }
         catch
         {
@@ -81,8 +87,51 @@ internal static class VideoExporter
         }
     }
 
-    private static void WriteMp4(string source, string target, TrimRange range, Func<SKImage, float, SKImage> render,
-        IProgress<double>? progress, CancellationToken cancel)
+    /// <summary>
+    /// The frames to write, <paramref name="fps"/> a second through the part kept: the video's frame shown by then,
+    /// at that time from the start. A step where neither the frame nor the overlay changed is left out (the frame
+    /// before lasts). The pictures stay this enumerator's: each is freed when the next one comes.
+    /// </summary>
+    private static IEnumerable<(TimeSpan Time, SKImage Image)> Steps(VideoReader reader, TrimRange range, int fps, Func<TimeSpan, int>? overlay,
+        CancellationToken cancel)
+    {
+        using var frames = Frames(reader, range, cancel).GetEnumerator();
+        (TimeSpan Time, SKImage Image)? shown = null, next = frames.MoveNext() ? frames.Current : null;
+        bool changed = false;
+        int? lastOverlay = null;
+        try
+        {
+            long count = Math.Max(1, (long)Math.Ceiling(range.Length.TotalSeconds * fps - 1e-6));
+            for (long step = 0; step < count; step++)
+            {
+                cancel.ThrowIfCancellationRequested();
+                var time = TimeSpan.FromSeconds(step / (double)fps);
+                while (next is { } coming && coming.Time <= time)
+                {
+                    shown?.Image.Dispose();
+                    shown = coming;
+                    changed = true;
+                    next = frames.MoveNext() ? frames.Current : null;
+                }
+                if (shown is not { } frame)
+                    continue;
+                int over = overlay?.Invoke(range.Start + time) ?? 0;
+                if (!changed && over == lastOverlay)
+                    continue;
+                changed = false;
+                lastOverlay = over;
+                yield return (time, frame.Image);
+            }
+        }
+        finally
+        {
+            shown?.Image.Dispose();
+            next?.Image.Dispose();
+        }
+    }
+
+    private static void WriteMp4(string source, string target, TrimRange range, Func<SKImage, TimeSpan, float, SKImage> render,
+        Func<TimeSpan, int>? overlay, IProgress<double>? progress, CancellationToken cancel)
     {
         using var reader = new VideoReader(source);
         using var sound = reader.HasAudio ? new AudioReader(source) : null;
@@ -133,12 +182,9 @@ internal static class VideoExporter
                 last = time;
             }
 
-            foreach (var (time, frame) in Frames(reader, range, cancel))
+            foreach (var (time, frame) in Steps(reader, range, Fps, overlay, cancel))
             {
-                SKImage picture;
-                using (frame)
-                    picture = render(frame, 1);
-                using (picture)
+                using (var picture = render(frame, range.Start + time, 1))
                 {
                     if (writer is null)
                     {
@@ -201,8 +247,8 @@ internal static class VideoExporter
         return writer;
     }
 
-    private static void WriteGif(string source, string target, TrimRange range, Func<SKImage, float, SKImage> render, float scale,
-        IProgress<double>? progress, CancellationToken cancel)
+    private static void WriteGif(string source, string target, TrimRange range, Func<SKImage, TimeSpan, float, SKImage> render,
+        Func<TimeSpan, int>? overlay, float scale, IProgress<double>? progress, CancellationToken cancel)
     {
         using var reader = new VideoReader(source);
         using var file = File.Create(target);
@@ -213,17 +259,11 @@ internal static class VideoExporter
         int width = 0, height = 0;
         try
         {
-            foreach (var (time, frame) in Frames(reader, range, cancel))
+            foreach (var (time, frame) in Steps(reader, range, GifFps, overlay, cancel))
             {
                 if (!pacer.Keep(time))
-                {
-                    frame.Dispose();
                     continue;
-                }
-                SKImage picture;
-                using (frame)
-                    picture = render(frame, scale);
-                using (picture)
+                using (var picture = render(frame, range.Start + time, scale))
                 {
                     if (gif is null)
                     {

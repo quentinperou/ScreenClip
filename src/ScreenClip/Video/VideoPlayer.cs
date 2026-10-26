@@ -16,7 +16,7 @@ internal sealed class VideoPlayer : IDisposable
 {
     private readonly string _path;
     private readonly TimeSpan _from, _to;
-    private readonly Action<SKImage, TimeSpan> _show;
+    private readonly Action<SKImage?, TimeSpan> _show;
     private readonly Action _ended;
     private readonly BlockingCollection<(TimeSpan Time, SKImage Image)> _frames = new(boundedCapacity: 6);
     private readonly CancellationTokenSource _cancel = new();
@@ -26,11 +26,15 @@ internal sealed class VideoPlayer : IDisposable
     private WasapiOut? _output;
     private Thread? _decoder, _feeder;
     private (TimeSpan Time, SKImage Image)? _pending;
+    private TimeSpan? _lastShown;
     private bool _stopped;
 
-    /// <param name="show">Gets each frame due and its time, on the UI thread; the picture is then the editor's.</param>
+    /// <param name="show">
+    /// Gets each frame due (the picture is then the editor's) and the time, on the UI thread; about sixty times a second
+    /// without a frame too, for what is drawn over it (a pointer moves while the screen stays still).
+    /// </param>
     /// <param name="ended">The end of the part was reached.</param>
-    public VideoPlayer(string path, TimeSpan from, TimeSpan to, bool sound, Action<SKImage, TimeSpan> show, Action ended)
+    public VideoPlayer(string path, TimeSpan from, TimeSpan to, bool sound, Action<SKImage?, TimeSpan> show, Action ended)
     {
         _path = path;
         _from = from;
@@ -179,8 +183,11 @@ internal sealed class VideoPlayer : IDisposable
             (latestTime, latest) = _pending.Value;
             _pending = null;
         }
-        if (latest is not null)
-            _show(latest, latestTime);
+        if (latest is not null || _lastShown is not { } last || now - last >= TimeSpan.FromMilliseconds(15))
+        {
+            _show(latest, now < latestTime ? latestTime : now);
+            _lastShown = now;
+        }
         if (now >= _to || (_frames.IsCompleted && _pending is null && (_output is null || _sound!.BufferedDuration <= TimeSpan.Zero || now >= _to)))
         {
             Stop();

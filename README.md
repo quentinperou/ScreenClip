@@ -30,8 +30,8 @@
   **Ctrl + Shift + Print Screen** all the screens at once, **Shift + Print Screen** the last area again. Every shortcut can be changed in **Settings → Capture**, or all of
   them turned off (the notification menu still captures).
 - ScreenClip waits in the **notification area**: a **click** on its icon captures an area (or opens the menu or the
-  editor, as set in **Settings → General**), a **right click** opens its menu (the same captures, the captures folder,
-  Settings). At rest it uses almost nothing: no window, no timer, about 5 MB of memory in use.
+  editor, as set in **Settings → General**), a **right click** opens its menu (**Open ScreenClip**, the same captures,
+  a picture to lay out, the captures folder, Settings). At rest it uses almost nothing: no window, no timer, about 5 MB of memory in use.
 - The screen is **frozen** the moment the key is pressed: menus and tooltips stay in the picture.
 - **Area**: the part of the window under the pointer is **outlined** as you move (a video player, a card of a web
   page, a panel, the whole window), from what the app tells Windows and from the blocks drawn on the screen: a
@@ -78,11 +78,11 @@ picture, annotations and layout included.
 
 **Layout**:
 
-- **Presets** in one click, each drawn as it renders: *Plain* (the default: just the picture on the background you
-  choose, no frame, corners, shadow nor outline), *README* (light, discreet), *Post 1:1*, *Story 9:16*, *Slide 16:9*,
-  and **your own**: **+ Save** keeps the current style under a name (its picture background included); right click
-  one to rename it, replace it with the current style or delete it. **Reset** goes back to *Plain*, the background
-  kept. The last settings used are kept for the next capture.
+- **Presets** in one click, each drawn as it renders: *None* (the default: the capture as it is, nothing added),
+  *Plain* (just the picture on the background you choose, no frame, corners, shadow nor outline), *README* (light,
+  discreet), *Post 1:1*, *Story 9:16*, *Slide 16:9*, and **your own**: **+ Save** keeps the current style under a name
+  (its picture background included); right click one to rename it, replace it with the current style or delete it.
+  **Reset** goes back to *None*, the background kept. The last settings used are kept for the next capture.
 - **Background**: eight gradients, white, black, transparent, the capture itself blurred, or **your own picture**.
 - **Frame**: none, a **browser in the macOS style** (traffic lights and an address you type), a **macOS window**, a
   **Windows 11 window** (with a title you type), light or dark, each with the rounded corners of the real one (8 px
@@ -93,8 +93,10 @@ picture, annotations and layout included.
   left–right and up–down), and the **format**: auto, 16:9, 4:3, 1:1, 4:5 or 9:16.
 - The capture keeps its own pixels: the picture grows around it, nothing is resized. Large (high DPI) captures get a
   larger window bar and corners, so that a style looks the same on any capture.
-- **Copy** (PNG with its transparency, and a bitmap for the other apps), **Save** as PNG, JPG or WebP (in
-  `Pictures\ScreenClip`, apart from the captures; can be changed), or **drag the preview** to an app or a folder.
+- **Copy as PNG** (with its transparency, and a bitmap for the other apps; JPG or WebP in **Settings → Saving**,
+  copied as a file), or **Export ▾**: PNG, JPG or WebP, with the
+  layout or the capture with its annotations alone, then **Save…** (in `Pictures\ScreenClip`, apart from the
+  captures; can be changed) or Copy; or **drag the preview** to an app or a folder.
   Once a file is written (Save, or a capture saved automatically), a notification at the bottom left opens it or
   shows it in its folder.
 - **New capture** from the editor: it steps aside while you choose, and comes back with the capture.
@@ -102,15 +104,29 @@ picture, annotations and layout included.
 ### Video
 
 - **Ctrl + Alt + Print Screen** (or **Video** on the capture bar, or the menu of the icon): choose an area, a window
-  or a screen as for a picture, and the recording starts after a 3 second countdown. The **sound of the computer**
-  and the **microphone** are each turned on or off on the capture bar.
+  or a screen as for a picture, and the recording starts after a 3 second countdown (▶ on the recording's bar
+  starts at once; Settings › Capture turns it off). The **sound of the computer**
+  and the **microphone** are each turned on or off on the capture bar, and so is the **pointer apart** (on by
+  default): the mouse pointer is then recorded apart from the screen, to be redrawn or hidden in the editor.
 - While it records, a dashed red line marks the area and a small bar shows the time: **pause**, **stop**, **start
   again**, **discard**. Neither is ever in the video. The same shortcut, or a click on the icon, stops it too.
 - The video opens in the **editor**: play it (**Space**), cut its start and end with the **yellow handles** of the
-  timeline, crop it, annotate it and lay it out as a picture (everything applies to every frame). **Save** writes an
-  **MP4** (with the sound) or an animated **GIF** (small, without sound), or a picture of the frame shown; **Copy**
-  puts the MP4 on the clipboard, ready to paste in a folder, a mail or a chat.
-- Saved automatically when the captures are, in **Videos\Screen Recordings** (can be changed).
+  timeline, crop it, annotate it and lay it out as a picture (everything applies to every frame). **Export ▾**
+  chooses **MP4** (with the sound), an animated **GIF** (small, without sound) or a **PNG** or **JPG** of the frame
+  shown, and whether the layout is applied, with the size and weight of the file; **Save…** writes it, and its
+  **Copy** copies the GIF or the picture (not an MP4: a video is not something to paste). The editor's **Copy as PNG**
+  copies the picture of the moment shown.
+- On the **tracks** under the timeline, each annotation has a bar: it shows only then. Drag the bar, or its ends
+  (the playhead follows, to see where it starts or stops). A new annotation shows all along. Drag an annotation up
+  or down in the list to put it over or under the others.
+- The **recorded pointer** (pointer apart) is redrawn as it was or as a Windows, macOS or hand pointer, larger,
+  **smoothed** (the shakes of the hand taken out), with its **clicks** shown (halo, ripple or press). The **eye** of
+  each row of the list hides a layer, the recorded pointer included.
+- An **A → B pointer**: with the Pointer tool, drag from A to B; it moves there along a curve and clicks when it
+  arrives. Its diamonds on its track are when it leaves and arrives.
+- With the pointer filmed with the screen, the video is saved automatically when the captures are, in
+  **Videos\Screen Recordings** (can be changed), and copied. With the pointer apart, the editor makes the video:
+  **Export ▾ → Save…** there (ScreenClip asks before an unsaved recording leaves the editor).
 
 ### Windows' Print Screen key
 
@@ -167,7 +183,7 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
 - [x] Annotations: arrows, shapes, text, numbered steps, highlighter, mouse pointer, hide, crop.
 - [x] Video: an area, a window or a screen, with the sound of the computer and the microphone; cut, crop, annotate,
   lay out; MP4 or GIF.
-- [ ] Video, next: annotations that come and go on the timeline, the pointer redrawn, click effects, an animated
+- [x] Video, next: annotations that come and go on the timeline, the pointer redrawn, click effects, an A → B
   pointer.
 
 ## Installation

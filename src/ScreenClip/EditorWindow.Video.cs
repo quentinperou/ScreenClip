@@ -26,6 +26,7 @@ public partial class EditorWindow
     private VideoReader? _frameReader;          // the frames shown when the playhead moves, read on a worker thread
     private readonly object _frameLock = new();
     private TimeSpan? _wantedFrame;
+    private TimeSpan? _shownFrameAt;             // when the frame shown starts (a move inside it reads nothing)
     private bool _frameWorker;
     private TimeSpan _duration;
     private TrimRange _trim;
@@ -35,16 +36,25 @@ public partial class EditorWindow
     private TimelineGrip _grip;
     private CancellationTokenSource? _export;
     private Task? _exportTask;
+    private bool _videoKept;                     // saved or copied: it may leave the editor without a question
+    private bool _leaving;
+    private int _playKey;                        // what was drawn over the frame last, while playing
 
     private bool IsVideo => _videoClip is not null;
+
+#if DEBUG
+    private int _framesShown;                    // for the script player's scrub test
+#endif
 
     private static string Decimal => System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
 
     // ---------------------------------------------------------------- Opening and closing
 
     /// <summary>Opens a video: its first frame is shown, all of it kept.</summary>
-    internal void LoadVideo(VideoClip clip)
+    internal async void LoadVideo(VideoClip clip)
     {
+        if (!await LeaveVideo())
+            return;
         CloseVideo();
         VideoReader? reader = null;
         SKImage? first;
@@ -57,13 +67,13 @@ public partial class EditorWindow
         {
             reader?.Dispose();
             DevLog.Write($"editor: video not opened: {ex}");
-            MessageBox.Show(this, Strings.Format("ErrorOpenVideo", ex.Message), "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Warning);
+            _ = ShowMessageAsync(Strings.Format("ErrorOpenVideo", ex.Message));
             return;
         }
         if (first is null)
         {
             reader.Dispose();
-            MessageBox.Show(this, Strings.Format("ErrorOpenVideo", "—"), "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Warning);
+            _ = ShowMessageAsync(Strings.Format("ErrorOpenVideo", "—"));
             return;
         }
         DevLog.Write($"editor: video {reader.Width} x {reader.Height}, {reader.Duration}, sound {reader.HasAudio}");
@@ -75,9 +85,36 @@ public partial class EditorWindow
         _playhead = TimeSpan.Zero;
         Timeline.ToolTip = Strings.Get("VideoTimelineToolTip");
         SetCapture(first, clip.TakenAt);
+        // The recorded pointer as it was (asked by the author: each new capture starts from the defaults).
+        _history.Reset(AnnotationLayer.Empty);
+        _videoKept = clip.Kept;
+        ShowAsRecordedSwatch();
         ShowPlaying(false);
         BuildThumbnails(clip.Path);
         ShowTimeline();
+        ShowTracks();
+        ShowEditPanel();
+    }
+
+    /// <summary>A recording kept nowhere yet (its pointer recorded apart, or nothing saved nor copied).</summary>
+    private bool NeedsKeeping => IsVideo && !_videoKept;
+
+    /// <summary>
+    /// Before a recording kept nowhere leaves the editor: save it, leave it, or keep it here. True when it may go.
+    /// </summary>
+    private async Task<bool> LeaveVideo()
+    {
+        if (!NeedsKeeping)
+            return true;
+        StopPlayback();
+        int answer = await AskAsync(Strings.Get("VideoNotKeptTitle"), Strings.Get("VideoNotKeptText"),
+            Strings.Get("ExportSave"), Strings.Get("VideoNotKeptDrop"), Strings.Get("Cancel"));
+        return answer switch
+        {
+            1 => true,
+            0 => await SaveVideoAsync(),
+            _ => false,
+        };
     }
 
     /// <summary>Back to pictures: the playing, an export and the reader stop.</summary>
@@ -101,8 +138,13 @@ public partial class EditorWindow
             _wantedFrame = null;
         }
         _videoClip = null;
+        _videoKept = false;
+        _shownFrameAt = null;
+        _cursorSelected = false;
+        _trackDrag = null;
         ThumbStrip.Source = null;
         TimelineMarks.Children.Clear();
+        ShowTracks();
         ShowState();
     }
 
@@ -111,6 +153,9 @@ public partial class EditorWindow
     /// <summary>The frame at the playhead, as the picture of both tabs (annotations and layout kept).</summary>
     private void ShowFrame(SKImage frame)
     {
+#if DEBUG
+        _framesShown++;
+#endif
         _capture?.Dispose();
         _capture = frame;
         RequestRender();
@@ -121,6 +166,9 @@ public partial class EditorWindow
     {
         _playhead = time;
         ShowTimeline();
+        // What is drawn over the frame moves with the time even inside one frame (the pointer, an A → B pointer).
+        if (HasTimedOverlay)
+            RequestRender();
         lock (_frameLock)
         {
             _wantedFrame = time;
@@ -133,6 +181,7 @@ public partial class EditorWindow
             while (true)
             {
                 SKImage? frame;
+                TimeSpan at;
                 lock (_frameLock)
                 {
                     if (_wantedFrame is not { } wanted || _frameReader is null)
@@ -143,11 +192,12 @@ public partial class EditorWindow
                     _wantedFrame = null;
                     try
                     {
-                        frame = _frameReader.FrameAt(wanted);
+                        frame = _frameReader.FrameAt(wanted, _shownFrameAt, out _, out at);
                     }
                     catch (SharpGen.Runtime.SharpGenException)
                     {
                         frame = null;
+                        at = default;
                     }
                 }
                 if (frame is not null)
@@ -155,7 +205,11 @@ public partial class EditorWindow
                     Dispatcher.BeginInvoke(() =>
                     {
                         if (IsVideo && _player is null)
+                        {
                             ShowFrame(frame);
+                            lock (_frameLock)
+                                _shownFrameAt = at;
+                        }
                         else
                             frame.Dispose();
                     });
@@ -201,7 +255,11 @@ public partial class EditorWindow
 
     // ---------------------------------------------------------------- Timeline
 
-    private void Timeline_SizeChanged(object sender, SizeChangedEventArgs e) => ShowTimeline();
+    private void Timeline_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        ShowTimeline();
+        ShowTracks();
+    }
 
     private double XOf(TimeSpan time) =>
         _duration <= TimeSpan.Zero ? 0 : Timeline.ActualWidth * Math.Clamp(time / _duration, 0, 1);
@@ -219,7 +277,9 @@ public partial class EditorWindow
         TimelineMarks.Children.Clear();
         if (width <= 0)
             return;
-        double start = XOf(_trim.Start), end = XOf(_trim.End), top = 6, bottom = height - 6;
+        // The timeline reaches 10 px above the frames: the playhead's ball, on top, is grabbed too (asked by the author).
+        const double Above = 10;
+        double start = XOf(_trim.Start), end = XOf(_trim.End), top = Above + 6, bottom = height - 6;
         var cut = new SolidColorBrush(Color.FromArgb(0xB0, 0x10, 0x10, 0x14));
         var yellow = new SolidColorBrush(Color.FromRgb(0xFF, 0xC5, 0x3D));
         Add(new System.Windows.Shapes.Rectangle { Width = Math.Max(0, start), Height = bottom - top, Fill = cut }, 0, top);
@@ -227,13 +287,15 @@ public partial class EditorWindow
         Add(new System.Windows.Shapes.Rectangle { Width = Math.Max(0, end - start), Height = bottom - top + 4, Stroke = yellow, StrokeThickness = 2, RadiusX = 3, RadiusY = 3 }, start, top - 2);
         foreach (double x in new[] { start, end })
         {
-            Add(new System.Windows.Shapes.Rectangle { Width = 10, Height = height, Fill = yellow, RadiusX = 3, RadiusY = 3 }, x - 5, 0);
-            Add(new System.Windows.Shapes.Rectangle { Width = 2, Height = 14, Fill = new SolidColorBrush(Color.FromRgb(0x8A, 0x61, 0x00)), RadiusX = 1, RadiusY = 1 }, x - 1, height / 2 - 7);
+            Add(new System.Windows.Shapes.Rectangle { Width = 10, Height = height - Above, Fill = yellow, RadiusX = 3, RadiusY = 3 }, x - 5, Above);
+            Add(new System.Windows.Shapes.Rectangle { Width = 2, Height = 14, Fill = new SolidColorBrush(Color.FromRgb(0x8A, 0x61, 0x00)), RadiusX = 1, RadiusY = 1 }, x - 1, (height + Above) / 2 - 7);
         }
         double playhead = XOf(_playhead);
         var red = new SolidColorBrush(Color.FromRgb(0xE5, 0x48, 0x4D));
-        Add(new System.Windows.Shapes.Rectangle { Width = 2, Height = height + 6, Fill = red }, playhead - 1, -3);
-        Add(new System.Windows.Shapes.Ellipse { Width = 10, Height = 10, Fill = red }, playhead - 5, -6);
+        // Down to the tracks under the timeline (4 px below it), where their own line goes on.
+        Add(new System.Windows.Shapes.Rectangle { Width = 2, Height = height - Above + 7, Fill = red }, playhead - 1, Above - 3);
+        Add(new System.Windows.Shapes.Ellipse { Width = 12, Height = 12, Fill = red }, playhead - 6, Above - 8);
+        MoveTrackPlayhead();
     }
 
     private void Add(UIElement element, double x, double y)
@@ -294,11 +356,13 @@ public partial class EditorWindow
             case TimelineGrip.Start:
                 _trim = _trim.WithStart(time);
                 RequestFrame(_trim.Start);
+                ShowTracks();
                 break;
             case TimelineGrip.End:
                 _trim = _trim.WithEnd(time, _duration);
                 // The last frame kept: just before the end.
                 RequestFrame(_trim.End - TimeSpan.FromMilliseconds(1));
+                ShowTracks();
                 break;
             case TimelineGrip.Playhead:
                 RequestFrame(_trim.Clamp(time));
@@ -332,13 +396,22 @@ public partial class EditorWindow
             return;
         CommitText();
         CancelDrag();
+        // The player shows its own frames: the next frame asked is read again.
+        lock (_frameLock)
+            _shownFrameAt = null;
         // From the playhead; from the start of the part kept when the playhead is at its end (or outside it).
         var from = _playhead < _trim.Start || _playhead >= _trim.End - TimeSpan.FromMilliseconds(100) ? _trim.Start : _playhead;
+        _playKey = 0;
         _player = new VideoPlayer(clip.Path, from, _trim.End, _videoHasSound,
             (frame, time) =>
             {
-                ShowFrame(frame);
                 _playhead = time;
+                int key = VideoTiming.Fingerprint(_history.Current, Moment!);
+                if (frame is not null)
+                    ShowFrame(frame);
+                else if (key != _playKey)
+                    RequestRender();
+                _playKey = key;
                 ShowTimeline();
             },
             () => Dispatcher.BeginInvoke(() =>
@@ -384,11 +457,29 @@ public partial class EditorWindow
         var style = _style;
         var background = BackgroundImageFor(style);
         var trim = _trim;
+        var track = Track;
         var kept = layer.Visible(_capture.Width, _capture.Height);
-        int width = ClipLayout.Measure(kept.Width, kept.Height, style).Width;
-        SKImage Render(SKImage frame, float scale)
+        // The layout applied, or the video with its annotations alone (the Export window's switch).
+        bool laidOut = ExportsLayout;
+        int width = laidOut ? ClipLayout.Measure(kept.Width, kept.Height, style).Width : kept.Width;
+        bool pointer = track is { IsEmpty: false } && layer.Cursor.Shows;
+        SKImage Render(SKImage frame, TimeSpan time, float scale)
         {
-            var flat = layer.IsEmpty ? frame : AnnotationRenderer.Flatten(frame, layer);
+            if (!laidOut)
+            {
+                var alone = AnnotationRenderer.Flatten(frame, layer, new VideoMoment(time, track));
+                if (scale >= 1)
+                    return alone;
+                // Smaller for a GIF.
+                using (alone)
+                {
+                    var info = new SKImageInfo(Math.Max(1, (int)Math.Round(alone.Width * scale)), Math.Max(1, (int)Math.Round(alone.Height * scale)), SKColorType.Bgra8888, SKAlphaType.Premul);
+                    using var surface = SKSurface.Create(info);
+                    surface.Canvas.DrawImage(alone, SKRect.Create(info.Width, info.Height), new SKSamplingOptions(SKCubicResampler.Mitchell));
+                    return surface.Snapshot();
+                }
+            }
+            var flat = layer.IsEmpty && !pointer ? frame : AnnotationRenderer.Flatten(frame, layer, new VideoMoment(time, track));
             try
             {
                 return Composer.Render(flat, style, scale, background);
@@ -399,6 +490,10 @@ public partial class EditorWindow
                     flat.Dispose();
             }
         }
+        // What is drawn over the frames changes with the time (annotations that come and go, the pointer): a frame is
+        // written whenever it changes, not only when the screen did.
+        bool timed = pointer || layer.Items.Any(a => a.Time is not null || a.Motion is not null);
+        Func<TimeSpan, int>? overlay = timed ? time => VideoTiming.Fingerprint(layer, new VideoMoment(time, track)) : null;
 
         var cancel = new CancellationTokenSource();
         _export = cancel;
@@ -406,7 +501,7 @@ public partial class EditorWindow
         ExportTitle.Text = Strings.Get(gif ? "ExportingGif" : "ExportingVideo");
         ExportProgress.Value = 0;
         ExportPercent.Text = "";
-        ExportCard.Visibility = Visibility.Visible;
+        ExportOverlay.Visibility = Visibility.Visible;
         var progress = new Progress<double>(p =>
         {
             ExportProgress.Value = p;
@@ -415,7 +510,7 @@ public partial class EditorWindow
         var watch = System.Diagnostics.Stopwatch.StartNew();
         try
         {
-            _exportTask = Task.Run(() => VideoExporter.Export(clip.Path, target, gif, trim, Render, width, progress, cancel.Token));
+            _exportTask = Task.Run(() => VideoExporter.Export(clip.Path, target, gif, trim, Render, overlay, width, progress, cancel.Token));
             await _exportTask;
             DevLog.Write($"export: {(gif ? "GIF" : "MP4")} of {trim.Length}, {watch.Elapsed.TotalSeconds:0.0} s, {new FileInfo(target).Length / 1024} KB");
             return true;
@@ -428,7 +523,7 @@ public partial class EditorWindow
         catch (Exception ex) when (ex is SharpGen.Runtime.SharpGenException or IOException or UnauthorizedAccessException or InvalidDataException or ArgumentException)
         {
             DevLog.Write($"export: failed: {ex}");
-            MessageBox.Show(this, Strings.Format("ErrorExport", ex.Message), "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Warning);
+            _ = ShowMessageAsync(Strings.Format("ErrorExport", ex.Message));
             return false;
         }
         finally
@@ -436,7 +531,7 @@ public partial class EditorWindow
             _export = null;
             _exportTask = null;
             cancel.Dispose();
-            ExportCard.Visibility = Visibility.Collapsed;
+            ExportOverlay.Visibility = Visibility.Collapsed;
             SetBusy(false);
         }
     }
@@ -446,7 +541,7 @@ public partial class EditorWindow
     // While exporting, nothing that would change what is exported.
     private void SetBusy(bool busy)
     {
-        foreach (var element in new UIElement[] { ToolRail, EditPanel, LayoutPanel, VideoBar, TabBar, SaveButton, CopyButton, NewCaptureButton })
+        foreach (var element in new UIElement[] { ToolRail, EditPanel, LayoutPanel, VideoBar, TabBar, ExportButton, CopyButton, NewCaptureButton })
             element.IsEnabled = !busy;
         Stage.IsHitTestVisible = !busy;
         if (!busy)
@@ -455,10 +550,13 @@ public partial class EditorWindow
 
     private string VideoFileName => FileNaming.Expand(App.Settings.EffectiveVideoFileNameTemplate, _takenAt);
 
-    private async void SaveVideo()
+    private async void SaveVideo() => await SaveVideoAsync();
+
+    /// <summary>The save dialog, then the video (or a picture of the frame) written; true when written.</summary>
+    private async Task<bool> SaveVideoAsync()
     {
         if (!IsVideo || _export is not null)
-            return;
+            return false;
         StopPlayback();
         string folder = App.Settings.EffectiveVideoExportFolder;
         try
@@ -475,19 +573,26 @@ public partial class EditorWindow
                 $"{Strings.Format("FilterThisFrame", Strings.Get("FilterPng"))}|*.png|" +
                 $"{Strings.Format("FilterThisFrame", Strings.Get("FilterJpeg"))}|*.jpg;*.jpeg|" +
                 $"{Strings.Format("FilterThisFrame", Strings.Get("FilterWebp"))}|*.webp",
-            FileName = VideoFileName + ".mp4",
+            // The format chosen in the Export window first.
+            FilterIndex = SavesGif ? 2 : SavesFrame ? 3 + (int)FrameFormat : 1,
+            FileName = VideoFileName + (SavesGif ? ".gif" : SavesFrame ? Composer.Extension(FrameFormat) : ".mp4"),
             InitialDirectory = folder,
             AddExtension = true,
-            DefaultExt = ".mp4",
+            DefaultExt = SavesGif ? ".gif" : SavesFrame ? Composer.Extension(FrameFormat) : ".mp4",
         };
         if (dialog.ShowDialog(this) != true)
-            return;
+            return false;
         string extension = Path.GetExtension(dialog.FileName).ToLowerInvariant();
         if (extension is ".mp4" or ".gif")
         {
-            if (await ExportVideo(dialog.FileName, gif: extension == ".gif"))
-                ShowSaved(dialog.FileName, capture: false);
-            return;
+            // The one chosen in the dialog becomes the format of the next ones, as for pictures.
+            App.Settings.VideoFormat = extension == ".gif" ? VideoFormat.Gif : VideoFormat.Mp4;
+            ShowExportFormat();
+            if (!await ExportVideo(dialog.FileName, gif: extension == ".gif"))
+                return false;
+            _videoKept = true;
+            ShowSaved(dialog.FileName, capture: false);
+            return true;
         }
         // A picture of the frame shown.
         var format = extension switch
@@ -501,15 +606,17 @@ public partial class EditorWindow
             using var picture = RenderFull();
             File.WriteAllBytes(dialog.FileName, Composer.Encode(picture, format));
             ShowSaved(dialog.FileName, capture: false);
+            return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            MessageBox.Show(this, Strings.Format("ErrorSave", ex.Message), "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Warning);
+            _ = ShowMessageAsync(Strings.Format("ErrorSave", ex.Message));
+            return false;
         }
     }
 
-    // The video made as shown, in the temp folder, then on the clipboard as a file (the apps take a video that way).
-    private async void CopyVideo()
+    // The GIF made as shown, in the temp folder, then on the clipboard as a file (chats take it so, and it moves).
+    private async void CopyGif()
     {
         if (!IsVideo || _export is not null)
             return;
@@ -521,10 +628,10 @@ public partial class EditorWindow
         {
             return;
         }
-        string path = FileNaming.UniquePath(ClipActions.TempFolder, VideoFileName, ".mp4");
-        if (!await ExportVideo(path, gif: false))
+        string path = FileNaming.UniquePath(ClipActions.TempFolder, VideoFileName, ".gif");
+        if (!await ExportVideo(path, gif: true))
             return;
         bool copied = ClipActions.CopyFile(path);
-        ShowStatus(Strings.Get(copied ? "VideoCopied" : "CopyFailed"));
+        ShowStatus(Strings.Get(copied ? "GifCopied" : "CopyFailed"));
     }
 }

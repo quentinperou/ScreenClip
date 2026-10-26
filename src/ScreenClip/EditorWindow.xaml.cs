@@ -12,6 +12,7 @@ using ScreenClip.Core;
 using ScreenClip.Core.Composition;
 using ScreenClip.Core.Video;
 using ScreenClip.Services;
+using ScreenClip.Core.Annotations;
 using SkiaSharp;
 
 namespace ScreenClip;
@@ -37,7 +38,7 @@ public partial class EditorWindow : Window
     private bool _draggingOut;
     private Point? _pressedAt;
     private string? _savedPath;                              // the file of the notification
-    private readonly DispatcherTimer _savedToastTimer = new() { Interval = TimeSpan.FromSeconds(8) };
+    private readonly DispatcherTimer _savedToastTimer = new() { Interval = TimeSpan.FromSeconds(4) };
 
     private readonly Dictionary<string, RadioButton> _presetTiles = [];
     private readonly List<RadioButton> _userTiles = [];
@@ -71,7 +72,24 @@ public partial class EditorWindow : Window
         DragOver += Editor_DragOver;
         Drop += Editor_Drop;
         DpiChanged += (_, _) => RequestRender();
-        Closing += (_, _) => CloseVideo();
+        Closing += (_, e) =>
+        {
+            // A recording kept nowhere yet: asked first (the window closes after a save, or without one).
+            if (!_leaving && !App.Quitting && NeedsKeeping)
+            {
+                e.Cancel = true;
+                Dispatcher.BeginInvoke(async () =>
+                {
+                    if (await LeaveVideo())
+                    {
+                        _leaving = true;
+                        Close();
+                    }
+                });
+                return;
+            }
+            CloseVideo();
+        };
         Closed += (_, _) =>
         {
             App.Settings.Save();
@@ -99,8 +117,10 @@ public partial class EditorWindow : Window
     // ---------------------------------------------------------------- The picture
 
     /// <summary>Shows <paramref name="image"/> (a capture, an imported or pasted picture) to be laid out.</summary>
-    internal void Load(BitmapSource image, DateTime takenAt)
+    internal async void Load(BitmapSource image, DateTime takenAt)
     {
+        if (!await LeaveVideo())
+            return;
         CloseVideo();
         SetCapture(Imaging.ToSkia(image), takenAt);
     }
@@ -132,7 +152,7 @@ public partial class EditorWindow : Window
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or FileFormatException or ArgumentException)
         {
-            MessageBox.Show(this, Strings.Format("ErrorOpenImage", ex.Message), "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Warning);
+            _ = ShowMessageAsync(Strings.Format("ErrorOpenImage", ex.Message));
             return false;
         }
     }
@@ -149,14 +169,15 @@ public partial class EditorWindow : Window
         VideoBar.Visibility = IsVideo ? Visibility.Visible : Visibility.Collapsed;
         ToolRail.IsEnabled = EditPanel.IsEnabled = hasPicture;
         ZoomBar.Visibility = hasPicture && _editTab ? Visibility.Visible : Visibility.Collapsed;
-        CopyButton.IsEnabled = SaveButton.IsEnabled = hasPicture;
+        CopyButton.IsEnabled = ExportButton.IsEnabled = hasPicture;
         if (!hasPicture)
             OutputText.Text = "";
+        ShowExportFormat();
     }
 
     private void Import_Click(object sender, RoutedEventArgs e) => Import();
 
-    private void Import()
+    internal void Import()
     {
         var dialog = new OpenFileDialog
         {
@@ -455,14 +476,15 @@ public partial class EditorWindow : Window
         PresetsChanged();
     }
 
-    private void DeletePreset(int index)
+    private async void DeletePreset(int index)
     {
         var presets = App.Settings.UserPresets;
-        if (index >= presets.Count
-            || MessageBox.Show(this, Strings.Format("PresetDeleteQuestion", presets[index].Name), "ScreenClip",
-                MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes)
+        if (index >= presets.Count)
             return;
-        presets.RemoveAt(index);
+        var preset = presets[index];
+        if (await AskAsync(Strings.Format("PresetDeleteQuestion", preset.Name), "", Strings.Get("PresetDelete"), Strings.Get("Cancel")) != 0)
+            return;
+        presets.Remove(preset);
         PresetsChanged();
     }
 
@@ -720,9 +742,7 @@ public partial class EditorWindow : Window
         TiltSlider.Value = _style.TiltDegrees;
         TurnValue.Text = Degrees(_style.TurnDegrees);
         TiltValue.Text = Degrees(_style.TiltDegrees);
-        FormatPng.IsChecked = _style.Format == ExportFormat.Png;
-        FormatJpeg.IsChecked = _style.Format == ExportFormat.Jpeg;
-        FormatWebp.IsChecked = _style.Format == ExportFormat.Webp;
+        ShowExportFormat();
         ShowImageSwatch();
         foreach (var (image, style) in _keepBackgroundMiniatures)
         {
@@ -761,7 +781,6 @@ public partial class EditorWindow : Window
         Apply(_style with
         {
             DarkFrame = DarkFrame.IsChecked == true,
-            Format = FormatJpeg.IsChecked == true ? ExportFormat.Jpeg : FormatWebp.IsChecked == true ? ExportFormat.Webp : ExportFormat.Png,
         });
     }
 
@@ -791,6 +810,19 @@ public partial class EditorWindow : Window
     private void AngleSlider_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
         ((Slider)sender).Value = 0;
+        e.Handled = true;
+    }
+
+    // A double click puts a slider back to its default (asked by the author): the layout's of the default preset, the
+    // pointers' usual sizes.
+    private void SliderReset_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        var slider = (Slider)sender;
+        slider.Value = slider == PaddingSlider ? StylePresets.Default.Padding
+            : slider == RadiusSlider ? StylePresets.Default.Radius
+            : slider == ShadowSlider ? StylePresets.Default.Shadow
+            : slider == PointerSizeSlider ? Core.Annotations.AnnotationDefaults.DefaultPointerSize
+            : 100; // the recorded pointer: its size on the screen
         e.Handled = true;
     }
 
@@ -866,12 +898,8 @@ public partial class EditorWindow : Window
         double width = PreviewHost.ActualWidth * dpi.DpiScaleX, height = PreviewHost.ActualHeight * dpi.DpiScaleY;
         if (width < 16 || height < 16)
             return;
-        // The size of what is exported, in both tabs: the part kept, laid out.
-        var kept = _history.Current.Visible(_capture.Width, _capture.Height);
-        var output = ClipLayout.Measure(kept.Width, kept.Height, _style);
-        OutputText.Text = IsVideo
-            ? Strings.Format("VideoOutput", output.Width & ~1, output.Height & ~1, Timecode.Format(_trim.Length, Decimal))
-            : Strings.Format("EditorOutput", output.Width, output.Height, FormatName(_style.Format));
+        // The size of what is exported, in both tabs: the part kept, laid out or not as the Export window says.
+        OutputText.Text = ExportOutput();
         if (_editTab)
         {
             RenderEditView(width, height, dpi);
@@ -899,46 +927,56 @@ public partial class EditorWindow : Window
 
     // ---------------------------------------------------------------- Export
 
-    // The text being typed counts: it is finished first.
-    private SKImage RenderFull()
-    {
-        CommitText();
-        return Composer.Render(Flattened(), _style, 1, BackgroundImageFor(_style));
-    }
+
 
     private string FileName => FileNaming.Expand(App.Settings.EffectiveFileNameTemplate, _takenAt);
 
-    private void Copy_Click(object sender, RoutedEventArgs e)
-    {
-        if (IsVideo)
-            CopyVideo();
-        else
-            Copy();
-    }
+    private void Copy_Click(object sender, RoutedEventArgs e) => Copy(App.Settings.CopyFormat);
 
-    // PNG for the apps that read it (transparency kept), and a bitmap on white for the others.
-    private async void Copy()
+    /// <summary>
+    /// The picture (the frame shown, for a video) in <paramref name="format"/>: the settings' for the bar's Copy, the
+    /// one chosen for the Export window's. PNG goes as itself, for the apps that read it (transparency kept); JPG and
+    /// WebP have no place of their own on the clipboard, so they go as a file (chats, mails and folders take it so); a
+    /// bitmap on white goes with both, for the apps that only take a bitmap.
+    /// </summary>
+    private async void Copy(ExportFormat format)
     {
-        if (_capture is null)
+        if (_capture is null || _export is not null)
             return;
-        using var picture = RenderFull();
-        var data = new DataObject();
-        data.SetData("PNG", new MemoryStream(Composer.Encode(picture, ExportFormat.Png)), autoConvert: false);
-        using (var flat = Composer.OnWhite(picture))
-            data.SetImage(Imaging.ToWpf(flat));
-        bool copied = ClipActions.Copy(data);
+        StopPlayback();
+        CommitText();
+        bool copied = ClipActions.Copy(CopyData(format));
         ShowStatus(Strings.Get(copied ? "EditorCopied" : "CopyFailed"));
         CopyText.Text = Strings.Get(copied ? "Copied" : "Copy");
         await Task.Delay(1500);
-        CopyText.Text = Strings.Get("Copy");
+        CopyText.Text = CopyLabel;
     }
 
-    private void Save_Click(object sender, RoutedEventArgs e)
+    // What Copy puts on the clipboard (apart, so that the script player can look at it without taking the clipboard).
+    private DataObject CopyData(ExportFormat format)
     {
-        if (IsVideo)
-            SaveVideo();
+        using var picture = RenderFull();
+        var data = new DataObject();
+        byte[] encoded = Composer.Encode(picture, format);
+        if (format == ExportFormat.Png)
+            data.SetData("PNG", new MemoryStream(encoded), autoConvert: false);
         else
-            Save();
+        {
+            try
+            {
+                Directory.CreateDirectory(ClipActions.TempFolder);
+                string path = FileNaming.UniquePath(ClipActions.TempFolder, IsVideo ? VideoFileName : FileName, Composer.Extension(format));
+                File.WriteAllBytes(path, encoded);
+                data.SetFileDropList(new System.Collections.Specialized.StringCollection { path });
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // The bitmap alone, then.
+            }
+        }
+        using (var flat = Composer.OnWhite(picture))
+            data.SetImage(Imaging.ToWpf(flat));
+        return data;
     }
 
     private void Save()
@@ -985,7 +1023,7 @@ public partial class EditorWindow : Window
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            MessageBox.Show(this, Strings.Format("ErrorSave", ex.Message), "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Warning);
+            _ = ShowMessageAsync(Strings.Format("ErrorSave", ex.Message));
         }
     }
 
@@ -998,8 +1036,8 @@ public partial class EditorWindow : Window
         HideStatus();
         bool video = Path.GetExtension(path).ToLowerInvariant() is ".mp4" or ".gif";
         SavedToastTitle.Text = Strings.Get(video ? "ToastVideoSaved" : capture ? "ToastCaptureSaved" : "ToastSaved");
-        SavedToastDetail.Text = Strings.Format("ToastDetail", Path.GetFileName(path), Path.GetFileName(Path.GetDirectoryName(path)) ?? "");
-        SavedToastDetail.ToolTip = path;
+        // The file and its folder on the title, for whoever wants them.
+        SavedToast.ToolTip = Strings.Format("ToastDetail", Path.GetFileName(path), Path.GetFileName(Path.GetDirectoryName(path)) ?? "");
         SavedToast.Visibility = Visibility.Visible;
         _savedToastTimer.Stop();
         _savedToastTimer.Start();
@@ -1116,6 +1154,13 @@ public partial class EditorWindow : Window
 
     private void Editor_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        // A dialog shown takes the keys: none of the editor's shortcuts meanwhile.
+        if (_dialog is not null)
+        {
+            if (DialogKey(e))
+                e.Handled = true;
+            return;
+        }
         bool inTextBox = Keyboard.FocusedElement is TextBox;
         // A video: Space plays and pauses, in both tabs.
         if (IsVideo && e.Key == Key.Space && Keyboard.Modifiers == ModifierKeys.None && !inTextBox && _export is null)
@@ -1175,10 +1220,7 @@ public partial class EditorWindow : Window
                 e.Handled = true;
                 break;
             case Key.C when !inTextBox:
-                if (IsVideo)
-                    CopyVideo();
-                else
-                    Copy();
+                Copy(App.Settings.CopyFormat);
                 e.Handled = true;
                 break;
             case Key.S:

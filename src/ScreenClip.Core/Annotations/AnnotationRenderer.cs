@@ -1,3 +1,4 @@
+using ScreenClip.Core.Video;
 using SkiaSharp;
 
 namespace ScreenClip.Core.Annotations;
@@ -15,9 +16,10 @@ public static class AnnotationRenderer
 
     /// <summary>
     /// The capture with its annotations, cut to its crop: what the layout lays out. A layer with nothing on it gives a
-    /// plain copy.
+    /// plain copy. A frame of a video is drawn at its <paramref name="moment"/>: the annotations shown then, and the
+    /// pointer recorded with it.
     /// </summary>
-    public static SKImage Flatten(SKImage capture, AnnotationLayer layer)
+    public static SKImage Flatten(SKImage capture, AnnotationLayer layer, VideoMoment? moment = null)
     {
         var area = layer.Visible(capture.Width, capture.Height);
         var info = new SKImageInfo(area.Width, area.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
@@ -26,19 +28,129 @@ public static class AnnotationRenderer
         canvas.Clear(SKColors.Transparent);
         canvas.Translate(-area.X, -area.Y);
         canvas.DrawImage(capture, 0, 0);
-        Draw(canvas, capture, layer.Items, area);
+        if (moment is null)
+            Draw(canvas, capture, layer.Items, area);
+        else
+        {
+            Draw(canvas, capture, layer.ShownAt(moment.Time), area);
+            DrawRecordedPointer(canvas, capture, layer, moment);
+        }
         return surface.Snapshot();
     }
 
     /// <summary>
+    /// The pointer recorded with a video, at its moment, as the layer's options say: its real shape or a drawn one, its
+    /// size, smoothed or not, and the clicks around then. Over the annotations, as the real one was over the screen.
+    /// </summary>
+    public static void DrawRecordedPointer(SKCanvas canvas, SKImage capture, AnnotationLayer layer, VideoMoment moment)
+    {
+        var options = layer.Cursor;
+        if (moment.Track is not { } track || track.IsEmpty || !options.Shows)
+            return;
+        var state = track.At(moment.Time, options.Smooth);
+        // The arrow fills about two thirds of its picture: the drawn pointers are that high.
+        float size = options.Size / 100f;
+        float height = track.HeightOf(state.Visible ? state.Shape : 0) * 0.66f * size;
+        float scale = AnnotationGeometry.ScaleOf(capture.Width, capture.Height);
+        float press = 1;
+        foreach (var (at, phase) in VideoTiming.RecordedClicks(track, options, moment.Time))
+        {
+            DrawClick(canvas, at, options.Click, phase, ClickRadius(height), scale);
+            if (options.Click == ClickEffect.Press)
+                press = PressScale(phase);
+        }
+        if (!state.Visible)
+            return;
+        if (options.Style == RecordedPointerStyle.AsRecorded)
+        {
+            var shape = track.Shapes[state.Shape];
+            if (track.ImageOf(state.Shape) is not { } image)
+                return;
+            float k = size * press;
+            var rect = SKRect.Create(state.Position.X - shape.HotX * k, state.Position.Y - shape.HotY * k, shape.Width * k, shape.Height * k);
+            canvas.DrawImage(image, rect, new SKSamplingOptions(SKCubicResampler.Mitchell));
+            return;
+        }
+        var style = options.Style switch
+        {
+            RecordedPointerStyle.Mac => PointerStyle.Mac,
+            RecordedPointerStyle.Hand => PointerStyle.Hand,
+            _ => PointerStyle.Windows,
+        };
+        DrawPointerShape(canvas, style, state.Position, height * press);
+    }
+
+    // A click shows about as wide as the pointer is high.
+    private static float ClickRadius(float pointerHeight) => Math.Max(10, pointerHeight * 0.75f);
+
+    // A pointer pressed is a little smaller, and comes back as the button goes up.
+    private static float PressScale(ClickPhase phase)
+    {
+        double back = phase.SinceUp is { } up ? Math.Clamp(up / ClickTiming.PressRelease, 0, 1) : 0;
+        double down = Math.Clamp(phase.SinceDown / 0.06, 0, 1);
+        return (float)(1 - 0.15 * down * (1 - back));
+    }
+
+    /// <summary>The effect of a click at <paramref name="at"/>, under the pointer.</summary>
+    private static void DrawClick(SKCanvas canvas, SKPoint at, ClickEffect effect, ClickPhase phase, float radius, float scale)
+    {
+        switch (effect)
+        {
+            case ClickEffect.Halo:
+            {
+                // Grows in quickly, stays while the button is down, then fades.
+                double grow = Math.Clamp(phase.SinceDown / 0.08, 0, 1);
+                double fade = phase.SinceUp is { } up ? Math.Clamp(1 - up / ClickTiming.HaloFade, 0, 1) : 1;
+                float r = radius * (float)(0.6 + 0.4 * grow);
+                using var fill = new SKPaint { IsAntialias = true, Color = HaloFill.WithAlpha((byte)(HaloFill.Alpha * fade)) };
+                canvas.DrawCircle(at, r, fill);
+                using var edge = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 2 * scale, Color = HaloStroke.WithAlpha((byte)(HaloStroke.Alpha * fade)) };
+                canvas.DrawCircle(at, r, edge);
+                break;
+            }
+            case ClickEffect.Ripple:
+            {
+                // A ring that spreads and fades.
+                double p = Math.Clamp(phase.SinceDown / ClickTiming.RippleLength, 0, 1);
+                float r = radius * (float)(0.35 + 1.25 * p);
+                using var ring = new SKPaint
+                {
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = (float)(3.5 * scale * (1 - 0.6 * p)),
+                    Color = HaloStroke.WithAlpha((byte)(0xFF * (1 - p))),
+                };
+                canvas.DrawCircle(at, r, ring);
+                break;
+            }
+            case ClickEffect.Press:
+            {
+                double fade = phase.SinceUp is { } up ? Math.Clamp(1 - up / ClickTiming.PressRelease, 0, 1) : 1;
+                using var dash = SKPathEffect.CreateDash([3 * scale, 3 * scale], 0);
+                using var ring = new SKPaint
+                {
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = 2 * scale,
+                    Color = HaloStroke.WithAlpha((byte)(HaloStroke.Alpha * fade)),
+                    PathEffect = dash,
+                };
+                canvas.DrawCircle(at, radius * 0.6f, ring);
+                break;
+            }
+        }
+    }
+
+    /// <summary>
     /// Draws <paramref name="annotations"/> on <paramref name="canvas"/>, set to the capture's pixels (any scale and
-    /// offset). The capture itself is drawn by the caller; masks read it. <paramref name="area"/> is the part shown,
-    /// darkened around the spotlights.
+    /// offset). The capture itself is drawn by the caller; a mask hides what is under it: the capture and the
+    /// annotations before it in the list. <paramref name="area"/> is the part shown, darkened around the spotlights.
     /// </summary>
     public static void Draw(SKCanvas canvas, SKImage capture, IEnumerable<Annotation> annotations, PixelRect area)
     {
         float scale = AnnotationGeometry.ScaleOf(capture.Width, capture.Height);
-        var list = annotations as IReadOnlyList<Annotation> ?? [.. annotations];
+        // What is hidden by its eye is not drawn, nor hidden by a mask over it.
+        IReadOnlyList<Annotation> list = [.. annotations.Where(a => !a.Hidden)];
 
         // The spotlights first: everything but them is darkened, and the other annotations stay bright on top.
         using (var spots = new SKPath())
@@ -63,8 +175,9 @@ public static class AnnotationRenderer
             }
         }
 
-        foreach (var a in list)
+        for (int i = 0; i < list.Count; i++)
         {
+            var a = list[i];
             switch (a.Kind)
             {
                 case AnnotationKind.Arrow:
@@ -90,7 +203,7 @@ public static class AnnotationRenderer
                     DrawPointer(canvas, a, scale);
                     break;
                 case AnnotationKind.Mask:
-                    DrawMask(canvas, capture, a, scale);
+                    DrawMask(canvas, capture, a, scale, part => Below(capture, list, i, part, area));
                     break;
             }
         }
@@ -263,7 +376,18 @@ public static class AnnotationRenderer
 
     private static void DrawPointer(SKCanvas canvas, Annotation a, float scale)
     {
-        if (a.Halo)
+        float height = AnnotationGeometry.PointerHeight(a, scale);
+        if (a.Motion is { } motion)
+        {
+            // A pointer that moves shows its click when it arrives (posed at a moment of the video).
+            if (a.Click is { } phase)
+            {
+                DrawClick(canvas, a.Start, motion.Click, phase, ClickRadius(height), scale);
+                if (motion.Click == ClickEffect.Press)
+                    height *= PressScale(phase);
+            }
+        }
+        else if (a.Halo)
         {
             float radius = AnnotationGeometry.HaloRadius(a, scale);
             using var fill = new SKPaint { IsAntialias = true, Color = HaloFill };
@@ -271,8 +395,14 @@ public static class AnnotationRenderer
             using var edge = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 2 * scale, Color = HaloStroke };
             canvas.DrawCircle(a.Start, radius, edge);
         }
-        using var path = AnnotationGeometry.PointerPath(a, scale, out bool dark);
-        float k = AnnotationGeometry.PointerHeight(a, scale) / 24;
+        DrawPointerShape(canvas, a.Pointer, a.Start, height);
+    }
+
+    /// <summary>A drawn pointer (white with a dark outline, or the reverse), with a soft shadow.</summary>
+    private static void DrawPointerShape(SKCanvas canvas, PointerStyle style, SKPoint at, float height)
+    {
+        using var path = AnnotationGeometry.PointerPath(style, at, height, out bool dark);
+        float k = height / 24;
         using (var shadow = new SKPaint
         {
             IsAntialias = true,
@@ -298,7 +428,25 @@ public static class AnnotationRenderer
         canvas.DrawPath(path, outline);
     }
 
-    private static void DrawMask(SKCanvas canvas, SKImage capture, Annotation a, float scale)
+    /// <summary>
+    /// What is under the annotation <paramref name="index"/> of <paramref name="list"/> on the part <paramref name="part"/>
+    /// of the capture: the capture with the annotations before it (the author: a blur that left a line drawn under it
+    /// sharp looked wrong).
+    /// </summary>
+    private static SKImage Below(SKImage capture, IReadOnlyList<Annotation> list, int index, SKRectI part, PixelRect area)
+    {
+        using var surface = SKSurface.Create(new SKImageInfo(part.Width, part.Height, SKColorType.Bgra8888, SKAlphaType.Premul))
+            ?? throw new OutOfMemoryException("The part is too large.");
+        var canvas = surface.Canvas;
+        canvas.Clear(SKColors.Transparent);
+        canvas.Translate(-part.Left, -part.Top);
+        canvas.DrawImage(capture, 0, 0);
+        if (index > 0)
+            Draw(canvas, capture, list.Take(index).ToList(), area);
+        return surface.Snapshot();
+    }
+
+    private static void DrawMask(SKCanvas canvas, SKImage capture, Annotation a, float scale, Func<SKRectI, SKImage> below)
     {
         var rect = a.Rect;
         rect.Intersect(SKRect.Create(0, 0, capture.Width, capture.Height));
@@ -312,21 +460,29 @@ public static class AnnotationRenderer
                 break;
             case MaskStyle.Blur:
             {
-                // Blurred from the capture itself; strong enough that a line of text cannot be read.
+                // Blurred from what is under it; strong enough that a line of text cannot be read.
                 float sigma = Math.Max(8 * scale, Math.Min(rect.Width, rect.Height) / 10);
+                var source = SKRect.Inflate(rect, sigma * 3, sigma * 3);
+                source.Intersect(SKRect.Create(0, 0, capture.Width, capture.Height));
+                var part = SKRectI.Ceiling(source, outwards: true);
+                using var under = below(part);
                 canvas.Save();
                 canvas.ClipRect(rect, antialias: true);
                 using var paint = new SKPaint { ImageFilter = SKImageFilter.CreateBlur(sigma, sigma, SKShaderTileMode.Clamp) };
-                var source = SKRect.Inflate(rect, sigma * 3, sigma * 3);
-                source.Intersect(SKRect.Create(0, 0, capture.Width, capture.Height));
-                canvas.DrawImage(capture, source, source, new SKSamplingOptions(SKFilterMode.Linear), paint);
+                canvas.DrawImage(under, part.Left, part.Top, new SKSamplingOptions(SKFilterMode.Linear), paint);
                 canvas.Restore();
                 break;
             }
             default:
             {
                 int cell = Math.Max(6, (int)Math.Round(12 * scale));
-                using var cells = Pixelate(capture, rect, cell, out var area);
+                var part = SKRectI.Round(rect);
+                part.Intersect(SKRectI.Create(0, 0, capture.Width, capture.Height));
+                if (part.Width <= 0 || part.Height <= 0)
+                    break;
+                using var under = below(part);
+                using var cells = Pixelate(under, SKRect.Create(0, 0, part.Width, part.Height), cell, out var cut);
+                var area = SKRectI.Create(part.Left + cut.Left, part.Top + cut.Top, cut.Width, cut.Height);
                 if (cells is null)
                     break;
                 // One pixel per block, enlarged without smoothing; the last blocks may be cut by the mask's edge.

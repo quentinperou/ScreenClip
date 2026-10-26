@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using ScreenClip.Core;
+using ScreenClip.Core.Video;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.MediaFoundation;
@@ -10,8 +11,9 @@ namespace ScreenClip.Video;
 
 /// <summary>
 /// Records a part of a monitor into an MP4 (H.264 by the graphics card when it can, AAC): the monitor is filmed by
-/// Windows.Graphics.Capture (frames only when something changes, at most <see cref="Fps"/> a second, the pointer
-/// included), cut to the area on the graphics card, and handed to Media Foundation. Pausing takes the paused time out.
+/// Windows.Graphics.Capture (frames only when something changes, at most <see cref="Fps"/> a second), cut to the area
+/// on the graphics card, and handed to Media Foundation. Pausing takes the paused time out. The pointer is filmed with
+/// the screen, or recorded apart (<see cref="PointerRecorder"/>) for the editor to draw it again.
 /// </summary>
 internal sealed class ScreenRecorder : IDisposable
 {
@@ -25,6 +27,7 @@ internal sealed class ScreenRecorder : IDisposable
     private readonly int _videoStream;
     private readonly int _audioStream = -1;
     private readonly AudioRecorder? _audio;
+    private readonly PointerRecorder? _pointer;
     private readonly GraphicsCaptureItem _item;
     private readonly Direct3D11CaptureFramePool _pool;
     private readonly GraphicsCaptureSession _session;
@@ -38,7 +41,8 @@ internal sealed class ScreenRecorder : IDisposable
     private bool _stopped;
 
     /// <param name="area">The part filmed, in screen pixels, on <paramref name="monitorBounds"/>.</param>
-    public ScreenRecorder(PixelRect area, IntPtr monitor, PixelRect monitorBounds, string path, bool systemSound, bool microphone)
+    /// <param name="pointerApart">The pointer is not filmed but recorded apart (<see cref="PointerTrack"/>).</param>
+    public ScreenRecorder(PixelRect area, IntPtr monitor, PixelRect monitorBounds, string path, bool systemSound, bool microphone, bool pointerApart)
     {
         Path = path;
         // H.264 wants even sizes.
@@ -63,8 +67,9 @@ internal sealed class ScreenRecorder : IDisposable
         using (var input = Media.VideoType(VideoFormatGuids.Argb32, Width, Height, Fps))
         using (var encoding = MediaFactory.MFCreateAttributes(1))
         {
-            // A key frame every second: the editor seeks to them.
-            encoding.Set(Media.GopSize, (uint)Fps);
+            // A key frame every third of a second: the editor decodes from the one before the playhead (measured on a
+            // 1800 × 1000 video moving all over: going back with a key frame every second, 70 ms a move of the playhead).
+            encoding.Set(Media.GopSize, (uint)(Fps / 3));
             _writer.SetInputMediaType(_videoStream, input, encoding);
         }
 
@@ -87,7 +92,9 @@ internal sealed class ScreenRecorder : IDisposable
         _item = Direct3D.ForMonitor(monitor);
         _pool = Direct3D11CaptureFramePool.CreateFreeThreaded(Direct3D.ToWinRT(_device), DirectXPixelFormat.B8G8R8A8UIntNormalized, 2, _item.Size);
         _session = _pool.CreateCaptureSession(_item);
-        _session.IsCursorCaptureEnabled = true;
+        _session.IsCursorCaptureEnabled = !pointerApart;
+        if (pointerApart)
+            _pointer = new PointerRecorder(area, VideoTime);
         try
         {
             // No yellow frame around the screen (Windows 11): ScreenClip draws its own around the area.
@@ -107,6 +114,9 @@ internal sealed class ScreenRecorder : IDisposable
 
     public bool HasSound => _audio is not null;
 
+    /// <summary>The pointer recorded apart, once stopped (null when it was filmed).</summary>
+    public PointerTrack? PointerTrack => _pointer?.Track;
+
     public bool IsPaused => _pausedAt != 0;
 
     /// <summary>The time recorded so far (pauses left out).</summary>
@@ -124,11 +134,15 @@ internal sealed class ScreenRecorder : IDisposable
     // QueryPerformanceCounter in 100 ns units: the clock of the captured frames.
     private static long Now() => (long)(Stopwatch.GetTimestamp() * (10_000_000.0 / Stopwatch.Frequency));
 
+    // The time of the video now, for the pointer; nothing while paused or stopped.
+    private long? VideoTime() => _start == 0 || IsPaused || _stopped ? null : Now() - _start - _pausedTotal;
+
     public void Start()
     {
         _start = Now();
         _session.StartCapture();
         _audio?.Start();
+        _pointer?.Start();
     }
 
     public void Pause()
@@ -218,6 +232,7 @@ internal sealed class ScreenRecorder : IDisposable
         if (IsPaused)
             Resume();
         _audio?.Stop();
+        _pointer?.Stop();
         _session.Dispose();
         _pool.Dispose();
         lock (_lock)
@@ -237,6 +252,7 @@ internal sealed class ScreenRecorder : IDisposable
     public void Abort()
     {
         _audio?.Stop();
+        _pointer?.Stop();
         _session.Dispose();
         _pool.Dispose();
         lock (_lock)

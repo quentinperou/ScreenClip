@@ -193,7 +193,7 @@ public partial class App : Application
         }
     }
 
-    internal static void OpenEditor(string? picturePath = null, Clip? clip = null, VideoClip? video = null)
+    internal static void OpenEditor(string? picturePath = null, Clip? clip = null, VideoClip? video = null, bool import = false)
     {
         EnsureTheme();
         var editor = Current.Windows.OfType<EditorWindow>().FirstOrDefault();
@@ -221,6 +221,9 @@ public partial class App : Application
         if (editor.WindowState == WindowState.Minimized)
             editor.WindowState = WindowState.Normal;
         editor.Activate();
+        // “Lay out a picture…” in the menu: the file to open is asked once the menu is gone.
+        if (import)
+            editor.Dispatcher.BeginInvoke(editor.Import);
     }
 
     /// <summary>
@@ -248,6 +251,13 @@ public partial class App : Application
             editor.Show();
     }
 
+    /// <summary>ScreenClip is quitting: the editor closes without asking about a video not saved.</summary>
+    internal static bool Quitting { get; private set; }
+
     /// <summary>Quits ScreenClip: the notification icon and the shortcuts go with it.</summary>
-    public static void Quit() => Current.Shutdown();
+    public static void Quit()
+    {
+        Quitting = true;
+        Current.Shutdown();
+    }
 }

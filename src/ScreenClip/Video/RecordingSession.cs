@@ -24,6 +24,7 @@ internal sealed class RecordingSession
     private Task<ScreenRecorder>? _preparing;   // made during the countdown: Media Foundation takes a moment the first time
     private DateTime _startedAt;
     private bool _ending;
+    private bool _skipCountdown;                 // started now, or no countdown in the settings
 
     private RecordingSession(PixelRect area, MonitorInfo monitor)
     {
@@ -32,6 +33,7 @@ internal sealed class RecordingSession
         _monitor = monitor;
         _frame = new RecordingFrame(_area);
         _bar = new RecordingBar(_area, monitor);
+        _bar.StartNowClicked += (_, _) => StartNow();
         _bar.PauseClicked += (_, _) => TogglePause();
         _bar.StopClicked += (_, _) => Stop();
         _bar.RestartClicked += (_, _) => Restart();
@@ -62,6 +64,7 @@ internal sealed class RecordingSession
 
     private void StartCountdown()
     {
+        _skipCountdown = !App.Settings.RecordCountdown;
         _recorder = null;
         _bar.EnableControls(false);
         _bar.ShowPaused(false);
@@ -77,7 +80,7 @@ internal sealed class RecordingSession
         var settings = App.Settings;
         _startedAt = DateTime.Now;
         string name = FileNaming.Expand(settings.EffectiveVideoFileNameTemplate, _startedAt);
-        bool sound = settings.RecordSystemSound, microphone = settings.RecordMicrophone;
+        bool sound = settings.RecordSystemSound, microphone = settings.RecordMicrophone, pointerApart = settings.RecordPointerApart;
         var area = _area;
         var bounds = _monitor.Bounds;
         return Task.Run(() =>
@@ -86,7 +89,7 @@ internal sealed class RecordingSession
             string path = FileNaming.UniquePath(Folder, name, ".mp4");
             var center = new NativeMethods.POINT { X = area.X + area.Width / 2, Y = area.Y + area.Height / 2 };
             var monitor = NativeMethods.MonitorFromPoint(center, NativeMethods.MONITOR_DEFAULTTONEAREST);
-            return new ScreenRecorder(area, monitor, bounds, path, sound, microphone);
+            return new ScreenRecorder(area, monitor, bounds, path, sound, microphone, pointerApart);
         });
     }
 
@@ -94,12 +97,13 @@ internal sealed class RecordingSession
     {
         if (_recorder is null)
         {
-            // The countdown stays on 1 while the recorder is not ready yet.
+            // The countdown stays on 1 while the recorder is not ready yet; skipped (or turned off), “…” until it is.
             int left = Math.Max(1, CountdownSeconds - (int)_countdown.Elapsed.TotalSeconds);
-            if (_countdown.Elapsed.TotalSeconds < CountdownSeconds || _preparing is { IsCompleted: false })
+            bool counting = !_skipCountdown && _countdown.Elapsed.TotalSeconds < CountdownSeconds;
+            if (counting || _preparing is { IsCompleted: false })
             {
-                _frame.ShowCount(left);
-                _bar.ShowText(left.ToString(System.Globalization.CultureInfo.CurrentCulture));
+                _frame.ShowCount(_skipCountdown ? null : left);
+                _bar.ShowText(_skipCountdown ? "…" : left.ToString(System.Globalization.CultureInfo.CurrentCulture));
                 return;
             }
             _frame.ShowCount(null);
@@ -123,7 +127,7 @@ internal sealed class RecordingSession
             _recorder = preparing.GetAwaiter().GetResult();
             _recorder.Start();
             DevLog.Write($"recording: {_recorder.Width} x {_recorder.Height} at {_area.X},{_area.Y}, sound {_recorder.HasSound} "
-                + $"(computer {App.Settings.RecordSystemSound}, microphone {App.Settings.RecordMicrophone})");
+                + $"(computer {App.Settings.RecordSystemSound}, microphone {App.Settings.RecordMicrophone}), pointer apart {App.Settings.RecordPointerApart}");
             _bar.EnableControls(true);
             Tick();
         }
@@ -137,6 +141,15 @@ internal sealed class RecordingSession
             App.ShowHiddenEditor();
             MessageBox.Show(Strings.Format("ErrorRecording", ex.Message), "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+    }
+
+    /// <summary>The countdown skipped: the recording starts as soon as the recorder is ready.</summary>
+    private void StartNow()
+    {
+        if (_recorder is not null || _ending)
+            return;
+        _skipCountdown = true;
+        Tick();
     }
 
     public void TogglePause()
@@ -179,7 +192,7 @@ internal sealed class RecordingSession
         }
         recorder.Dispose();
         End();
-        App.Capture.DeliverVideo(recorder.Path, _startedAt, _monitor);
+        App.Capture.DeliverVideo(recorder.Path, _startedAt, recorder.PointerTrack);
     }
 
     private void Restart()

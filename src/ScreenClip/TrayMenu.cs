@@ -1,7 +1,10 @@
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 using ScreenClip.Core;
 using ScreenClip.Services;
@@ -43,7 +46,15 @@ internal static class TrayMenu
         };
         host.SourceInitialized += (_, _) =>
         {
+            // At the pointer, but inside the work area: the menu then opens above the taskbar (or beside it). Put at
+            // the pointer itself, on the icon, it reached into the taskbar, which sometimes covered its end (the author).
             NativeMethods.GetCursorPos(out var pointer);
+            var info = new NativeMethods.MONITORINFO { cbSize = Marshal.SizeOf<NativeMethods.MONITORINFO>() };
+            if (NativeMethods.GetMonitorInfo(NativeMethods.MonitorFromPoint(pointer, NativeMethods.MONITOR_DEFAULTTONEAREST), ref info))
+            {
+                pointer.X = Math.Clamp(pointer.X, info.rcWork.Left, info.rcWork.Right - 1);
+                pointer.Y = Math.Clamp(pointer.Y, info.rcWork.Top, info.rcWork.Bottom - 1);
+            }
             NativeMethods.SetWindowPos(new WindowInteropHelper(host).Handle, NativeMethods.HWND_TOPMOST,
                 pointer.X, pointer.Y, 1, 1, NativeMethods.SWP_NOACTIVATE);
         };
@@ -53,7 +64,8 @@ internal static class TrayMenu
 
         var menu = Build();
         menu.PlacementTarget = host;
-        menu.Placement = PlacementMode.MousePoint;
+        // Under that point, or above it when there is no room (the taskbar at the bottom).
+        menu.Placement = PlacementMode.Bottom;
         // Not the popup itself: activating it would deactivate the host, which closes the menu.
         menu.Closed += (_, _) =>
         {
@@ -65,10 +77,13 @@ internal static class TrayMenu
         menu.IsOpen = true;
     }
 
-    private static ContextMenu Build()
+    internal static ContextMenu Build()
     {
         var settings = App.Settings;
         var menu = new ContextMenu { MinWidth = 300 };
+        // The app itself, plainly (asked by the author): the editor, as it is.
+        menu.Items.Add(Item(Strings.Get("OpenApp"), AppIcon(), Hotkey.None, () => App.OpenEditor()));
+        menu.Items.Add(new Separator());
 
         menu.Items.Add(Item(Strings.Get("CaptureArea"), PathIcon("IconArea"), settings.GetShortcut(ShortcutAction.Area),
             () => App.Capture.RunAfterMenu(ShortcutAction.Area)));
@@ -89,7 +104,7 @@ internal static class TrayMenu
                 () => App.Capture.RunAfterMenu(ShortcutAction.Video)));
 
         menu.Items.Add(new Separator());
-        menu.Items.Add(Item(Strings.Get("OpenEditor"), GlyphIcon(""), Hotkey.None, () => App.OpenEditor()));
+        menu.Items.Add(Item(Strings.Get("OpenEditor"), GlyphIcon(""), Hotkey.None, () => App.OpenEditor(import: true)));
         menu.Items.Add(Item(Strings.Get("OpenCapturesFolder"), PathIcon("IconFolder"), Hotkey.None,
             () => ClipActions.OpenFolder(settings.EffectiveSaveFolder)));
 
@@ -116,6 +131,16 @@ internal static class TrayMenu
         Data = (System.Windows.Media.Geometry)Application.Current.FindResource(key),
         Style = (Style)Application.Current.FindResource("IconPath"),
     };
+
+    // The app's icon, from a frame of the .ico large enough for 200 % (scaled down smoothly).
+    private static Image AppIcon()
+    {
+        var decoder = BitmapDecoder.Create(new Uri("pack://application:,,,/Assets/ScreenClip.ico"), BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+        var frame = decoder.Frames.Where(f => f.PixelWidth >= 32).OrderBy(f => f.PixelWidth).FirstOrDefault() ?? decoder.Frames[0];
+        var image = new Image { Source = frame, Width = 16, Height = 16 };
+        RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.HighQuality);
+        return image;
+    }
 
     private static TextBlock GlyphIcon(string glyph) => new()
     {

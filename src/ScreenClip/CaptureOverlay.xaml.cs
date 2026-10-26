@@ -155,21 +155,27 @@ public partial class CaptureOverlay : Window
         _session.SetMode(sender == WindowButton ? CaptureMode.Window : sender == ScreenButton ? CaptureMode.Screen : CaptureMode.Area);
     }
 
+    private bool _syncingAudio;
+
     private void Cancel_Click(object sender, RoutedEventArgs e) => _session.Cancel();
 
     private void Video_Click(object sender, RoutedEventArgs e) => _session.SetVideo(VideoButton.IsChecked == true);
 
-    // The sound of the video, kept for the next one.
-    private void Audio_Click(object sender, RoutedEventArgs e)
+    // The sound and the pointer of the video, kept for the next one (on Checked: the keyboard and UI Automation too).
+    private void Audio_Changed(object sender, RoutedEventArgs e)
     {
+        if (_syncingAudio)
+            return;
         App.Settings.RecordSystemSound = SystemSoundButton.IsChecked == true;
         App.Settings.RecordMicrophone = MicrophoneButton.IsChecked == true;
+        App.Settings.RecordPointerApart = PointerButton.IsChecked == true;
         App.Settings.Save();
         ShowAudio();
     }
 
     private void ShowAudio()
     {
+        _syncingAudio = true;
         bool sound = App.Settings.RecordSystemSound, microphone = App.Settings.RecordMicrophone;
         SystemSoundButton.IsChecked = sound;
         MicrophoneButton.IsChecked = microphone;
@@ -181,6 +187,12 @@ public partial class CaptureOverlay : Window
         MicrophoneButton.ToolTip = microphoneText;
         System.Windows.Automation.AutomationProperties.SetName(SystemSoundButton, Strings.Get("SystemSound"));
         System.Windows.Automation.AutomationProperties.SetName(MicrophoneButton, Strings.Get("Microphone"));
+        bool apart = App.Settings.RecordPointerApart;
+        PointerButton.IsChecked = apart;
+        PointerPen.Visibility = apart ? Visibility.Visible : Visibility.Collapsed;
+        PointerButton.ToolTip = Strings.Get(apart ? "PointerApartOn" : "PointerApartOff");
+        System.Windows.Automation.AutomationProperties.SetName(PointerButton, Strings.Get("PointerApart"));
+        _syncingAudio = false;
     }
 
     private void FillHints()
@@ -203,7 +215,7 @@ public partial class CaptureOverlay : Window
                 break;
         }
         if (_session.IsVideo)
-            AddHint(null, Strings.Get("HintVideoStart"));
+            AddHint(null, Strings.Get(App.Settings.RecordCountdown ? "HintVideoStart" : "HintVideoStartNow"));
         AddHint(Strings.Find("KeyEscape") ?? "Esc", Strings.Get("HintCancel"));
     }
 

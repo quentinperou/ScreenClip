@@ -43,11 +43,20 @@
   <data name="AnnotListEmpty" xml:space="preserve">
     <value>Nothing drawn yet: pick a tool on the left.</value>
   </data>
+  <data name="AnnotListMotion" xml:space="preserve">
+    <value>Pointer A → B</value>
+  </data>
   <data name="AnnotListNumber" xml:space="preserve">
     <value>Number {0}</value>
   </data>
   <data name="AnnotListText" xml:space="preserve">
     <value>Text “{0}”</value>
+  </data>
+  <data name="AnnotListToolTip" xml:space="preserve">
+    <value>Click to choose it; drag it up or down to put it over or under the others</value>
+  </data>
+  <data name="AnnotMotion" xml:space="preserve">
+    <value>Move from A to B</value>
   </data>
   <data name="AnnotNextNumber" xml:space="preserve">
     <value>Next: {0}</value>
@@ -142,6 +151,18 @@
   <data name="CaptureWindow" xml:space="preserve">
     <value>Capture a window</value>
   </data>
+  <data name="ClickHalo" xml:space="preserve">
+    <value>Halo</value>
+  </data>
+  <data name="ClickNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="ClickPress" xml:space="preserve">
+    <value>Press</value>
+  </data>
+  <data name="ClickRipple" xml:space="preserve">
+    <value>Ripple</value>
+  </data>
   <data name="Close" xml:space="preserve">
     <value>Close</value>
   </data>
@@ -178,8 +199,20 @@
   <data name="Copy" xml:space="preserve">
     <value>Copy</value>
   </data>
+  <data name="CopyAs" xml:space="preserve">
+    <value>Copy as {0}</value>
+  </data>
   <data name="CopyFailed" xml:space="preserve">
     <value>Clipboard busy, try again</value>
+  </data>
+  <data name="CopyFrameToolTip" xml:space="preserve">
+    <value>Copy the picture of the moment shown (Ctrl+C); the video itself: Export › Save…</value>
+  </data>
+  <data name="CopyPictureToolTip" xml:space="preserve">
+    <value>Copy the picture (Ctrl+C); its format: Settings › Saving</value>
+  </data>
+  <data name="CopyTheGif" xml:space="preserve">
+    <value>Copy the GIF</value>
   </data>
   <data name="CropAll" xml:space="preserve">
     <value>Whole capture</value>
@@ -322,6 +355,27 @@
   <data name="ErrorUpdateRateLimited" xml:space="preserve">
     <value>GitHub limits the number of checks, try again in a while.</value>
   </data>
+  <data name="Export" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="ExportFormat" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="ExportLayout" xml:space="preserve">
+    <value>Apply the layout</value>
+  </data>
+  <data name="ExportLayoutCustom" xml:space="preserve">
+    <value>The one of the Layout tab</value>
+  </data>
+  <data name="ExportLayoutPreset" xml:space="preserve">
+    <value>{0}, from the Layout tab</value>
+  </data>
+  <data name="ExportSave" xml:space="preserve">
+    <value>Save…</value>
+  </data>
+  <data name="ExportToolTip" xml:space="preserve">
+    <value>Format, layout, then copy or save (Ctrl+S: save at once)</value>
+  </data>
   <data name="ExportingGif" xml:space="preserve">
     <value>Making the GIF…</value>
   </data>
@@ -349,6 +403,15 @@
   <data name="FilterWebp" xml:space="preserve">
     <value>WebP picture</value>
   </data>
+  <data name="FormatFrameToolTip" xml:space="preserve">
+    <value>The moment shown, as a picture</value>
+  </data>
+  <data name="FormatGifToolTip" xml:space="preserve">
+    <value>An animated picture without sound: small, it moves in chats and pages</value>
+  </data>
+  <data name="FormatMp4ToolTip" xml:space="preserve">
+    <value>A video with its sound</value>
+  </data>
   <data name="FrameBrowser" xml:space="preserve">
     <value>Browser</value>
   </data>
@@ -366,6 +429,9 @@
   </data>
   <data name="FrameWindows" xml:space="preserve">
     <value>Windows</value>
+  </data>
+  <data name="GifCopied" xml:space="preserve">
+    <value>GIF copied to the clipboard.</value>
   </data>
   <data name="HintCancel" xml:space="preserve">
     <value>cancel</value>
@@ -390,6 +456,9 @@
   </data>
   <data name="HintVideoStart" xml:space="preserve">
     <value>Recording starts 3 seconds after your choice</value>
+  </data>
+  <data name="HintVideoStartNow" xml:space="preserve">
+    <value>Recording starts as soon as you choose</value>
   </data>
   <data name="HintWheel" xml:space="preserve">
     <value>Wheel: larger or smaller</value>
@@ -439,6 +508,12 @@
   <data name="LanguageSystem" xml:space="preserve">
     <value>System language (automatic)</value>
   </data>
+  <data name="LayerHide" xml:space="preserve">
+    <value>Hide “{0}”</value>
+  </data>
+  <data name="LayerShow" xml:space="preserve">
+    <value>Show “{0}” again</value>
+  </data>
   <data name="MaskBlur" xml:space="preserve">
     <value>Blur</value>
   </data>
@@ -466,8 +541,41 @@
   <data name="ModeWindow" xml:space="preserve">
     <value>Window</value>
   </data>
+  <data name="MotionClick" xml:space="preserve">
+    <value>Click on arrival</value>
+  </data>
+  <data name="MotionHelp" xml:space="preserve">
+    <value>Drag A and B on the picture; the square handles bend the way. On the timeline, drag the diamonds to change when it leaves and arrives.</value>
+  </data>
+  <data name="MotionPace" xml:space="preserve">
+    <value>Movement</value>
+  </data>
+  <data name="MotionPaceEased" xml:space="preserve">
+    <value>Smooth</value>
+  </data>
+  <data name="MotionPaceSteady" xml:space="preserve">
+    <value>Steady</value>
+  </data>
+  <data name="MotionPath" xml:space="preserve">
+    <value>Path</value>
+  </data>
+  <data name="MotionPathCurve" xml:space="preserve">
+    <value>Curve</value>
+  </data>
+  <data name="MotionPathStraight" xml:space="preserve">
+    <value>Straight</value>
+  </data>
+  <data name="MovementReal" xml:space="preserve">
+    <value>Real</value>
+  </data>
+  <data name="MovementSmooth" xml:space="preserve">
+    <value>Smoothed</value>
+  </data>
   <data name="Ok" xml:space="preserve">
     <value>OK</value>
+  </data>
+  <data name="OpenApp" xml:space="preserve">
+    <value>Open ScreenClip</value>
   </data>
   <data name="OpenCapturesFolder" xml:space="preserve">
     <value>Open the captures folder</value>
@@ -477,6 +585,15 @@
   </data>
   <data name="OpenFolder" xml:space="preserve">
     <value>Open</value>
+  </data>
+  <data name="PointerApart" xml:space="preserve">
+    <value>Pointer apart</value>
+  </data>
+  <data name="PointerApartOff" xml:space="preserve">
+    <value>Pointer filmed with the screen: the video is ready at once. Click to record it apart, to restyle it in the editor</value>
+  </data>
+  <data name="PointerApartOn" xml:space="preserve">
+    <value>Pointer recorded apart: in the editor, change its style, its size, its clicks (the editor then copies and saves the video)</value>
   </data>
   <data name="PointerHand" xml:space="preserve">
     <value>Hand</value>
@@ -507,6 +624,9 @@
   </data>
   <data name="PresetNameTaken" xml:space="preserve">
     <value>A preset already has this name.</value>
+  </data>
+  <data name="PresetNone" xml:space="preserve">
+    <value>None</value>
   </data>
   <data name="PresetPlain" xml:space="preserve">
     <value>Plain</value>
@@ -580,6 +700,33 @@
   <data name="RatioAuto" xml:space="preserve">
     <value>Auto</value>
   </data>
+  <data name="RecordedClicks" xml:space="preserve">
+    <value>Clicks</value>
+  </data>
+  <data name="RecordedMovement" xml:space="preserve">
+    <value>Movement</value>
+  </data>
+  <data name="RecordedPointer" xml:space="preserve">
+    <value>Recorded pointer</value>
+  </data>
+  <data name="RecordedPointerHelp" xml:space="preserve">
+    <value>The mouse pointer recorded with the video, drawn again: as it was, or in a style of your choice, larger, smoothed, with its clicks shown.</value>
+  </data>
+  <data name="RecordedStyleAsRecorded" xml:space="preserve">
+    <value>As it was</value>
+  </data>
+  <data name="RecordedStyleHand" xml:space="preserve">
+    <value>Hand</value>
+  </data>
+  <data name="RecordedStyleHidden" xml:space="preserve">
+    <value>Hidden</value>
+  </data>
+  <data name="RecordedStyleMac" xml:space="preserve">
+    <value>macOS</value>
+  </data>
+  <data name="RecordedStyleWindows" xml:space="preserve">
+    <value>Windows</value>
+  </data>
   <data name="RecordingDiscard" xml:space="preserve">
     <value>Discard: nothing is kept</value>
   </data>
@@ -594,6 +741,9 @@
   </data>
   <data name="RecordingSaving" xml:space="preserve">
     <value>Saving…</value>
+  </data>
+  <data name="RecordingStartNow" xml:space="preserve">
+    <value>Start now</value>
   </data>
   <data name="RecordingStop" xml:space="preserve">
     <value>Stop</value>
@@ -633,6 +783,18 @@
   </data>
   <data name="SettingsCopyDescription" xml:space="preserve">
     <value>Ready to paste with Ctrl+V.</value>
+  </data>
+  <data name="SettingsCopyFormat" xml:space="preserve">
+    <value>Format of Copy in the editor</value>
+  </data>
+  <data name="SettingsCopyFormatDescription" xml:space="preserve">
+    <value>PNG keeps every pixel and the transparency. JPG and WebP are lighter: they are copied as a file, with the picture for the apps that only take a picture.</value>
+  </data>
+  <data name="SettingsCountdown" xml:space="preserve">
+    <value>Countdown before recording</value>
+  </data>
+  <data name="SettingsCountdownDescription" xml:space="preserve">
+    <value>3, 2, 1 before a video starts. While it counts, ▶ on the recording's bar starts at once.</value>
   </data>
   <data name="SettingsExportFolder" xml:space="preserve">
     <value>Laid-out pictures folder</value>
@@ -733,6 +895,9 @@
   <data name="SettingsTrayClickDescription" xml:space="preserve">
     <value>The icon of ScreenClip in the notification area. A right click always opens its menu.</value>
   </data>
+  <data name="SettingsVideo" xml:space="preserve">
+    <value>Video</value>
+  </data>
   <data name="SettingsVideoFolder" xml:space="preserve">
     <value>Videos folder</value>
   </data>
@@ -808,8 +973,17 @@
   <data name="ShowInExplorer" xml:space="preserve">
     <value>Show in File Explorer</value>
   </data>
+  <data name="SizeAbout" xml:space="preserve">
+    <value>about {0}</value>
+  </data>
+  <data name="SizeKB" xml:space="preserve">
+    <value>{0} KB</value>
+  </data>
   <data name="SizeLarge" xml:space="preserve">
     <value>Thick</value>
+  </data>
+  <data name="SizeMB" xml:space="preserve">
+    <value>{0} MB</value>
   </data>
   <data name="SizeMedium" xml:space="preserve">
     <value>Medium</value>
@@ -819,6 +993,9 @@
   </data>
   <data name="SizeSmall" xml:space="preserve">
     <value>Thin</value>
+  </data>
+  <data name="SliderResetToolTip" xml:space="preserve">
+    <value>Double click: back to the default</value>
   </data>
   <data name="StopRecording" xml:space="preserve">
     <value>Stop the recording</value>
@@ -886,6 +1063,9 @@
   <data name="ToastDetail" xml:space="preserve">
     <value>{0} · in the “{1}” folder</value>
   </data>
+  <data name="ToastFolder" xml:space="preserve">
+    <value>Folder</value>
+  </data>
   <data name="ToastOpen" xml:space="preserve">
     <value>Open</value>
   </data>
@@ -951,6 +1131,9 @@
   </data>
   <data name="ToolPointerHelp" xml:space="preserve">
     <value>Click where the mouse pointer goes; drag it to move it. The real one is never captured.</value>
+  </data>
+  <data name="ToolPointerVideoHelp" xml:space="preserve">
+    <value>Click where the mouse pointer goes. Drag from A to B: it moves there in the video, with a click.</value>
   </data>
   <data name="ToolRectangle" xml:space="preserve">
     <value>Rectangle</value>
@@ -1039,14 +1222,20 @@
   <data name="UpdatesTitle" xml:space="preserve">
     <value>Updates</value>
   </data>
-  <data name="VideoCopied" xml:space="preserve">
-    <value>Video copied: paste it in a folder, a mail or a chat</value>
-  </data>
   <data name="VideoModeToolTip" xml:space="preserve">
     <value>Record a video of the area, the window or the screen you choose</value>
   </data>
+  <data name="VideoNotKeptDrop" xml:space="preserve">
+    <value>Don't save</value>
+  </data>
+  <data name="VideoNotKeptText" xml:space="preserve">
+    <value>If it leaves the editor now, it is lost.</value>
+  </data>
+  <data name="VideoNotKeptTitle" xml:space="preserve">
+    <value>This video is not saved</value>
+  </data>
   <data name="VideoOutput" xml:space="preserve">
-    <value>{0} × {1} px · MP4 · {2}</value>
+    <value>{0} × {1} px · {2} · {3}</value>
   </data>
   <data name="VideoPause" xml:space="preserve">
     <value>Pause (Space)</value>

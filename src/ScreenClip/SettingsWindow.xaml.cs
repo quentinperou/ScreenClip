@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Navigation;
 using Microsoft.Win32;
 using ScreenClip.Core;
+using ScreenClip.Core.Composition;
 using ScreenClip.Services;
 
 namespace ScreenClip;
@@ -48,6 +49,11 @@ public partial class SettingsWindow : Window
         TrayClickBox.Items.Add(new Option<TrayClick>(TrayClick.Menu, Strings.Get("TrayClickMenu")));
         TrayClickBox.Items.Add(new Option<TrayClick>(TrayClick.Editor, Strings.Get("TrayClickEditor")));
         TrayClickBox.SelectedItem = TrayClickBox.Items.Cast<Option<TrayClick>>().First(o => o.Value == _settings.TrayClick);
+        CopyFormatBox.Items.Add(new Option<ExportFormat>(ExportFormat.Png, "PNG"));
+        CopyFormatBox.Items.Add(new Option<ExportFormat>(ExportFormat.Jpeg, "JPG"));
+        CopyFormatBox.Items.Add(new Option<ExportFormat>(ExportFormat.Webp, "WebP"));
+        CopyFormatBox.SelectedItem = CopyFormatBox.Items.Cast<Option<ExportFormat>>().FirstOrDefault(o => o.Value == _settings.CopyFormat)
+            ?? CopyFormatBox.Items[0];
 
         OpenEditorBox.IsChecked = _settings.OpenEditorAfterCapture;
         ShowThumbnailBox.IsChecked = _settings.ShowThumbnail;
@@ -59,6 +65,7 @@ public partial class SettingsWindow : Window
         CopyBox.IsChecked = _settings.CopyToClipboard;
         SaveBox.IsChecked = _settings.SaveAutomatically;
         ShortcutsEnabledBox.IsChecked = _settings.ShortcutsEnabled;
+        CountdownBox.IsChecked = _settings.RecordCountdown;
         FillShortcuts();
         ShowPrintScreenState();
         // Back from Windows Settings (Print Screen switch): show what changed.
@@ -143,6 +150,16 @@ public partial class SettingsWindow : Window
         _settings.Save();
     }
 
+    private void CopyFormatBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_initialized || CopyFormatBox.SelectedItem is not Option<ExportFormat> option)
+            return;
+        _settings.CopyFormat = option.Value;
+        _settings.Save();
+        foreach (var editor in Application.Current.Windows.OfType<EditorWindow>())
+            editor.CopyFormatChanged();
+    }
+
     // ---------------------------------------------------------------- Capture
 
     private void AfterCapture_Changed(object sender, RoutedEventArgs e)
@@ -172,6 +189,14 @@ public partial class SettingsWindow : Window
         if (!_initialized || ThumbnailScreenBox.SelectedItem is not Option<ThumbnailScreen> option)
             return;
         _settings.ThumbnailScreen = option.Value;
+        _settings.Save();
+    }
+
+    private void Countdown_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_initialized)
+            return;
+        _settings.RecordCountdown = CountdownBox.IsChecked == true;
         _settings.Save();
     }
 

@@ -172,7 +172,7 @@ internal sealed class TrayHost : IDisposable
             case WM_CLOSE:
                 // End of the Windows session, or the installer of an update closing the app (Restart Manager).
                 handled = true;
-                Application.Current.Shutdown();
+                App.Quit();
                 break;
 
             default:

@@ -49,6 +49,19 @@ internal static class Direct3D
         return device;
     }
 
+    /// <summary>A device of the graphics card to decode video on, or null when there is no such card.</summary>
+    public static ID3D11Device? CreateVideoDevice()
+    {
+        FeatureLevel[] levels = [FeatureLevel.Level_11_1, FeatureLevel.Level_11_0, FeatureLevel.Level_10_1];
+        if (D3D11.D3D11CreateDevice(IntPtr.Zero, DriverType.Hardware, DeviceCreationFlags.VideoSupport | DeviceCreationFlags.BgraSupport,
+            levels, out var device, out var context).Failure || device is null)
+            return null;
+        context?.Dispose();
+        using (var multithread = device.QueryInterface<ID3D11Multithread>())
+            multithread.SetMultithreadProtected(true);
+        return device;
+    }
+
     /// <summary>The same device, as Windows.Graphics.Capture wants it.</summary>
     public static IDirect3DDevice ToWinRT(ID3D11Device device)
     {

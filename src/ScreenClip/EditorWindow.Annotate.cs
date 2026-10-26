@@ -40,7 +40,7 @@ public partial class EditorWindow
         new(EditTool.Mask, Key.B, "M3,3 H7 V7 H3 Z M11,3 H15 V7 H11 Z M7,7 H11 V11 H7 Z M3,11 H7 V15 H3 Z M11,11 H15 V15 H11 Z", AnnotationKind.Mask),
     ];
 
-    private enum DragMode { Draw, Move, Handle, CropNew, CropMove, CropEdges }
+    private enum DragMode { Draw, Move, Handle, CropNew, CropMove, CropEdges, Motion }
 
     [Flags]
     private enum Edges { None = 0, Left = 1, Top = 2, Right = 4, Bottom = 8 }
@@ -62,11 +62,13 @@ public partial class EditorWindow
     private AnnotationLayer? _live;              // the layer while a drag or a text is under way, committed at the end
     private EditTool _tool = EditTool.Select;
     private int? _selectedId;
+    private int? _hoveredId;                     // under the pointer with the Select tool: framed, dashed and light
     private Drag? _drag;
     private bool _editTab;
     private SKImage? _flattened;                 // the capture with its annotations, for the Layout tab and the export
     private AnnotationLayer? _flattenedFor;
     private SKImage? _flattenedFrom;             // the picture it was made from (a video changes it at each frame)
+    private int _flattenedKey;                   // and what was drawn over it at that moment of a video
     private SKImage? _viewBaseFrom;
     private SKImage? _viewBase;                  // the capture at the size the Edit tab shows it
     private float _viewBaseScale;
@@ -156,6 +158,7 @@ public partial class EditorWindow
         }
         PointerSizeSlider.Minimum = AnnotationDefaults.MinPointerSize;
         PointerSizeSlider.Maximum = AnnotationDefaults.MaxPointerSize;
+        BuildRecordedPointerPanel();
         Stage.Focusable = true;
         Stage.FocusVisualStyle = null;
     }
@@ -231,6 +234,7 @@ public partial class EditorWindow
         if (_tool == EditTool.Crop && tool != EditTool.Crop)
             RequestRender();  // the view goes back to the part kept
         _tool = tool;
+        _cursorSelected = false;
         // A drawing tool keeps the annotation chosen only if it is one of its own (its options are then shown).
         if (Selected is { } selected && tool != EditTool.Select && ToolOf(selected.Kind) != tool)
             _selectedId = null;
@@ -261,6 +265,7 @@ public partial class EditorWindow
         CancelDrag();
         _history.Reset(AnnotationLayer.Empty);
         _selectedId = null;
+        _cursorSelected = false;
         _live = null;
         DropFlattened();
         _viewBase?.Dispose();
@@ -278,18 +283,25 @@ public partial class EditorWindow
         _flattenedFrom = null;
     }
 
-    /// <summary>The capture with its annotations and crop: what the Layout tab lays out.</summary>
+    /// <summary>
+    /// The capture with its annotations and crop: what the Layout tab lays out. A video's frame is drawn at the
+    /// playhead: the annotations shown then, and the recorded pointer.
+    /// </summary>
     private SKImage Flattened()
     {
         var layer = _history.Current;
-        if (layer.IsEmpty)
+        var moment = Moment;
+        bool pointer = moment?.Track is { IsEmpty: false } && layer.Cursor.Shows;
+        if (layer.IsEmpty && !pointer)
             return _capture!;
-        if (_flattened is null || !ReferenceEquals(_flattenedFor, layer) || !ReferenceEquals(_flattenedFrom, _capture))
+        int key = moment is null ? 0 : VideoTiming.Fingerprint(layer, moment);
+        if (_flattened is null || !ReferenceEquals(_flattenedFor, layer) || !ReferenceEquals(_flattenedFrom, _capture) || _flattenedKey != key)
         {
             DropFlattened();
-            _flattened = AnnotationRenderer.Flatten(_capture!, layer);
+            _flattened = AnnotationRenderer.Flatten(_capture!, layer, moment);
             _flattenedFor = layer;
             _flattenedFrom = _capture;
+            _flattenedKey = key;
         }
         return _flattened;
     }
@@ -308,6 +320,7 @@ public partial class EditorWindow
         if (_selectedId is { } id && Layer.Find(id) is null)
             _selectedId = null;
         ShowEditPanel();
+        ShowTracks();
         RequestRender();
     }
 
@@ -376,8 +389,12 @@ public partial class EditorWindow
         // Enlarged, the pixels stay sharp squares, as in image editors.
         if (scale >= 1)
             canvas.DrawImage(capture, 0, 0, new SKSamplingOptions(scale >= 2 ? SKFilterMode.Nearest : SKFilterMode.Linear));
-        // The text being typed is shown by its text box, not drawn twice.
-        AnnotationRenderer.Draw(canvas, capture, _editingTextId is { } typing ? layer.Items.Where(a => a.Id != typing) : layer.Items, area);
+        // The text being typed is shown by its text box, not drawn twice. A video: what shows at the playhead.
+        var moment = Moment;
+        IEnumerable<Annotation> items = moment is null ? layer.Items : layer.ShownAt(moment.Time);
+        AnnotationRenderer.Draw(canvas, capture, _editingTextId is { } typing ? items.Where(a => a.Id != typing) : items, area);
+        if (moment is not null)
+            AnnotationRenderer.DrawRecordedPointer(canvas, capture, layer, moment);
         using var picture = surface.Snapshot();
         _previewBitmap = Imaging.CopyTo(picture, _previewBitmap);
         Preview.Source = _previewBitmap;
@@ -571,15 +588,69 @@ public partial class EditorWindow
                 AddHandle(point, accent);
             return;
         }
-        if (Selected is not { } selected || _editingTextId == selected.Id)
+        // The one under the pointer (asked by the author): a light dashed frame, so that what a click takes is seen.
+        if (_hoveredId is { } hovered && hovered != _selectedId && Layer.Find(hovered) is { } over && IsShownNow(over) && _drag is null)
+        {
+            var overBounds = AnnotationGeometry.Bounds(IsVideo ? VideoTiming.Posed(over, _playhead) : over, AnnotationScale);
+            var overFrame = new Rect(ToView(new SKPoint(overBounds.Left, overBounds.Top)), ToView(new SKPoint(overBounds.Right, overBounds.Bottom)));
+            overFrame.Inflate(3, 3);
+            AddFrame(overFrame, accent, dashed: true);
+            Overlay.Children[^1].Opacity = 0.6;
+        }
+        if (Selected is not { } selected || _editingTextId == selected.Id || !IsShownNow(selected))
             return;
-        var bounds = AnnotationGeometry.Bounds(selected, AnnotationScale);
+        var posed = IsVideo ? VideoTiming.Posed(selected, _playhead) : selected;
+        var bounds = AnnotationGeometry.Bounds(posed, AnnotationScale);
         var frame = new Rect(ToView(new SKPoint(bounds.Left, bounds.Top)), ToView(new SKPoint(bounds.Right, bounds.Bottom)));
         frame.Inflate(3, 3);
         AddFrame(frame, accent, dashed: true);
+        if (selected.Motion is { } motion)
+        {
+            // Its way, dashed; the lines to the square handles that bend it; A and B round.
+            var way = new System.Windows.Shapes.Polyline { Stroke = accent, StrokeThickness = 1.5, StrokeDashArray = [5, 3] };
+            foreach (var point in VideoTiming.Path(selected))
+                way.Points.Add(ToView(point));
+            Overlay.Children.Add(way);
+            if (motion.Curved)
+            {
+                foreach (var (end, control) in new[] { (motion.From, motion.Control1), (selected.Start, motion.Control2) })
+                    Overlay.Children.Add(new System.Windows.Shapes.Line { X1 = ToView(end).X, Y1 = ToView(end).Y, X2 = ToView(control).X, Y2 = ToView(control).Y, Stroke = accent, StrokeThickness = 1, Opacity = 0.7 });
+            }
+            foreach (var (kind, point) in AnnotationGeometry.Handles(selected))
+            {
+                if (kind is HandleKind.MotionFrom or HandleKind.MotionTo)
+                    AddEndHandle(ToView(point), accent, kind == HandleKind.MotionFrom ? "A" : "B");
+                else
+                    AddHandle(ToView(point), accent);
+            }
+            return;
+        }
         foreach (var (_, point) in AnnotationGeometry.Handles(selected))
             AddHandle(ToView(point), accent);
     }
+
+    // A or B of a moving pointer: a round handle with its letter.
+    private void AddEndHandle(Point center, Brush brush, string letter)
+    {
+        var handle = new Border
+        {
+            Width = 16,
+            Height = 16,
+            CornerRadius = new CornerRadius(8),
+            Background = brush,
+            BorderBrush = Brushes.White,
+            BorderThickness = new Thickness(1.5),
+            Child = new TextBlock { Text = letter, FontSize = 9, FontWeight = FontWeights.Bold, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
+        };
+        Canvas.SetLeft(handle, center.X - 8);
+        Canvas.SetTop(handle, center.Y - 8);
+        Overlay.Children.Add(handle);
+    }
+
+    // The annotation on top under a point, among those that show at the playhead of a video.
+    private Annotation? HitAt(AnnotationLayer layer, SKPoint point, float tolerance) => IsVideo
+        ? layer.HitTestAt(point, AnnotationScale, tolerance, _playhead)
+        : layer.HitTest(point, AnnotationScale, tolerance);
 
     private void AddFrame(Rect rect, Brush brush, bool dashed)
     {
@@ -651,7 +722,7 @@ public partial class EditorWindow
         }
 
         // The handles of the annotation chosen come first, whatever the tool.
-        if (Selected is { } selected)
+        if (Selected is { } selected && IsShownNow(selected))
         {
             foreach (var (kind, handle) in AnnotationGeometry.Handles(selected))
             {
@@ -663,7 +734,7 @@ public partial class EditorWindow
             }
         }
 
-        var hit = layer.HitTest(point, scale, tolerance);
+        var hit = HitAt(layer, point, tolerance);
         var tool = Tools.First(t => t.Tool == _tool);
         // The Select tool picks; the tools that place one thing pick their own kind (a pointer is moved, a text edited).
         bool picks = _tool == EditTool.Select || (hit is not null && tool.Kind == hit.Kind && _tool is EditTool.Text or EditTool.Number or EditTool.Pointer);
@@ -705,7 +776,9 @@ public partial class EditorWindow
                     annotation = annotation with { Number = layer.NextNumber };
                 _live = layer.Add(annotation, out var added);
                 Select(added.Id);
-                StartDrag(new Drag { Mode = DragMode.Move, Start = point, Base = layer, Original = added, Moved = true }, adding: _live);
+                // In a video, a pointer dragged from A to B moves there.
+                var mode = IsVideo && kindToDraw == AnnotationKind.Pointer ? DragMode.Motion : DragMode.Move;
+                StartDrag(new Drag { Mode = mode, Start = point, Base = layer, Original = added, Moved = true }, adding: _live);
                 return false;
             }
             default:
@@ -793,6 +866,14 @@ public partial class EditorWindow
             case DragMode.Handle:
                 _live = drag.Base.Replace(AnnotationGeometry.WithHandle(drag.Original!, drag.Handle, point, shift));
                 break;
+            case DragMode.Motion:
+            {
+                // A pointer just put in a video: dragged far enough, it goes from where the drag began to here.
+                var original = drag.Original!;
+                bool far = AnnotationGeometry.Distance(drag.Start, point) > Tolerance(12);
+                _live = drag.Base.Add(far ? original with { Points = [point], Motion = MotionAt(drag.Start, point) } : original, out _);
+                break;
+            }
             case DragMode.CropNew:
                 _live = drag.Base with { Crop = CropOf(Clamp(drag.Start, width, height), Clamp(point, width, height), width, height) };
                 break;
@@ -895,12 +976,28 @@ public partial class EditorWindow
                 _ => Contains(kept, point) ? Cursors.SizeAll : Cursors.Cross,
             };
         }
-        else if (Selected is { } selected && AnnotationGeometry.Handles(selected).Any(h => AnnotationGeometry.Distance(h.Point, point) <= Tolerance(7)))
+        else if (Selected is { } selected && IsShownNow(selected) && AnnotationGeometry.Handles(selected).Any(h => AnnotationGeometry.Distance(h.Point, point) <= Tolerance(7)))
             cursor = Cursors.Hand;
-        else if (_tool == EditTool.Select && Layer.HitTest(point, AnnotationScale, Tolerance()) is not null)
+        else if (_tool == EditTool.Select && HitAt(Layer, point, Tolerance()) is not null)
             cursor = Cursors.SizeAll;
         if (Stage.Cursor != cursor)
             Stage.Cursor = cursor;
+        SetHovered(_tool == EditTool.Select ? HitAt(Layer, point, Tolerance())?.Id : null);
+    }
+
+    private void SetHovered(int? id)
+    {
+        if (_hoveredId == id)
+            return;
+        _hoveredId = id;
+        if (_editTab && _capture is not null)
+            ShowOverlay(VisualTreeHelper.GetDpi(this));
+    }
+
+    private void Stage_MouseLeave(object sender, MouseEventArgs e)
+    {
+        if (_drag is null)
+            SetHovered(null);
     }
 
     private static bool Contains(PixelRect rect, SKPoint point) => point.X >= rect.X && point.X <= rect.Right && point.Y >= rect.Y && point.Y <= rect.Bottom;
@@ -948,7 +1045,9 @@ public partial class EditorWindow
     private void Select(int? id)
     {
         _selectedId = id;
+        _cursorSelected = false;
         ShowEditPanel();
+        ShowTracks();
         RequestRender();
     }
 
@@ -1144,12 +1243,33 @@ public partial class EditorWindow
         if (!_initialized || !_editTab)
             return;
         _syncingEdit = true;
+        bool cursor = _cursorSelected && HasRecordedPointer;
+        RecordedPointerRow.Visibility = Show(cursor);
+        ToolKeyCap.Visibility = Show(!cursor);
+        if (cursor)
+        {
+            ToolName.Text = Strings.Get("RecordedPointer");
+            ToolIcon.Content = ToolPath(Tools.First(t => t.Tool == EditTool.Pointer).Icon, 18);
+            ToolHelp.Text = Strings.Get("RecordedPointerHelp");
+            ColorRow.Visibility = SizeRow.Visibility = StyleRow.Visibility = PointerRow.Visibility = Visibility.Collapsed;
+            NextNumberText.Visibility = CropRow.Visibility = SelectionRow.Visibility = Visibility.Collapsed;
+            ShowRecordedPointerPanel();
+            UndoButton.IsEnabled = _history.CanUndo;
+            RedoButton.IsEnabled = _history.CanRedo;
+            ClearAllButton.IsEnabled = !_history.Current.Items.IsEmpty;
+            if (listToo)
+                ShowAnnotationList();
+            _syncingEdit = false;
+            return;
+        }
         var selected = Selected;
         var info = selected is not null && _tool == EditTool.Select ? Tools.First(t => t.Kind == selected.Kind) : Tools.First(t => t.Tool == _tool);
-        ToolName.Text = Strings.Get("Tool" + info.Tool);
+        ToolName.Text = selected?.Motion is not null ? Strings.Get("AnnotListMotion") : Strings.Get("Tool" + info.Tool);
         ToolKey.Text = info.Key.ToString();
         ToolIcon.Content = ToolPath(info.Icon, 18);
-        ToolHelp.Text = Strings.Get("Tool" + info.Tool + "Help");
+        ToolHelp.Text = info.Tool == EditTool.Pointer && IsVideo
+            ? Strings.Get(selected?.Motion is not null ? "MotionHelp" : "ToolPointerVideoHelp")
+            : Strings.Get("Tool" + info.Tool + "Help");
 
         var kind = OptionsKind();
         var shown = selected ?? (kind is { } k ? Defaults.Create(k) : null);
@@ -1200,6 +1320,11 @@ public partial class EditorWindow
                 PointerSizeSlider.Value = shown.PointerSize;
                 PointerSizeValue.Text = Strings.Format("EditorPixels", shown.PointerSize);
                 HaloSwitch.IsChecked = shown.Halo;
+                // The ring of a still pointer; a moving one shows its click when it arrives instead.
+                HaloRow.Visibility = Show(shown.Motion is null);
+                MotionRow.Visibility = Show(IsVideo && selected is not null);
+                if (IsVideo && selected is not null)
+                    ShowMotionOptions(selected);
             }
         }
         NextNumberText.Text = Strings.Format("AnnotNextNumber", Layer.NextNumber);
@@ -1250,17 +1375,39 @@ public partial class EditorWindow
     {
         AnnotationList.Children.Clear();
         var items = _history.Current.Items;
-        AnnotationListEmpty.Visibility = Show(items.IsEmpty);
+        AnnotationListEmpty.Visibility = Show(items.IsEmpty && !HasRecordedPointer);
+        if (HasRecordedPointer)
+        {
+            string name = Strings.Get("RecordedPointer");
+            bool hidden = _history.Current.Cursor.Hidden;
+            var row = new RadioButton
+            {
+                Style = (Style)FindResource("ListRow"),
+                GroupName = "Annotations",
+                IsChecked = _cursorSelected,
+                Content = new DockPanel
+                {
+                    Children =
+                    {
+                        Eye(hidden, name, () => ChangeCursor(o => o with { Hidden = !o.Hidden }, "hidden")),
+                        Faded(ToolPath(Tools.First(t => t.Tool == EditTool.Pointer).Icon, 18), hidden),
+                        Faded(new TextBlock { Text = name, Margin = new Thickness(10, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis }, hidden),
+                    },
+                },
+            };
+            System.Windows.Automation.AutomationProperties.SetName(row, name);
+            row.Checked += (_, _) =>
+            {
+                if (!_syncingEdit)
+                    SelectCursor();
+            };
+            AnnotationList.Children.Add(row);
+        }
         for (int i = items.Count - 1; i >= 0; i--)
         {
             var annotation = items[i];
             var info = Tools.First(t => t.Kind == annotation.Kind);
-            string name = annotation.Kind switch
-            {
-                AnnotationKind.Text => Strings.Format("AnnotListText", Shorten(annotation.Text.Replace('\n', ' '), 24)),
-                AnnotationKind.Number => Strings.Format("AnnotListNumber", annotation.Number),
-                _ => Strings.Get("Tool" + info.Tool),
-            };
+            string name = AnnotationName(annotation);
             var swatch = new System.Windows.Shapes.Ellipse { Width = 12, Height = 12, StrokeThickness = 1, VerticalAlignment = VerticalAlignment.Center };
             swatch.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, "ControlStrokeColorDefaultBrush");
             swatch.Fill = new SolidColorBrush(ToColor(annotation.Color));
@@ -1276,14 +1423,17 @@ public partial class EditorWindow
                     LastChildFill = true,
                     Children =
                     {
-                        ToolPath(info.Icon, 18),
-                        Docked(swatch, Dock.Right),
-                        new TextBlock { Text = name, Margin = new Thickness(10, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis },
+                        Eye(annotation.Hidden, name, () => Commit(_history.Current.Replace(annotation with { Hidden = !annotation.Hidden }))),
+                        Faded(ToolPath(info.Icon, 18), annotation.Hidden),
+                        Docked(Faded(swatch, annotation.Hidden), Dock.Right),
+                        Faded(new TextBlock { Text = name, Margin = new Thickness(10, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis }, annotation.Hidden),
                     },
                 },
             };
             System.Windows.Automation.AutomationProperties.SetName(row, name);
             int id = annotation.Id;
+            row.Tag = id;
+            row.ToolTip = Strings.Get("AnnotListToolTip");
             row.Checked += (_, _) =>
             {
                 if (_syncingEdit)
@@ -1294,6 +1444,169 @@ public partial class EditorWindow
             };
             AnnotationList.Children.Add(row);
         }
+    }
+
+    // ---------------------------------------------------------------- Reordering the list
+
+    private Point? _listPress;
+    private RadioButton? _listDragged;
+    private int _listDropSlot = -1;
+
+    // The rows of the annotations (the recorded pointer's row stays on top, it is not one of them), top first.
+    private List<RadioButton> AnnotationRows() => [.. AnnotationList.Children.OfType<RadioButton>().Where(r => r.Tag is int)];
+
+    private void AnnotationList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) =>
+        ListPress(e.GetPosition(AnnotationList), e.OriginalSource as DependencyObject);
+
+    private void AnnotationList_PreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed && ListDrag(e.GetPosition(AnnotationList)))
+            e.Handled = true;
+    }
+
+    private void AnnotationList_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (ListDrop())
+            e.Handled = true;
+    }
+
+    // The mouse code with explicit points, so that the Debug script player can play it (WPF ignores posted buttons).
+    private void ListPress(Point at, DependencyObject? source)
+    {
+        _listPress = at;
+        _listDragged = source is null ? null : AnnotationRows().FirstOrDefault(r => r == source || r.IsAncestorOf(source));
+    }
+
+    /// <summary>The mouse moved with the button down: a drag once it went far enough. True while dragging.</summary>
+    private bool ListDrag(Point at)
+    {
+        if (_listPress is not { } press || _listDragged is not { } row)
+            return false;
+        if (!AnnotationList.IsMouseCaptured)
+        {
+            if (Math.Abs(at.Y - press.Y) < SystemParameters.MinimumVerticalDragDistance)
+                return false;
+            // A drag, not a click: the list takes the mouse from the row (whose click is then not one).
+            AnnotationList.CaptureMouse();
+            row.Opacity = 0.5;
+            AnnotationList.Cursor = Cursors.SizeNS;
+        }
+        ShowDropSlot(at.Y);
+        return true;
+    }
+
+    /// <summary>The button up: the row dragged goes where the line is. True when it was a drag.</summary>
+    private bool ListDrop()
+    {
+        if (!AnnotationList.IsMouseCaptured || _listDragged is not { } row)
+        {
+            _listPress = null;
+            return false;
+        }
+        int slot = _listDropSlot;
+        EndListDrag();
+        if (slot >= 0)
+            ReorderInList(AnnotationRows().IndexOf(row), slot);
+        return true;
+    }
+
+    // Only the list's own capture lost ends the drag: the row pressed loses its capture to the list as the drag starts,
+    // and that bubbles up here too (it ended every drag at once: the author's “it does not work”).
+    private void AnnotationList_LostMouseCapture(object sender, MouseEventArgs e)
+    {
+        if (_listDragged is not null && ReferenceEquals(e.OriginalSource, AnnotationList))
+            EndListDrag();
+    }
+
+    private void EndListDrag()
+    {
+        if (_listDragged is { } row)
+            row.Opacity = 1;
+        _listPress = null;
+        _listDragged = null;
+        _listDropSlot = -1;
+        AnnotationDrop.Children.Clear();
+        AnnotationList.Cursor = null;
+        if (AnnotationList.IsMouseCaptured)
+            AnnotationList.ReleaseMouseCapture();
+    }
+
+    // Where the row would go: between the rows whose middle is above the pointer and the others; a line shows it.
+    private void ShowDropSlot(double y)
+    {
+        var rows = AnnotationRows();
+        int slot = 0;
+        double lineY = 0;
+        foreach (var row in rows)
+        {
+            double top = row.TranslatePoint(new Point(0, 0), AnnotationList).Y;
+            if (y > top + row.ActualHeight / 2)
+            {
+                slot++;
+                lineY = top + row.ActualHeight;
+            }
+            else
+            {
+                if (slot == 0)
+                    lineY = top;
+                break;
+            }
+        }
+        _listDropSlot = slot;
+        AnnotationDrop.Children.Clear();
+        var line = new System.Windows.Shapes.Rectangle { Width = AnnotationList.ActualWidth, Height = 2, RadiusX = 1, RadiusY = 1, Fill = (Brush)FindResource("AccentFillColorDefaultBrush") };
+        Canvas.SetTop(line, lineY - 1);
+        AnnotationDrop.Children.Add(line);
+    }
+
+    /// <summary>
+    /// The annotation of row <paramref name="from"/> of the list put at <paramref name="slot"/> (0: above the first row,
+    /// the top of the drawing). The list shows the one on top first: its rows are the layer's items from the end.
+    /// </summary>
+    private void ReorderInList(int from, int slot)
+    {
+        var items = _history.Current.Items;
+        if (from < 0 || from >= items.Count)
+            return;
+        int to = slot > from ? slot - 1 : slot;
+        if (to == from)
+            return;
+        var annotation = items[items.Count - 1 - from];
+        Commit(_history.Current.MoveTo(annotation.Id, items.Count - 1 - to));
+    }
+
+    // The eye of a row (asked by the author): hides the layer or shows it again; the row stays, faded.
+    private Button Eye(bool hidden, string name, Action toggle)
+    {
+        string what = Strings.Format(hidden ? "LayerShow" : "LayerHide", name);
+        var eye = new Button
+        {
+            Width = 28,
+            Height = 24,
+            Padding = new Thickness(0),
+            Margin = new Thickness(4, 0, 0, 0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Focusable = false,
+            Content = new TextBlock { Style = (Style)FindResource("IconText"), FontSize = 13, Text = hidden ? "\uED1A" : "\uE7B3", Opacity = hidden ? 0.6 : 1 },
+            ToolTip = what,
+        };
+        System.Windows.Automation.AutomationProperties.SetName(eye, what);
+        eye.Click += (_, e) =>
+        {
+            e.Handled = true;
+            CommitText();
+            toggle();
+        };
+        DockPanel.SetDock(eye, Dock.Right);
+        return eye;
+    }
+
+    private static T Faded<T>(T element, bool hidden) where T : UIElement
+    {
+        if (hidden)
+            element.Opacity = 0.45;
+        return element;
     }
 
     private static UIElement Docked(UIElement element, Dock dock)

@@ -30,8 +30,8 @@
   **Ctrl + Maj + Impr. écran** tous les écrans d'un coup, **Maj + Impr. écran** refait la dernière zone. Chaque raccourci se modifie dans **Paramètres → Capture**, ou tous
   se désactivent (le menu de la zone de notification capture toujours).
 - ScreenClip attend dans la **zone de notification** : un **clic** sur son icône capture une zone (ou ouvre le menu
-  ou l'éditeur, au choix dans **Paramètres → Général**), un **clic droit** ouvre son menu (les mêmes captures, le
-  dossier des captures et les paramètres). Au repos il ne consomme presque rien : aucune fenêtre, aucun minuteur,
+  ou l'éditeur, au choix dans **Paramètres → Général**), un **clic droit** ouvre son menu (**Ouvrir ScreenClip**, les
+  mêmes captures, une image à mettre en forme, le dossier des captures et les paramètres). Au repos il ne consomme presque rien : aucune fenêtre, aucun minuteur,
   environ 5 Mo de mémoire utilisée.
 - L'écran est **figé** à l'instant où la touche est pressée : menus et info-bulles restent sur l'image.
 - **Zone** : la partie de la fenêtre sous le pointeur est **encadrée** au survol (un lecteur vidéo, une carte d'une
@@ -82,11 +82,11 @@ et mise en forme comprises.
 
 **Mise en forme** :
 
-- Des **préréglages** en un clic, chacun dessiné tel qu'il rend : *Neutre* (par défaut : juste l'image sur le fond de
-  votre choix, ni cadre, ni coins, ni ombre, ni contour), *README* (clair, discret), *Post 1:1*, *Story 9:16*,
-  *Slide 16:9*, et **les vôtres** : **+ Enregistrer** garde le style actuel sous un nom (son image de fond comprise) ;
-  un clic droit sur l'un d'eux le renomme, le remplace par le style actuel ou le supprime. **Réinitialiser** revient
-  à *Neutre*, en gardant le fond. Les derniers réglages utilisés sont gardés pour la capture suivante.
+- Des **préréglages** en un clic, chacun dessiné tel qu'il rend : *Rien* (par défaut : la capture telle quelle, rien
+  d'ajouté), *Neutre* (juste l'image sur le fond de votre choix, ni cadre, ni coins, ni ombre, ni contour), *README*
+  (clair, discret), *Post 1:1*, *Story 9:16*, *Slide 16:9*, et **les vôtres** : **+ Enregistrer** garde le style actuel
+  sous un nom (son image de fond comprise) ; un clic droit sur l'un d'eux le renomme, le remplace par le style actuel
+  ou le supprime. **Réinitialiser** revient à *Rien*, en gardant le fond. Les derniers réglages utilisés sont gardés pour la capture suivante.
 - **Fond** : huit dégradés, blanc, noir, transparent, la capture elle-même floutée, ou **votre propre image**.
 - **Cadre** : aucun, un **navigateur façon macOS** (feux tricolores et une adresse que vous tapez), une **fenêtre
   macOS**, une **fenêtre Windows 11** (avec un titre que vous tapez), clair ou sombre, chacun avec les coins arrondis
@@ -98,25 +98,43 @@ et mise en forme comprises.
   à la main : gauche–droite et haut–bas), et le **format** : auto, 16:9, 4:3, 1:1, 4:5 ou 9:16.
 - La capture garde ses propres pixels : l'image grandit autour d'elle, rien n'est redimensionné. Les grandes captures
   (écrans haute densité) ont une barre de fenêtre et des coins plus grands, pour qu'un style rende pareil sur toutes.
-- **Copier** (PNG avec sa transparence, et une image pour les autres applications), **Enregistrer** en PNG, JPG ou
-  WebP (dans `Images\ScreenClip`, à part des captures ; modifiable), ou **glisser l'aperçu** vers une application ou
-  un dossier. Une fois un fichier écrit (Enregistrer, ou une capture enregistrée automatiquement), une notification en
+- **Copier en PNG** (avec sa transparence, et une image pour les autres applications ; JPG ou WebP dans
+  **Paramètres → Enregistrement**, copiés comme un fichier), ou **Exporter ▾** : PNG, JPG ou
+  WebP, avec la mise en forme ou la capture et ses annotations seules, puis **Enregistrer…** (dans
+  `Images\ScreenClip`, à part des captures ; modifiable) ou Copier ; ou **glisser l'aperçu** vers une application
+  ou un dossier. Une fois un fichier écrit (Enregistrer, ou une capture enregistrée automatiquement), une notification en
   bas à gauche l'ouvre ou l'affiche dans son dossier.
 - **Nouvelle capture** depuis l'éditeur : il s'efface le temps de choisir, et revient avec la capture.
 
 ### Vidéo
 
 - **Ctrl + Alt + Impr. écran** (ou **Vidéo** dans la barre de capture, ou le menu de l'icône) : choisissez une zone,
-  une fenêtre ou un écran comme pour une image, et l'enregistrement démarre après un compte à rebours de 3 secondes.
-  Le **son de l'ordinateur** et le **micro** s'activent ou se coupent chacun dans la barre de capture.
+  une fenêtre ou un écran comme pour une image, et l'enregistrement démarre après un compte à rebours de 3 secondes
+  (▶ dans la barre d'enregistrement démarre tout de suite ; Paramètres › Capture le désactive).
+  Le **son de l'ordinateur** et le **micro** s'activent ou se coupent chacun dans la barre de capture, tout comme le
+  **pointeur à part** (activé par défaut) : le pointeur de la souris est alors enregistré à part de l'écran, pour être
+  redessiné ou masqué dans l'éditeur.
 - Pendant l'enregistrement, un trait rouge pointillé entoure la zone et une petite barre montre la durée :
   **pause**, **arrêter**, **recommencer**, **abandonner**. Ni l'un ni l'autre n'est jamais dans la vidéo. Le même
   raccourci, ou un clic sur l'icône, l'arrête aussi.
 - La vidéo s'ouvre dans l'**éditeur** : lisez-la (**Espace**), coupez son début et sa fin avec les **poignées jaunes**
   de la timeline, recadrez-la, annotez-la et mettez-la en forme comme une image (tout s'applique à chaque image).
-  **Enregistrer** écrit un **MP4** (avec le son) ou un **GIF** animé (léger, sans son), ou une image de l'instant
-  montré ; **Copier** met le MP4 dans le presse-papiers, prêt à coller dans un dossier, un mail ou une discussion.
-- Enregistrée automatiquement quand les captures le sont, dans **Vidéos\Enregistrements d'écran** (modifiable).
+  **Exporter ▾** choisit **MP4** (avec le son), **GIF** animé (léger, sans son) ou un **PNG** ou **JPG** de l'instant
+  montré, et si la mise en forme s'applique, avec la taille et le poids du fichier ; **Enregistrer…** l'écrit, et son
+  **Copier** copie le GIF ou l'image (pas un MP4 : une vidéo ne se colle pas). Le **Copier en PNG** de l'éditeur copie
+  l'image de l'instant montré.
+- Sur les **pistes** sous la timeline, chaque annotation a sa barre : elle n'apparaît que pendant ce temps. Glissez la
+  barre, ou ses bords (la tête de lecture suit, pour voir où elle commence ou s'arrête). Une nouvelle annotation reste
+  toute la vidéo. Glissez une annotation vers le haut ou le bas dans la liste pour la mettre au-dessus ou en dessous
+  des autres.
+- Le **pointeur filmé** (pointeur à part) est redessiné tel quel ou en pointeur Windows, macOS ou main, plus grand,
+  **lissé** (les tremblements de la main effacés), avec ses **clics** (halo, onde ou enfoncé). L'**œil** de chaque
+  ligne de la liste masque un calque, le pointeur filmé compris.
+- Un **curseur A → B** : avec l'outil Curseur, glissez de A à B ; il s'y déplace en courbe et clique à l'arrivée.
+  Ses losanges sur sa piste sont les moments où il part et arrive.
+- Avec le pointeur filmé avec l'écran, la vidéo est enregistrée automatiquement quand les captures le sont, dans
+  **Vidéos\Enregistrements d'écran** (modifiable), et copiée. Avec le pointeur à part, c'est l'éditeur qui fait la
+  vidéo : **Exporter ▾ → Enregistrer…** (ScreenClip demande avant qu'un enregistrement non sauvé quitte l'éditeur).
 
 ### La touche Impr. écran de Windows
 
@@ -176,8 +194,8 @@ parfois le changement qu'à la prochaine ouverture de session.
 - [x] Annotations : flèches, formes, texte, étapes numérotées, surligneur, pointeur de souris, masquage, recadrage.
 - [x] Vidéo : une zone, une fenêtre ou un écran, avec le son de l'ordinateur et le micro ; couper, recadrer, annoter,
   mettre en forme ; MP4 ou GIF.
-- [ ] Vidéo, ensuite : des annotations qui apparaissent et disparaissent sur la timeline, le pointeur redessiné, des
-  effets de clic, un pointeur animé.
+- [x] Vidéo, ensuite : des annotations qui apparaissent et disparaissent sur la timeline, le pointeur redessiné, des
+  effets de clic, un curseur A → B.
 
 ## Installation
 

@@ -105,6 +105,13 @@ public class LocalizationTests
             Assert.Contains("Mask" + style, keys);
         foreach (var style in Enum.GetValues<PointerStyle>())
             Assert.Contains("Pointer" + style, keys);
+        // A video: the recorded pointer, the clicks, the A → B pointer (the editor's own enums for the last ones).
+        foreach (var style in Enum.GetValues<RecordedPointerStyle>())
+            Assert.Contains("RecordedStyle" + style, keys);
+        foreach (var effect in Enum.GetValues<ClickEffect>())
+            Assert.Contains("Click" + effect, keys);
+        foreach (string key in new[] { "MovementReal", "MovementSmooth", "MotionPathCurve", "MotionPathStraight", "MotionPaceEased", "MotionPaceSteady" })
+            Assert.Contains(key, keys);
         // ShortcutText: the keys that read differently in French (modifiers, Print Screen, editing keys).
         foreach (string part in new[] { "Ctrl", "Alt", "Shift", "Win", "PrintScreen", "Space", "Delete", "Insert", "Home", "End", "PageUp", "PageDown", "Pause" })
         {

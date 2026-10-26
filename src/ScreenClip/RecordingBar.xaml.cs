@@ -25,6 +25,8 @@ public partial class RecordingBar : Window
         string stop = ShortcutText.Format(App.Settings.GetShortcut(ShortcutAction.Video));
         StopButton.ToolTip = App.Settings.ShortcutsEnabled && stop.Length > 0 ? Strings.Format("RecordingStopKey", stop) : Strings.Get("RecordingStop");
         RestartButton.ToolTip = Strings.Get("RecordingRestart");
+        StartNowButton.ToolTip = Strings.Get("RecordingStartNow");
+        System.Windows.Automation.AutomationProperties.SetName(StartNowButton, Strings.Get("RecordingStartNow"));
         DiscardButton.ToolTip = Strings.Get("RecordingDiscard");
         System.Windows.Automation.AutomationProperties.SetName(StopButton, Strings.Get("RecordingStop"));
         System.Windows.Automation.AutomationProperties.SetName(RestartButton, Strings.Get("RecordingRestart"));
@@ -47,6 +49,7 @@ public partial class RecordingBar : Window
         };
     }
 
+    public event EventHandler? StartNowClicked;
     public event EventHandler? PauseClicked;
     public event EventHandler? StopClicked;
     public event EventHandler? RestartClicked;
@@ -67,10 +70,16 @@ public partial class RecordingBar : Window
     public void ShowSaving()
     {
         TimeText.Text = Strings.Get("RecordingSaving");
-        PauseButton.IsEnabled = StopButton.IsEnabled = RestartButton.IsEnabled = DiscardButton.IsEnabled = false;
+        PauseButton.IsEnabled = StopButton.IsEnabled = RestartButton.IsEnabled = DiscardButton.IsEnabled = StartNowButton.IsEnabled = false;
     }
 
-    public void EnableControls(bool recording) => PauseButton.IsEnabled = recording;
+    /// <summary>Recording: pause; before (the countdown): start now in its place.</summary>
+    public void EnableControls(bool recording)
+    {
+        PauseButton.IsEnabled = recording;
+        PauseButton.Visibility = recording ? Visibility.Visible : Visibility.Collapsed;
+        StartNowButton.Visibility = recording ? Visibility.Collapsed : Visibility.Visible;
+    }
 
     // Centered under the area, inside its monitor's work area; above it when there is no room below; at the bottom of
     // the area itself for a full screen (the bar is not in the video anyway).
@@ -98,6 +107,8 @@ public partial class RecordingBar : Window
             DragMove();
         }
     }
+
+    private void StartNow_Click(object sender, RoutedEventArgs e) => StartNowClicked?.Invoke(this, EventArgs.Empty);
 
     private void Pause_Click(object sender, RoutedEventArgs e) => PauseClicked?.Invoke(this, EventArgs.Empty);
 

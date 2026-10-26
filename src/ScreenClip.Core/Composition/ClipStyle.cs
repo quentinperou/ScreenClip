@@ -135,8 +135,11 @@ public static class StylePresets
 {
     public static readonly IReadOnlyList<(string Id, ClipStyle Style)> All =
     [
+        // Nothing at all (asked by the author): the capture as it is, no margin, corners, shadow, frame nor turn. First,
+        // the default and what Reset gives: the editor opens after every capture, with nothing added that was not asked
+        // for (a video above all). The background is kept, unseen until a margin or a ratio shows it.
+        ("none", new ClipStyle { Background = CurrentBackground, Padding = 0, Radius = 0, Shadow = 0, Frame = FrameKind.None, Ratio = AspectRatio.Auto, Format = ExportFormat.Png }),
         // Just the picture on a background, the one chosen (asked by the author): no frame, corners, shadow nor outline.
-        // First, and the default: the editor opens after every capture, with nothing added that was not asked for.
         ("plain", new ClipStyle { Background = CurrentBackground, Padding = 6, Radius = 0, Shadow = 0, Frame = FrameKind.None, Ratio = AspectRatio.Auto, Format = ExportFormat.Png }),
         ("readme", new ClipStyle { Background = "mica", Padding = 7, Radius = 10, Shadow = 40, Frame = FrameKind.None, Ratio = AspectRatio.Auto, Format = ExportFormat.Png }),
         ("post", new ClipStyle { Background = "violet", Padding = 10, Radius = 12, Shadow = 60, Frame = FrameKind.Browser, Ratio = AspectRatio.Square, Format = ExportFormat.Jpeg }),
@@ -147,10 +150,10 @@ public static class StylePresets
     /// <summary>The background of a preset that keeps the one chosen (its tile shows it chosen whatever the background).</summary>
     public const string CurrentBackground = "current";
 
-    /// <summary>The style of a new user: the plain preset (asked by the author), on the violet of the brand.</summary>
+    /// <summary>The style of a new user: nothing (asked by the author), the violet of the brand kept for a margin.</summary>
     public static ClipStyle Default => ApplyTo(All[0].Style, new ClipStyle());
 
-    /// <summary>What “Reset” gives: the plain preset, the background kept.</summary>
+    /// <summary>What “Reset” gives: nothing, the background kept.</summary>
     public static ClipStyle Reset(ClipStyle current) => ApplyTo(All[0].Style, current);
 
     /// <summary>The longest name of a preset of the user.</summary>
@@ -161,11 +164,13 @@ public static class StylePresets
 
     /// <summary>
     /// <paramref name="preset"/> applied on top of <paramref name="current"/>: the text of the frame stays (it names the
-    /// page captured, not a style), and so does the user's picture, unless the preset has a picture of its own.
+    /// page captured, not a style), and so does the user's picture, unless the preset has a picture of its own. The
+    /// file format stays too: it is the Export window's choice, not a look (a JPG chosen made every tile look unchosen).
     /// </summary>
     public static ClipStyle ApplyTo(ClipStyle preset, ClipStyle current) => (preset with
     {
         FrameText = current.FrameText,
+        Format = current.Format,
         Background = preset.Background == CurrentBackground ? current.Background : preset.Background,
         BackgroundImage = preset.Background == Backgrounds.ImageId ? preset.BackgroundImage : current.BackgroundImage,
     }).Normalized();
