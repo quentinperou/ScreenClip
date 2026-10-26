@@ -23,9 +23,10 @@
               <Trigger Property="IsMouseOver" Value="True">
                 <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
               </Trigger>
+              <!-- The accent for a picture, red for a video (CaptureOverlay.ModeChanged sets both). -->
               <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="Back" Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
-                <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+                <Setter TargetName="Back" Property="Background" Value="{DynamicResource ModeCheckedBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource ModeCheckedTextBrush}" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -33,28 +34,39 @@
       </Setter>
     </Style>
 
-    <!-- Video: on, the bar records instead of taking a picture (red, as recording is everywhere). -->
-    <Style x:Key="VideoToggle" TargetType="ToggleButton">
+    <!-- Picture or video, first in the bar (asked by the author: a toggle after the modes was not clear): the one
+         chosen in the accent, or red for a video, as recording is everywhere. -->
+    <Style x:Key="KindButton" TargetType="RadioButton">
+      <Setter Property="GroupName" Value="Kind" />
       <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="Background" Value="Transparent" />
       <Setter Property="FocusVisualStyle" Value="{x:Null}" />
       <Setter Property="Template">
         <Setter.Value>
-          <ControlTemplate TargetType="ToggleButton">
-            <Border x:Name="Back" CornerRadius="4" Padding="12,0" Height="36" Background="Transparent">
+          <ControlTemplate TargetType="RadioButton">
+            <Border CornerRadius="4" Padding="12,0" Height="32" Background="{TemplateBinding Background}">
               <ContentPresenter VerticalAlignment="Center" />
             </Border>
-            <ControlTemplate.Triggers>
-              <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
-              </Trigger>
-              <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="Back" Property="Background" Value="#C42B1C" />
-                <Setter Property="Foreground" Value="White" />
-              </Trigger>
-            </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+        </Trigger>
+        <Trigger Property="IsChecked" Value="True">
+          <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+          <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="VideoKindButton" TargetType="RadioButton" BasedOn="{StaticResource KindButton}">
+      <Style.Triggers>
+        <Trigger Property="IsChecked" Value="True">
+          <Setter Property="Background" Value="#C42B1C" />
+          <Setter Property="Foreground" Value="White" />
+        </Trigger>
+      </Style.Triggers>
     </Style>
 
     <!-- The sound of a video: struck through when off. -->
@@ -64,7 +76,7 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="ToggleButton">
-            <Border x:Name="Back" CornerRadius="4" Width="36" Height="36" Background="Transparent">
+            <Border x:Name="Back" CornerRadius="4" MinWidth="36" Height="36" Padding="8,0" Background="Transparent">
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
             <ControlTemplate.Triggers>
@@ -161,6 +173,25 @@
         <DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.3" Direction="270" />
       </Border.Effect>
       <StackPanel Orientation="Horizontal">
+        <Border CornerRadius="6" Padding="2" VerticalAlignment="Center" Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+          <StackPanel Orientation="Horizontal">
+            <RadioButton x:Name="ImageKindButton" Style="{StaticResource KindButton}" Checked="Kind_Checked"
+                         ToolTip="{local:Tr ImageModeToolTip}" AutomationProperties.Name="{local:Tr ModeImage}">
+              <StackPanel Orientation="Horizontal">
+                <Path Style="{StaticResource BarIcon}" Data="{StaticResource IconCamera}" />
+                <TextBlock Text="{local:Tr ModeImage}" VerticalAlignment="Center" />
+              </StackPanel>
+            </RadioButton>
+            <RadioButton x:Name="VideoKindButton" Style="{StaticResource VideoKindButton}" Checked="Kind_Checked"
+                         ToolTip="{local:Tr VideoModeToolTip}" AutomationProperties.Name="{local:Tr ModeVideo}">
+              <StackPanel Orientation="Horizontal">
+                <Path Style="{StaticResource BarIcon}" Data="{StaticResource IconVideo}" />
+                <TextBlock Text="{local:Tr ModeVideo}" VerticalAlignment="Center" />
+              </StackPanel>
+            </RadioButton>
+          </StackPanel>
+        </Border>
+        <Rectangle Style="{StaticResource BarDivider}" />
         <RadioButton x:Name="AreaButton" Style="{StaticResource ModeButton}" Checked="Mode_Checked"
                      AutomationProperties.Name="{local:Tr ModeArea}">
           <StackPanel Orientation="Horizontal">
@@ -182,28 +213,39 @@
             <TextBlock Text="{local:Tr ModeScreen}" VerticalAlignment="Center" />
           </StackPanel>
         </RadioButton>
-        <!-- Shown with several screens only. -->
-        <RadioButton x:Name="AllScreensButton" Style="{StaticResource ModeButton}" Checked="Mode_Checked"
+        <!-- “All screens” (a picture, with several screens only) and a video's sounds and pointer share one place, as
+             wide as the wider of them, the other hidden in it: the bar keeps its width from one kind to the other, so
+             that no button moves under the mouse (asked by the author). -->
+        <Grid>
+        <RadioButton x:Name="AllScreensButton" Style="{StaticResource ModeButton}" Checked="Mode_Checked" HorizontalAlignment="Left"
                      AutomationProperties.Name="{local:Tr ModeAllScreens}">
           <StackPanel Orientation="Horizontal">
             <Path Style="{StaticResource BarIcon}" Data="{StaticResource IconAllScreens}" />
             <TextBlock Text="{local:Tr ModeAllScreens}" VerticalAlignment="Center" />
           </StackPanel>
         </RadioButton>
-        <Rectangle Style="{StaticResource BarDivider}" />
-        <ToggleButton x:Name="VideoButton" Style="{StaticResource VideoToggle}" Click="Video_Click"
-                      ToolTip="{local:Tr VideoModeToolTip}" AutomationProperties.Name="{local:Tr ModeVideo}">
-          <StackPanel Orientation="Horizontal">
-            <Path Style="{StaticResource BarIcon}" Data="{StaticResource IconVideo}" />
-            <TextBlock Text="{local:Tr ModeVideo}" VerticalAlignment="Center" />
-          </StackPanel>
-        </ToggleButton>
-        <StackPanel x:Name="AudioOptions" Orientation="Horizontal" Margin="4,0,0,0" Visibility="Collapsed">
+        <StackPanel x:Name="AudioOptions" Orientation="Horizontal" HorizontalAlignment="Left" Visibility="Hidden">
+          <Rectangle Style="{StaticResource BarDivider}" />
+          <!-- Each sound with its meter (step 3 of the video: to see that the microphone hears before recording). -->
           <ToggleButton x:Name="SystemSoundButton" Style="{StaticResource AudioToggle}" Checked="Audio_Changed" Unchecked="Audio_Changed">
-            <TextBlock x:Name="SystemSoundGlyph" Style="{StaticResource IconText}" FontSize="15" />
+            <StackPanel Orientation="Horizontal">
+              <TextBlock x:Name="SystemSoundGlyph" Style="{StaticResource IconText}" FontSize="15" />
+              <Border x:Name="SystemSoundMeter" Width="4" Height="16" Margin="4,0,0,0" CornerRadius="2" VerticalAlignment="Center"
+                      Background="{DynamicResource ControlStrongFillColorDisabledBrush}" Visibility="Hidden">
+                <Border x:Name="SystemSoundLevel" Height="0" VerticalAlignment="Bottom" CornerRadius="2" Background="#1D9E75" />
+              </Border>
+            </StackPanel>
           </ToggleButton>
-          <ToggleButton x:Name="MicrophoneButton" Style="{StaticResource AudioToggle}" Checked="Audio_Changed" Unchecked="Audio_Changed">
-            <TextBlock x:Name="MicrophoneGlyph" Style="{StaticResource IconText}" FontSize="15" />
+          <!-- A right click chooses the microphone (asked by the author: nothing more to see on the bar). -->
+          <ToggleButton x:Name="MicrophoneButton" Style="{StaticResource AudioToggle}" Checked="Audio_Changed" Unchecked="Audio_Changed"
+                        MouseRightButtonUp="Microphone_MouseRightButtonUp">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock x:Name="MicrophoneGlyph" Style="{StaticResource IconText}" FontSize="15" />
+              <Border x:Name="MicrophoneMeter" Width="4" Height="16" Margin="4,0,0,0" CornerRadius="2" VerticalAlignment="Center"
+                      Background="{DynamicResource ControlStrongFillColorDisabledBrush}" Visibility="Hidden">
+                <Border x:Name="MicrophoneLevel" Height="0" VerticalAlignment="Bottom" CornerRadius="2" Background="#1D9E75" />
+              </Border>
+            </StackPanel>
           </ToggleButton>
           <!-- The pointer filmed with the screen (the video is ready at once), or recorded apart to be restyled in the
                editor (asked by the author: both ways). -->
@@ -221,6 +263,7 @@
             </Grid>
           </ToggleButton>
         </StackPanel>
+        </Grid>
         <Rectangle Style="{StaticResource BarDivider}" />
         <Button Width="36" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Cancel_Click"
                 ToolTip="{local:Tr CancelCapture}" AutomationProperties.Name="{local:Tr CancelCapture}">

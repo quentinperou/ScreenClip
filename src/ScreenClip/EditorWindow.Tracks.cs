@@ -12,12 +12,13 @@ namespace ScreenClip;
 
 /// <summary>
 /// The tracks of a video under its timeline (the mock-up's VideoEdit board): the recorded pointer with its clicks, then
-/// a bar per annotation, when it shows. A bar is dragged in time or stretched by its ends; the diamonds of an A → B
-/// pointer are when it leaves and arrives. And the options of the recorded pointer, in the Edit panel.
+/// a bar per annotation, when it shows. A bar is dragged in time or stretched by its ends; the diamonds of a moving
+/// pointer are when it leaves, arrives at each stop and leaves it, and arrives. And the options of the recorded
+/// pointer, in the Edit panel. A picture animated has its tracks too.
 /// </summary>
 public partial class EditorWindow
 {
-    private enum TrackGrip { Move, Start, End, Leave, Arrive }
+    private enum TrackGrip { Move, Start, End, Key }
 
     private enum PointerMovement { Real, Smooth }
 
@@ -25,7 +26,7 @@ public partial class EditorWindow
 
     private enum MotionPace { Eased, Steady }
 
-    private sealed record TrackDrag(TrackGrip Grip, Annotation Original, AnnotationLayer Base, double StartX);
+    private sealed record TrackDrag(TrackGrip Grip, int Key, Annotation Original, AnnotationLayer Base, double StartX);
 
     private const double TrackHeight = 24, TrackGap = 3, VisibleTracks = 4;
 
@@ -40,7 +41,7 @@ public partial class EditorWindow
     private bool HasRecordedPointer => Track is { IsEmpty: false };
 
     /// <summary>The moment of the video shown (null for a picture): what the annotations and the pointer are drawn at.</summary>
-    private VideoMoment? Moment => IsVideo ? new VideoMoment(_playhead, Track) : null;
+    private VideoMoment? Moment => IsTimed ? new VideoMoment(_playhead, Track) : null;
 
     /// <summary>Something drawn over the frames changes with the time: the recorded pointer, a timed or moving annotation.</summary>
     private bool HasTimedOverlay =>
@@ -48,7 +49,7 @@ public partial class EditorWindow
         || Layer.Items.Any(a => a.Time is not null || a.Motion is not null);
 
     /// <summary>Whether the annotation chosen shows at the playhead (always, in a picture).</summary>
-    private bool IsShownNow(Annotation annotation) => !annotation.Hidden && (!IsVideo || annotation.IsShownAt(_playhead));
+    private bool IsShownNow(Annotation annotation) => !annotation.Hidden && (!IsTimed || annotation.IsShownAt(_playhead));
 
     // ---------------------------------------------------------------- Building
 
@@ -120,8 +121,11 @@ public partial class EditorWindow
             SetTool(EditTool.Select);
         _selectedId = null;
         _cursorSelected = true;
+        _soundSelected = -1;
+        _pieceChosen = false;
         ShowEditPanel();
         ShowTracks();
+        ShowSounds();
         RequestRender();
     }
 
@@ -158,12 +162,12 @@ public partial class EditorWindow
 
     // ---------------------------------------------------------------- An A → B pointer
 
-    /// <summary>A new A → B motion at the playhead, kept inside the video.</summary>
+    /// <summary>A new A → B motion at the playhead, kept inside the video (an animation grows to hold it instead).</summary>
     private PointerMotion MotionAt(SKPoint from, SKPoint to)
     {
         var motion = VideoTiming.NewMotion(from, to, _playhead, Defaults);
         var span = motion.Arrive - motion.Leave;
-        if (motion.Arrive > _duration)
+        if (motion.Arrive > _duration && IsVideo)
             motion = motion with { Arrive = _duration, Leave = _duration - span < TimeSpan.Zero ? TimeSpan.Zero : _duration - span };
         return motion;
     }
@@ -180,20 +184,7 @@ public partial class EditorWindow
             Commit(_history.Current.Replace(pointer with { Motion = null }));
             return;
         }
-        // From up and to the left of where it is (or the other way near that corner); there at the playhead, on its
-        // way the second before.
-        float dx = _capture.Width * 0.2f, dy = _capture.Height * 0.16f;
-        var b = pointer.Start;
-        var a = new SKPoint(b.X - dx < 0 ? b.X + dx : b.X - dx, b.Y - dy < 0 ? b.Y + dy : b.Y - dy);
-        var shown = VideoTiming.TimeOf(pointer, _duration);
-        var arrive = _playhead < shown.Start + TimeSpan.FromSeconds(1) ? shown.Start + TimeSpan.FromSeconds(1) : _playhead;
-        if (arrive > shown.End)
-            arrive = shown.End;
-        var leave = arrive - TimeSpan.FromSeconds(1) < shown.Start ? shown.Start : arrive - TimeSpan.FromSeconds(1);
-        var motion = VideoTiming.NewMotion(a, b, leave, Defaults) with { Leave = leave, Arrive = arrive };
-        var changed = pointer with { Motion = motion };
-        Defaults = Defaults.Follow(changed);
-        Commit(_history.Current.Replace(changed));
+        MakeMove(pointer);
     }
 
     private void ShowMotionOptions(Annotation pointer)
@@ -229,14 +220,16 @@ public partial class EditorWindow
     {
         TrackCanvas.Children.Clear();
         _trackPlayhead = null;
-        var rows = IsVideo ? TrackRows() : [];
-        TrackScroll.Visibility = Show(rows.Count > 0);
+        var rows = IsTimed ? TrackRows() : [];
+        // The room given by the handle above the timeline shows even with no track yet.
+        TrackScroll.Visibility = Show(IsTimed && (rows.Count > 0 || _tracksExtra > 0));
         double width = Timeline.ActualWidth;
+        TrackCanvas.Height = Math.Max(0, rows.Count * (TrackHeight + TrackGap) - TrackGap);
+        // Four tracks at most, then a scroll bar; more with the room the handle gives.
+        TrackScroll.Height = Math.Min(TrackCanvas.Height, VisibleTracks * (TrackHeight + TrackGap) - TrackGap) + _tracksExtra;
         if (rows.Count == 0 || width <= 0)
             return;
-        TrackScroll.MaxHeight = VisibleTracks * (TrackHeight + TrackGap);
         TrackCanvas.Width = width;
-        TrackCanvas.Height = rows.Count * (TrackHeight + TrackGap) - TrackGap;
         var accent = (Brush)FindResource("AccentFillColorDefaultBrush");
         var text = (Brush)FindResource("TextFillColorPrimaryBrush");
         var orange = new SolidColorBrush(Color.FromRgb(0xF7, 0xA0, 0x15));
@@ -265,14 +258,29 @@ public partial class EditorWindow
             TrackCanvas.Children.Add(annotationBar);
             if (annotation.Motion is { } motion)
             {
-                Place(Diamond(Color.FromRgb(0x00, 0x5F, 0xB8)), XOf(motion.Leave) - 5, y + TrackHeight / 2 - 5);
-                Place(Diamond(motion.Click == ClickEffect.None ? Color.FromRgb(0x00, 0x5F, 0xB8) : Color.FromRgb(0xF7, 0xA0, 0x15)), XOf(motion.Arrive) - 5, y + TrackHeight / 2 - 5);
+                // Each diamond in the color of its point on the picture (the author: they did not match): A's leaving
+                // blue; a stop's arrival and leaving in its own color, joined by its wait; the end's arrival in its own.
+                var keys = motion.Keys();
+                var blue = Color.FromRgb(0x00, 0x5F, 0xB8);
+                Color ColorOf(int point) => point > 0 && motion.ClicksAt(2 * point - 1) ? ClickColor : blue;
+                for (int s = 0; s < motion.Stops.Count; s++)
+                {
+                    double from = XOf(motion.Stops[s].Arrive), to = XOf(motion.Stops[s].Leave);
+                    Place(new System.Windows.Shapes.Rectangle { Width = Math.Max(0, to - from), Height = 3, Fill = new SolidColorBrush(ColorOf(s + 1)), IsHitTestVisible = false }, from, y + TrackHeight / 2 - 1.5);
+                }
+                for (int k = 0; k < keys.Length; k++)
+                    Place(Diamond(ColorOf((k + 1) / 2)), XOf(keys[k]) - 5, y + TrackHeight / 2 - 5);
             }
         }
         // What is cut, darkened as on the frames.
         var cut = new SolidColorBrush(Color.FromArgb(0x70, 0x10, 0x10, 0x14));
         Place(new System.Windows.Shapes.Rectangle { Width = Math.Max(0, XOf(_trim.Start)), Height = TrackCanvas.Height, Fill = cut, IsHitTestVisible = false }, 0, 0);
         Place(new System.Windows.Shapes.Rectangle { Width = Math.Max(0, width - XOf(_trim.End)), Height = TrackCanvas.Height, Fill = cut, IsHitTestVisible = false }, XOf(_trim.End), 0);
+        foreach (var piece in Edit.Removed)
+            Place(new System.Windows.Shapes.Rectangle { Width = Math.Max(0, XOf(piece.End) - XOf(piece.Start)), Height = TrackCanvas.Height, Fill = RemovedBrush, IsHitTestVisible = false }, XOf(piece.Start), 0);
+        // The splits go through everything (the author: a split seemed to cut the picture alone).
+        foreach (var split in Edit.Splits)
+            Place(SplitLine(TrackCanvas.Height), XOf(split) - 1, 0);
         _trackPlayhead = new System.Windows.Shapes.Rectangle { Width = 2, Height = TrackCanvas.Height, Fill = new SolidColorBrush(Color.FromRgb(0xE5, 0x48, 0x4D)), IsHitTestVisible = false };
         Place(_trackPlayhead, XOf(_playhead) - 1, 0);
     }
@@ -365,33 +373,42 @@ public partial class EditorWindow
         return rows[index];
     }
 
-    private TrackGrip? GripOf(Annotation annotation, double x)
+    private (TrackGrip Grip, int Key)? GripOf(Annotation annotation, double x)
     {
         const double Reach = 6;
         if (annotation.Motion is { } motion)
         {
-            if (Math.Abs(x - XOf(motion.Arrive)) <= Reach)
-                return TrackGrip.Arrive;
-            if (Math.Abs(x - XOf(motion.Leave)) <= Reach)
-                return TrackGrip.Leave;
+            // The nearest diamond; the last ones first when they touch (a stop left at once).
+            var keys = motion.Keys();
+            int nearest = -1;
+            for (int k = keys.Length - 1; k >= 0; k--)
+            {
+                double distance = Math.Abs(x - XOf(keys[k]));
+                if (distance <= Reach && (nearest < 0 || distance < Math.Abs(x - XOf(keys[nearest]))))
+                    nearest = k;
+            }
+            if (nearest >= 0)
+                return (TrackGrip.Key, nearest);
         }
         var time = VideoTiming.TimeOf(annotation, _duration);
         double x1 = XOf(time.Start), x2 = XOf(time.End);
         if (Math.Abs(x - x1) <= Reach && Math.Abs(x - x1) <= Math.Abs(x - x2))
-            return TrackGrip.Start;
+            return (TrackGrip.Start, 0);
         if (Math.Abs(x - x2) <= Reach)
-            return TrackGrip.End;
-        return x > x1 && x < x2 ? TrackGrip.Move : null;
+            return (TrackGrip.End, 0);
+        return x > x1 && x < x2 ? (TrackGrip.Move, 0) : null;
     }
 
     /// <summary>A press on the tracks: the row's annotation is chosen, and its bar or a diamond is grabbed. True when dragging.</summary>
     private bool TrackDown(Point at)
     {
-        if (!IsVideo || _export is not null)
+        if (!IsTimed || _export is not null)
             return false;
         StopPlayback();
         CommitText();
         CancelDrag();
+        _pieceChosen = false;
+        _pieceAt = TimeAt(at.X);
         var annotation = TrackRowAt(at, out bool cursorRow);
         if (cursorRow)
         {
@@ -408,18 +425,18 @@ public partial class EditorWindow
         if (GripOf(annotation, at.X) is not { } grip)
             return false;
         // The playhead stays where it is (the author: moving it while a bar is shortened was in the way).
-        _trackDrag = new TrackDrag(grip, annotation, _history.Current, at.X);
+        _trackDrag = new TrackDrag(grip.Grip, grip.Key, annotation, _history.Current, at.X);
         return true;
     }
 
     private void TrackMove(Point at, bool pressed)
     {
-        if (!IsVideo)
+        if (!IsTimed)
             return;
         if (_trackDrag is not { } drag)
         {
             var annotation = TrackRowAt(at, out _);
-            TrackCanvas.Cursor = annotation is null ? Cursors.Arrow : GripOf(annotation, at.X) switch
+            TrackCanvas.Cursor = annotation is null ? Cursors.Arrow : GripOf(annotation, at.X)?.Grip switch
             {
                 TrackGrip.Move => Cursors.SizeAll,
                 null => Cursors.Arrow,
@@ -437,11 +454,10 @@ public partial class EditorWindow
         var original = drag.Original;
         var changed = drag.Grip switch
         {
-            TrackGrip.Move => VideoTiming.TimeMovedBy(original, _duration * ((at.X - drag.StartX) / width), _duration),
+            TrackGrip.Move => VideoTiming.TimeMovedBy(original, Span * ((at.X - drag.StartX) / width), _duration),
             TrackGrip.Start => VideoTiming.WithShowStart(original, time, _duration),
             TrackGrip.End => VideoTiming.WithShowEnd(original, time, _duration),
-            TrackGrip.Leave => VideoTiming.WithLeave(original, time, _duration),
-            _ => VideoTiming.WithArrive(original, time, _duration),
+            _ => VideoTiming.WithKey(original, drag.Key, time, _duration),
         };
         _live = drag.Base.Replace(changed);
         // The playhead follows the moment being set, so that the picture shows it (asked by the author once moving
@@ -452,8 +468,7 @@ public partial class EditorWindow
         {
             TrackGrip.Start => shown.Start,
             TrackGrip.End => shown.End - TimeSpan.FromMilliseconds(1),
-            TrackGrip.Leave => changed.Motion!.Leave,
-            TrackGrip.Arrive => changed.Motion!.Arrive,
+            TrackGrip.Key => changed.Motion!.Keys()[drag.Key],
             _ => shown.Contains(_playhead) ? _playhead : shown.Start,
         };
         RequestFrame(_trim.Clamp(follow));

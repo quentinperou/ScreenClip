@@ -10,7 +10,8 @@ using Windows.Graphics.DirectX;
 namespace ScreenClip.Video;
 
 /// <summary>
-/// Records a part of a monitor into an MP4 (H.264 by the graphics card when it can, AAC): the monitor is filmed by
+/// Records a part of a monitor into an MP4 (H.264 by the graphics card when it can, AAC; with both sounds, their mix and
+/// each one apart, named at the end, <see cref="SoundTracks"/>): the monitor is filmed by
 /// Windows.Graphics.Capture (frames only when something changes, at most <see cref="Fps"/> a second), cut to the area
 /// on the graphics card, and handed to Media Foundation. Pausing takes the paused time out. The pointer is filmed with
 /// the screen, or recorded apart (<see cref="PointerRecorder"/>) for the editor to draw it again.
@@ -25,7 +26,7 @@ internal sealed class ScreenRecorder : IDisposable
     private readonly IMFDXGIDeviceManager _manager;
     private readonly IMFSinkWriter _writer;
     private readonly int _videoStream;
-    private readonly int _audioStream = -1;
+    private readonly int[] _audioStreams = [];
     private readonly AudioRecorder? _audio;
     private readonly PointerRecorder? _pointer;
     private readonly GraphicsCaptureItem _item;
@@ -39,6 +40,7 @@ internal sealed class ScreenRecorder : IDisposable
     private long _pausedTotal;
     private long _lastTime = -1;
     private bool _stopped;
+    private bool _finalized;
 
     /// <param name="area">The part filmed, in screen pixels, on <paramref name="monitorBounds"/>.</param>
     /// <param name="pointerApart">The pointer is not filmed but recorded apart (<see cref="PointerTrack"/>).</param>
@@ -78,10 +80,16 @@ internal sealed class ScreenRecorder : IDisposable
             var audio = new AudioRecorder(systemSound, microphone, WriteAudio);
             if (audio.HasSources)
             {
-                using (var output = Media.Aac())
-                    _audioStream = _writer.AddStream(output);
-                using (var input = Media.Pcm())
-                    _writer.SetInputMediaType(_audioStream, input, null);
+                _audioStreams = new int[audio.Tracks];
+                SoundKind[] kinds = audio.Tracks > 1 ? [SoundKind.Mix, .. audio.Kinds] : [SoundKind.Mix];
+                for (int i = 0; i < _audioStreams.Length; i++)
+                {
+                    // Each its own rate, by which the editor finds it again (SoundTracks.BytesPerSecondOf).
+                    using (var output = Media.Aac(SoundTracks.BytesPerSecondOf(kinds[i])))
+                        _audioStreams[i] = _writer.AddStream(output);
+                    using var input = Media.Pcm();
+                    _writer.SetInputMediaType(_audioStreams[i], input, null);
+                }
                 _audio = audio;
             }
             else
@@ -118,6 +126,9 @@ internal sealed class ScreenRecorder : IDisposable
     public PointerTrack? PointerTrack => _pointer?.Track;
 
     public bool IsPaused => _pausedAt != 0;
+
+    /// <summary>A sound muted from now on, or heard again (the recording's bar).</summary>
+    public void SetMuted(SoundKind kind, bool muted) => _audio?.SetMuted(kind, muted);
 
     /// <summary>The time recorded so far (pauses left out).</summary>
     public TimeSpan Elapsed
@@ -212,13 +223,13 @@ internal sealed class ScreenRecorder : IDisposable
         _writer.WriteSample(_videoStream, sample);
     }
 
-    private void WriteAudio(byte[] pcm, long time)
+    private void WriteAudio(int track, byte[] pcm, long time)
     {
         using var sample = Media.Sample(pcm, time, pcm.Length / 4 * 10_000_000L / AudioRecorder.Rate);
         lock (_lock)
         {
-            if (!_stopped)
-                _writer.WriteSample(_audioStream, sample);
+            if (!_stopped && track < _audioStreams.Length)
+                _writer.WriteSample(_audioStreams[track], sample);
         }
     }
 
@@ -244,6 +255,7 @@ internal sealed class ScreenRecorder : IDisposable
                 WriteFrame(_lastFrame, end - FrameTime);
             _stopped = true;
             _writer.Finalize();
+            _finalized = true;
         }
         return elapsed;
     }
@@ -269,6 +281,7 @@ internal sealed class ScreenRecorder : IDisposable
 
     public void Dispose()
     {
+        var kinds = _audio is { } audio ? (audio.Tracks > 1 ? [SoundKind.Mix, .. audio.Kinds] : audio.Kinds) : null;
         _audio?.Dispose();
         _lastFrame?.Dispose();
         _lastFrame = null;
@@ -276,5 +289,11 @@ internal sealed class ScreenRecorder : IDisposable
         _manager.Dispose();
         _context.Dispose();
         _device.Dispose();
+        // The file closed, its sounds named: the mix, then each one apart (or the one sound), for the editor.
+        if (_finalized && kinds is not null)
+        {
+            _finalized = false;
+            SoundTracks.Mark(Path, kinds);
+        }
     }
 }

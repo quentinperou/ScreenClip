@@ -5,9 +5,10 @@ using Vortice.MediaFoundation;
 namespace ScreenClip.Video;
 
 /// <summary>
-/// Writes the part kept of a video as the editor shows it: every frame drawn by the editor (annotations, crop,
-/// layout), then encoded as MP4 (H.264 and the sound in AAC) or as an animated GIF (no sound, at most
-/// <see cref="GifFps"/> frames a second and <see cref="GifMaxWidth"/> pixels wide, for a file that stays small).
+/// Writes what is kept of a video (its pieces, one after the other) as the editor shows it: every frame drawn by the
+/// editor (annotations, crop, layout), then encoded as MP4 (H.264 and the sound the editor mixes, in AAC) or as an
+/// animated GIF (no sound, at most <see cref="GifFps"/> frames a second and <see cref="GifMaxWidth"/> pixels wide, for a
+/// file that stays small). A still picture animated (a pointer that moves on it) is written the same way.
 /// </summary>
 internal static class VideoExporter
 {
@@ -16,23 +17,49 @@ internal static class VideoExporter
     private const int Fps = ScreenRecorder.Fps;
     private const long FrameTime = 10_000_000 / Fps;
 
+    /// <param name="pieces">What is kept, in order, in the video's own times.</param>
     /// <param name="render">
     /// Draws a frame at its time in the video (the scale for a smaller GIF): the picture is the caller's to free.
     /// </param>
     /// <param name="overlay">
-    /// What is drawn over the frames at a time, as a number that changes when it does (null: nothing changes with the
-    /// time): a frame is written when the video or that changes.
+    /// What is drawn over the frames at a time of the video, as a number that changes when it does (null: nothing
+    /// changes with the time): a frame is written when the video or that changes.
     /// </param>
     /// <param name="width">The width of a frame drawn at scale 1 (the GIF is made smaller from it).</param>
-    public static void Export(string source, string target, bool gif, TrimRange range, Func<SKImage, TimeSpan, float, SKImage> render,
-        Func<TimeSpan, int>? overlay, int width, IProgress<double>? progress, CancellationToken cancel)
+    /// <param name="sound">Makes the sound of the MP4 (null: none).</param>
+    public static void Export(string source, string target, bool gif, IReadOnlyList<Piece> pieces, Func<SKImage, TimeSpan, float, SKImage> render,
+        Func<TimeSpan, int>? overlay, int width, Func<SoundComposer?>? sound, IProgress<double>? progress, CancellationToken cancel)
+    {
+        using var reader = new VideoReader(source);
+        Write(Frames(reader, pieces, cancel), target, gif, pieces, render, overlay, width, sound, progress, cancel);
+    }
+
+    /// <summary>
+    /// A still picture animated for <paramref name="length"/>: one frame, and a new one written whenever what is drawn
+    /// over it changes (<paramref name="overlay"/>). No sound.
+    /// </summary>
+    public static void ExportStill(SKImage still, string target, bool gif, TimeSpan length, Func<SKImage, TimeSpan, float, SKImage> render,
+        Func<TimeSpan, int>? overlay, int width, IProgress<double>? progress, CancellationToken cancel) =>
+        Write(StillFrames(still), target, gif, [new Piece(TimeSpan.Zero, length)], render, overlay, width, null, progress, cancel);
+
+    // The picture once, as a copy: the steps free each frame when they are done with it.
+    private static IEnumerable<(TimeSpan Time, SKImage Image)> StillFrames(SKImage still)
+    {
+        using var surface = SKSurface.Create(new SKImageInfo(still.Width, still.Height, SKColorType.Bgra8888, SKAlphaType.Premul));
+        surface.Canvas.DrawImage(still, 0, 0);
+        yield return (TimeSpan.Zero, surface.Snapshot());
+    }
+
+    private static void Write(IEnumerable<(TimeSpan Time, SKImage Image)> frames, string target, bool gif, IReadOnlyList<Piece> pieces,
+        Func<SKImage, TimeSpan, float, SKImage> render, Func<TimeSpan, int>? overlay, int width, Func<SoundComposer?>? sound,
+        IProgress<double>? progress, CancellationToken cancel)
     {
         try
         {
             if (gif)
-                WriteGif(source, target, range, render, overlay, Math.Min(1f, GifMaxWidth / (float)Math.Max(1, width)), progress, cancel);
+                WriteGif(frames, target, pieces, render, overlay, Math.Min(1f, GifMaxWidth / (float)Math.Max(1, width)), progress, cancel);
             else
-                WriteMp4(source, target, range, render, overlay, progress, cancel);
+                WriteMp4(frames, target, pieces, render, overlay, sound, progress, cancel);
         }
         catch
         {
@@ -47,61 +74,47 @@ internal static class VideoExporter
         }
     }
 
-    /// <summary>The frames of the part kept, with their time from its start: the one shown at the start first.</summary>
-    private static IEnumerable<(TimeSpan Time, SKImage Image)> Frames(VideoReader reader, TrimRange range, CancellationToken cancel)
+    private static TimeSpan LengthOf(IReadOnlyList<Piece> pieces) => pieces.Aggregate(TimeSpan.Zero, (sum, p) => sum + p.Length);
+
+    // The time of the video at a time of what is kept.
+    private static TimeSpan VideoTimeOf(IReadOnlyList<Piece> pieces, TimeSpan kept)
     {
-        reader.Seek(range.Start);
-        (TimeSpan Time, SKImage Image)? before = null;
-        try
+        foreach (var piece in pieces)
         {
-            while (reader.Next() is { } frame)
-            {
-                cancel.ThrowIfCancellationRequested();
-                if (frame.Time < range.Start)
-                {
-                    before?.Image.Dispose();
-                    before = frame;
-                    continue;
-                }
-                if (before is { } first && frame.Time > range.Start)
-                {
-                    before = null;
-                    yield return (TimeSpan.Zero, first.Image);
-                }
-                if (frame.Time >= range.End)
-                {
-                    frame.Image.Dispose();
-                    yield break;
-                }
-                yield return (frame.Time - range.Start, frame.Image);
-            }
-            if (before is { } only)
-            {
-                before = null;
-                yield return (TimeSpan.Zero, only.Image);
-            }
+            if (kept < piece.Length)
+                return piece.Start + kept;
+            kept -= piece.Length;
         }
-        finally
+        return pieces.Count > 0 ? pieces[^1].End : TimeSpan.Zero;
+    }
+
+    /// <summary>The frames of what is kept, with their time in it, piece after piece.</summary>
+    private static IEnumerable<(TimeSpan Time, SKImage Image)> Frames(VideoReader reader, IReadOnlyList<Piece> pieces, CancellationToken cancel)
+    {
+        var before = TimeSpan.Zero;
+        foreach (var piece in pieces)
         {
-            before?.Image.Dispose();
+            foreach (var frame in VideoPlayer.FramesOf(reader, piece, cancel))
+                yield return (before + frame.Time, frame.Image);
+            before += piece.Length;
         }
     }
 
     /// <summary>
-    /// The frames to write, <paramref name="fps"/> a second through the part kept: the video's frame shown by then,
-    /// at that time from the start. A step where neither the frame nor the overlay changed is left out (the frame
-    /// before lasts). The pictures stay this enumerator's: each is freed when the next one comes.
+    /// The frames to write, <paramref name="fps"/> a second through what is kept: the video's frame shown by then, at
+    /// that time in what is kept. A step where neither the frame nor the overlay changed is left out (the frame before
+    /// lasts). The pictures stay this enumerator's: each is freed when the next one comes.
     /// </summary>
-    private static IEnumerable<(TimeSpan Time, SKImage Image)> Steps(VideoReader reader, TrimRange range, int fps, Func<TimeSpan, int>? overlay,
-        CancellationToken cancel)
+    private static IEnumerable<(TimeSpan Time, SKImage Image)> Steps(IEnumerable<(TimeSpan Time, SKImage Image)> source, IReadOnlyList<Piece> pieces, int fps,
+        Func<TimeSpan, int>? overlay, CancellationToken cancel)
     {
-        using var frames = Frames(reader, range, cancel).GetEnumerator();
+        using var frames = source.GetEnumerator();
         (TimeSpan Time, SKImage Image)? shown = null, next = frames.MoveNext() ? frames.Current : null;
         bool changed = false;
         int? lastOverlay = null;
         try
         {
-            long count = Math.Max(1, (long)Math.Ceiling(range.Length.TotalSeconds * fps - 1e-6));
+            long count = Math.Max(1, (long)Math.Ceiling(LengthOf(pieces).TotalSeconds * fps - 1e-6));
             for (long step = 0; step < count; step++)
             {
                 cancel.ThrowIfCancellationRequested();
@@ -115,7 +128,7 @@ internal static class VideoExporter
                 }
                 if (shown is not { } frame)
                     continue;
-                int over = overlay?.Invoke(range.Start + time) ?? 0;
+                int over = overlay?.Invoke(VideoTimeOf(pieces, time)) ?? 0;
                 if (!changed && over == lastOverlay)
                     continue;
                 changed = false;
@@ -130,17 +143,16 @@ internal static class VideoExporter
         }
     }
 
-    private static void WriteMp4(string source, string target, TrimRange range, Func<SKImage, TimeSpan, float, SKImage> render,
-        Func<TimeSpan, int>? overlay, IProgress<double>? progress, CancellationToken cancel)
+    private static void WriteMp4(IEnumerable<(TimeSpan Time, SKImage Image)> frames, string target, IReadOnlyList<Piece> pieces,
+        Func<SKImage, TimeSpan, float, SKImage> render, Func<TimeSpan, int>? overlay, Func<SoundComposer?>? makeSound, IProgress<double>? progress,
+        CancellationToken cancel)
     {
-        using var reader = new VideoReader(source);
-        using var sound = reader.HasAudio ? new AudioReader(source) : null;
-        sound?.Seek(range.Start);
+        using var sound = makeSound?.Invoke();
+        var length = LengthOf(pieces);
         IMFSinkWriter? writer = null;
         SKSurface? flat = null;
         int videoStream = -1, soundStream = -1, width = 0, height = 0;
         long soundWritten = 0;          // up to where (100 ns, from the start) the sound is written
-        (TimeSpan Time, byte[] Pcm)? soundBlock = null;
         long last = -1;
         try
         {
@@ -150,20 +162,14 @@ internal static class VideoExporter
                     return;
                 while (soundWritten < until)
                 {
-                    soundBlock ??= sound.Next();
-                    if (soundBlock is not { } block || block.Time >= range.End)
+                    if (sound.Next() is not { } chunk)
                     {
                         soundWritten = long.MaxValue;
                         return;
                     }
-                    soundBlock = null;
-                    var (bytes, offset, count) = VideoPlayer.Trim(block.Time, block.Pcm, range.Start, range.End);
-                    if (count == 0)
-                        continue;
-                    long time = Math.Max(0, (block.Time - range.Start).Ticks + offset / 4 * 10_000_000L / 48000);
-                    using var sample = Media.Sample(bytes.AsSpan(offset, count), time, count / 4 * 10_000_000L / 48000);
+                    using var sample = Media.Sample(chunk.Pcm, chunk.Time.Ticks, chunk.Pcm.Length / 4 * 10_000_000L / SoundComposer.Rate);
                     writer!.WriteSample(soundStream, sample);
-                    soundWritten = time + sample.SampleDuration;
+                    soundWritten = chunk.Time.Ticks + sample.SampleDuration;
                 }
             }
 
@@ -182,9 +188,9 @@ internal static class VideoExporter
                 last = time;
             }
 
-            foreach (var (time, frame) in Steps(reader, range, Fps, overlay, cancel))
+            foreach (var (time, frame) in Steps(frames, pieces, Fps, overlay, cancel))
             {
-                using (var picture = render(frame, range.Start + time, 1))
+                using (var picture = render(frame, VideoTimeOf(pieces, time), 1))
                 {
                     if (writer is null)
                     {
@@ -200,12 +206,12 @@ internal static class VideoExporter
                 }
                 WriteFrame(time.Ticks);
                 WriteSound(time.Ticks + 10_000_000);
-                progress?.Report(time.TotalSeconds / Math.Max(0.001, range.Length.TotalSeconds));
+                progress?.Report(time.TotalSeconds / Math.Max(0.001, length.TotalSeconds));
             }
             if (writer is null)
                 throw new InvalidDataException("No frame in this part of the video.");
             // Still at the end (nothing moved): the last frame lasts until the end.
-            long end = range.Length.Ticks;
+            long end = length.Ticks;
             if (end - last > FrameTime)
                 WriteFrame(end - FrameTime);
             WriteSound(end);
@@ -247,10 +253,10 @@ internal static class VideoExporter
         return writer;
     }
 
-    private static void WriteGif(string source, string target, TrimRange range, Func<SKImage, TimeSpan, float, SKImage> render,
-        Func<TimeSpan, int>? overlay, float scale, IProgress<double>? progress, CancellationToken cancel)
+    private static void WriteGif(IEnumerable<(TimeSpan Time, SKImage Image)> frames, string target, IReadOnlyList<Piece> pieces,
+        Func<SKImage, TimeSpan, float, SKImage> render, Func<TimeSpan, int>? overlay, float scale, IProgress<double>? progress, CancellationToken cancel)
     {
-        using var reader = new VideoReader(source);
+        var length = LengthOf(pieces);
         using var file = File.Create(target);
         var pacer = new GifPacer(GifFps);
         GifEncoder? gif = null;
@@ -259,11 +265,11 @@ internal static class VideoExporter
         int width = 0, height = 0;
         try
         {
-            foreach (var (time, frame) in Steps(reader, range, GifFps, overlay, cancel))
+            foreach (var (time, frame) in Steps(frames, pieces, GifFps, overlay, cancel))
             {
                 if (!pacer.Keep(time))
                     continue;
-                using (var picture = render(frame, range.Start + time, scale))
+                using (var picture = render(frame, VideoTimeOf(pieces, time), scale))
                 {
                     if (gif is null)
                     {
@@ -283,11 +289,11 @@ internal static class VideoExporter
                     fixed (byte* p = pending)
                         flat!.ReadPixels(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul), (IntPtr)p, width * 4, 0, 0);
                 }
-                progress?.Report(time.TotalSeconds / Math.Max(0.001, range.Length.TotalSeconds));
+                progress?.Report(time.TotalSeconds / Math.Max(0.001, length.TotalSeconds));
             }
             if (gif is null || pending is null)
                 throw new InvalidDataException("No frame in this part of the video.");
-            gif.AddFrame(pending, width * 4, pacer.Close(range.Length));
+            gif.AddFrame(pending, width * 4, pacer.Close(length));
             gif.Finish();
             progress?.Report(1);
         }

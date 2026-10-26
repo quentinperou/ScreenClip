@@ -66,6 +66,7 @@ public partial class SettingsWindow : Window
         SaveBox.IsChecked = _settings.SaveAutomatically;
         ShortcutsEnabledBox.IsChecked = _settings.ShortcutsEnabled;
         CountdownBox.IsChecked = _settings.RecordCountdown;
+        ShowMicrophone();
         FillShortcuts();
         ShowPrintScreenState();
         // Back from Windows Settings (Print Screen switch): show what changed.
@@ -190,6 +191,40 @@ public partial class SettingsWindow : Window
             return;
         _settings.ThumbnailScreen = option.Value;
         _settings.Save();
+    }
+
+    // ---------------------------------------------------------------- The microphone
+
+    private bool _fillingMicrophones;
+
+    // The one chosen alone, by its name kept: the devices are listed when the list opens.
+    private void ShowMicrophone()
+    {
+        _fillingMicrophones = true;
+        MicrophoneBox.DisplayMemberPath = nameof(Video.Microphones.Choice.Name);
+        MicrophoneBox.Items.Clear();
+        MicrophoneBox.Items.Add(new Video.Microphones.Choice(_settings.MicrophoneId, Video.Microphones.ChosenName));
+        MicrophoneBox.SelectedIndex = 0;
+        _fillingMicrophones = false;
+    }
+
+    private void MicrophoneBox_DropDownOpened(object sender, EventArgs e)
+    {
+        _fillingMicrophones = true;
+        var choices = Video.Microphones.All();
+        MicrophoneBox.Items.Clear();
+        foreach (var choice in choices)
+            MicrophoneBox.Items.Add(choice);
+        // The one chosen, or Windows' default when it is unplugged.
+        MicrophoneBox.SelectedItem = choices.FirstOrDefault(c => c.Id == _settings.MicrophoneId) ?? choices[0];
+        _fillingMicrophones = false;
+    }
+
+    private void MicrophoneBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_initialized || _fillingMicrophones || MicrophoneBox.SelectedItem is not Video.Microphones.Choice choice)
+            return;
+        Video.Microphones.Choose(choice);
     }
 
     private void Countdown_Changed(object sender, RoutedEventArgs e)

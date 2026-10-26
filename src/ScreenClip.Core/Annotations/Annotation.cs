@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 using SkiaSharp;
+using ScreenClip.Core.Video;
 
 namespace ScreenClip.Core.Annotations;
 
@@ -100,9 +101,34 @@ public readonly record struct ShowTime(TimeSpan Start, TimeSpan End)
 }
 
 /// <summary>
+/// A stop on the way of a moving pointer (A → B → C…, asked by the author): it arrives there, clicks, and leaves again
+/// for the next point, along a curve bent by its own two handles.
+/// </summary>
+public sealed record PointerStop
+{
+    public SKPoint At { get; init; }
+
+    public TimeSpan Arrive { get; init; }
+
+    public TimeSpan Leave { get; init; }
+
+    /// <summary>The handles that bend the way from here to the next point.</summary>
+    public SKPoint Control1 { get; init; }
+
+    public SKPoint Control2 { get; init; }
+
+    /// <summary>Whether it clicks when it arrives here (asked by the author: chosen step by step).</summary>
+    public bool Clicks { get; init; } = true;
+}
+
+/// <summary>A part of a pointer's way, from one point to the next.</summary>
+public readonly record struct PointerLeg(SKPoint From, SKPoint Control1, SKPoint Control2, SKPoint To, TimeSpan Leave, TimeSpan Arrive);
+
+/// <summary>
 /// A pointer of a video that moves (the A → B pointer of the mock-up): from <see cref="From"/> to the annotation's own
 /// point, leaving at <see cref="Leave"/> and arriving at <see cref="Arrive"/>, along a curve bent by two handles or
-/// straight, eased or steady, with a click when it arrives.
+/// straight, eased or steady, with a click when it arrives. It may stop on its way (<see cref="Stops"/>), clicking at
+/// each stop too.
 /// </summary>
 public sealed record PointerMotion
 {
@@ -123,11 +149,75 @@ public sealed record PointerMotion
 
     public ClickEffect Click { get; init; } = ClickEffect.Halo;
 
+    /// <summary>Where it stops on its way to its last point, in order.</summary>
+    public ImmutableList<PointerStop> Stops { get; init; } = [];
+
+    /// <summary>Whether it clicks when it arrives at its last point.</summary>
+    public bool ClicksAtEnd { get; init; } = true;
+
+    /// <summary>
+    /// Whether it clicks on the arrival at key <paramref name="index"/> of <see cref="Keys"/> (at a stop, or at its
+    /// end): a click effect chosen, and a click there.
+    /// </summary>
+    public bool ClicksAt(int index)
+    {
+        if (Click == ClickEffect.None || !IsArrival(index))
+            return false;
+        int stop = (index - 1) / 2;
+        return stop < Stops.Count ? Stops[stop].Clicks : ClicksAtEnd;
+    }
+
+    /// <summary>Its way in parts, to <paramref name="to"/> (the annotation's point): one more than the stops.</summary>
+    public PointerLeg[] Legs(SKPoint to)
+    {
+        var legs = new PointerLeg[Stops.Count + 1];
+        var (from, control1, control2, leave) = (From, Control1, Control2, Leave);
+        for (int i = 0; i < Stops.Count; i++)
+        {
+            var stop = Stops[i];
+            legs[i] = new PointerLeg(from, control1, control2, stop.At, leave, stop.Arrive);
+            (from, control1, control2, leave) = (stop.At, stop.Control1, stop.Control2, stop.Leave);
+        }
+        legs[^1] = new PointerLeg(from, control1, control2, to, leave, Arrive);
+        return legs;
+    }
+
+    /// <summary>Its times in order: it leaves, arrives at a stop and leaves it (for each), then arrives.</summary>
+    public TimeSpan[] Keys()
+    {
+        var keys = new TimeSpan[2 + 2 * Stops.Count];
+        keys[0] = Leave;
+        for (int i = 0; i < Stops.Count; i++)
+        {
+            keys[1 + 2 * i] = Stops[i].Arrive;
+            keys[2 + 2 * i] = Stops[i].Leave;
+        }
+        keys[^1] = Arrive;
+        return keys;
+    }
+
+    /// <summary>The motion with these times (<see cref="Keys"/>'s order).</summary>
+    public PointerMotion WithKeys(IReadOnlyList<TimeSpan> keys) => this with
+    {
+        Leave = keys[0],
+        Arrive = keys[^1],
+        Stops = [.. Stops.Select((stop, i) => stop with { Arrive = keys[1 + 2 * i], Leave = keys[2 + 2 * i] })],
+    };
+
+    /// <summary>Whether the key at <paramref name="index"/> of <see cref="Keys"/> is an arrival (a click), not a leaving.</summary>
+    public static bool IsArrival(int index) => index % 2 == 1;
+
     public PointerMotion MovedBy(float dx, float dy) => this with
     {
         From = new SKPoint(From.X + dx, From.Y + dy),
         Control1 = new SKPoint(Control1.X + dx, Control1.Y + dy),
         Control2 = new SKPoint(Control2.X + dx, Control2.Y + dy),
+        Stops = [.. Stops.Select(s => s with
+        {
+            At = new SKPoint(s.At.X + dx, s.At.Y + dy),
+            Control1 = new SKPoint(s.Control1.X + dx, s.Control1.Y + dy),
+            Control2 = new SKPoint(s.Control2.X + dx, s.Control2.Y + dy),
+        })],
     };
 }
 
@@ -421,6 +511,15 @@ public sealed record AnnotationLayer
 
     /// <summary>A video's recorded pointer: how it is drawn (here, so that its changes are undone as the others).</summary>
     public RecordedPointerOptions Cursor { get; init; } = new();
+
+    /// <summary>A video's splits, pieces removed and sounds (here too, so that they are undone as the rest).</summary>
+    public VideoEdit Video { get; init; } = new();
+
+    /// <summary>
+    /// A picture animated for that long (asked by the author: a pointer that moves on a still picture, exported as a GIF
+    /// or a video); null: a still picture. Here so that “Animate” and the length are undone as the rest.
+    /// </summary>
+    public TimeSpan? Animation { get; init; }
 
     public bool IsEmpty => Items.IsEmpty && Crop is null;
 

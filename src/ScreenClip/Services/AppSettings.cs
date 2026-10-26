@@ -147,8 +147,9 @@ public sealed class AppSettings
     public string? FileNameTemplate { get; set; }
 
     /// <summary>
-    /// Folder of the videos recorded, when they are saved automatically; null: Videos\Screen Recordings, where Windows'
-    /// Snipping Tool puts its recordings.
+    /// Folder of the videos recorded, when they are saved automatically; null: Videos\ScreenClip (asked by the author:
+    /// Windows' own Screen Recordings folder has a name that depends on the language, and an English one was made beside
+    /// the French “Enregistrements d'écran”).
     /// </summary>
     public string? VideoFolder { get; set; }
 
@@ -165,6 +166,14 @@ public sealed class AppSettings
 
     /// <summary>The recording takes the microphone (to comment). Chosen on the capture bar.</summary>
     public bool RecordMicrophone { get; set; }
+
+    /// <summary>
+    /// The microphone recorded (Settings › Capture, or a right click on the capture bar's microphone; asked by the
+    /// author); null: Windows' default input. Its name is kept to be shown without asking Windows for the devices.
+    /// </summary>
+    public string? MicrophoneId { get; set; }
+
+    public string? MicrophoneName { get; set; }
 
     /// <summary>
     /// The pointer is recorded apart, to be restyled or hidden in the editor (which then copies and saves the video);
@@ -255,7 +264,7 @@ public sealed class AppSettings
     public string EffectiveVideoFolder => string.IsNullOrWhiteSpace(VideoFolder) ? DefaultVideoFolder : VideoFolder;
 
     public static string DefaultVideoFolder =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "Screen Recordings");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "ScreenClip");
 
     /// <summary>The name of a video: the captures' own, when the user set one; else “Recording {date}…”.</summary>
     [JsonIgnore]

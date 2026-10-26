@@ -25,6 +25,7 @@ internal sealed class RecordingSession
     private DateTime _startedAt;
     private bool _ending;
     private bool _skipCountdown;                 // started now, or no countdown in the settings
+    private readonly HashSet<SoundKind> _muted = [];  // muted on the bar (asked by the author), even before the start
 
     private RecordingSession(PixelRect area, MonitorInfo monitor)
     {
@@ -38,7 +39,20 @@ internal sealed class RecordingSession
         _bar.StopClicked += (_, _) => Stop();
         _bar.RestartClicked += (_, _) => Restart();
         _bar.DiscardClicked += (_, _) => Discard();
+        _bar.SoundToggled += (_, kind) => ToggleSound(kind);
+        _bar.ShowSounds(App.Settings.RecordSystemSound, App.Settings.RecordMicrophone);
         _timer.Tick += (_, _) => Tick();
+    }
+
+    // A sound muted from now on, or heard again: the bar shows it, the recorder (or the next one) applies it.
+    private void ToggleSound(SoundKind kind)
+    {
+        if (_ending)
+            return;
+        bool muted = _muted.Add(kind) || !_muted.Remove(kind);
+        _recorder?.SetMuted(kind, muted);
+        _bar.ShowMuted(kind, muted);
+        DevLog.Write($"recording: {kind} {(muted ? "muted" : "on again")}");
     }
 
     /// <summary>The recording under way, if any: the video shortcut and the notification icon stop it.</summary>
@@ -109,7 +123,13 @@ internal sealed class RecordingSession
                 _bar.ShowText(_skipCountdown ? "…" : left.ToString(System.Globalization.CultureInfo.CurrentCulture));
                 return;
             }
-            _frame.ShowCount(null);
+            // The number goes first, and the recording starts at the next tick, once it is gone from the screen: in
+            // developer mode the frame is filmed, and its last 1 was in the first frame (the author).
+            if (_frame.ShowsCount)
+            {
+                _frame.ShowCount(null);
+                return;
+            }
             StartRecorder();
             return;
         }
@@ -128,6 +148,8 @@ internal sealed class RecordingSession
             var preparing = _preparing!;
             _preparing = null;
             _recorder = preparing.GetAwaiter().GetResult();
+            foreach (var kind in _muted)
+                _recorder.SetMuted(kind, true);
             _recorder.Start();
             DevLog.Write($"recording: {_recorder.Width} x {_recorder.Height} at {_area.X},{_area.Y}, sound {_recorder.HasSound} "
                 + $"(computer {App.Settings.RecordSystemSound}, microphone {App.Settings.RecordMicrophone}), pointer apart {App.Settings.RecordPointerApart}");
@@ -141,7 +163,7 @@ internal sealed class RecordingSession
             _recorder?.Abort();
             _recorder = null;
             End();
-            App.ShowHiddenEditor();
+            App.ShowHiddenEditors();
             MessageBox.Show(Strings.Format("ErrorRecording", ex.Message), "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -229,7 +251,7 @@ internal sealed class RecordingSession
         _recorder?.Abort();
         DropPreparing();
         End();
-        App.ShowHiddenEditor();
+        App.ShowHiddenEditors();
     }
 
     private void End()

@@ -238,6 +238,20 @@
         </Border>
 
         <TextBlock Style="{StaticResource SectionTitle}" Text="{local:Tr SettingsVideo}" />
+        <!-- The microphone recorded: Windows' default, or one of them (listed when the list opens: the sound devices
+             are not asked for before). -->
+        <Border Style="{StaticResource Card}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xE720;" />
+            <ComboBox x:Name="MicrophoneBox" DockPanel.Dock="Right" MinWidth="220" MaxWidth="320" VerticalAlignment="Center"
+                      Margin="16,0,0,0" SelectionChanged="MicrophoneBox_SelectionChanged" DropDownOpened="MicrophoneBox_DropDownOpened"
+                      AutomationProperties.Name="{local:Tr SettingsMicrophone}" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{local:Tr SettingsMicrophone}" />
+              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsMicrophoneDescription}" />
+            </StackPanel>
+          </DockPanel>
+        </Border>
         <!-- The 3 second countdown before a recording (it can also be skipped from the recording's bar). -->
         <Border Style="{StaticResource Card}">
           <DockPanel>

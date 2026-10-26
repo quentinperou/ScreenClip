@@ -285,14 +285,15 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
 
-    <!-- Command bar: capture and import on the left, the two tabs in the middle, save and copy on the right. -->
-    <Grid Margin="12,8,12,8">
+    <!-- Command bar: capture and import on the left, the two tabs in the middle, save and copy on the right. In a
+         narrow window, the buttons show their icons alone (FitCommandBar). -->
+    <Grid x:Name="CommandBar" Margin="12,8,12,8" SizeChanged="CommandBar_SizeChanged">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+      <StackPanel x:Name="LeftCommands" Orientation="Horizontal" HorizontalAlignment="Left">
       <Button x:Name="NewCaptureButton" Style="{StaticResource BarButton}" Click="NewCapture_Click"
               AutomationProperties.Name="{local:Tr EditorNewCapture}">
         <StackPanel Orientation="Horizontal">
@@ -308,6 +309,15 @@
           <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr EditorImport}" />
         </StackPanel>
       </Button>
+      <!-- A picture animated (asked by the author): a length and a timeline, for a pointer that moves on it; checked
+           while it is. -->
+      <ToggleButton x:Name="AnimateButton" Margin="0,0,6,0" Padding="12,5" Click="Animate_Click" Visibility="Collapsed"
+                    ToolTip="{local:Tr AnimateToolTip}" AutomationProperties.Name="{local:Tr Animate}">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Style="{StaticResource IconText}" FontSize="15" Text="&#xE7C9;" />
+          <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr Animate}" />
+        </StackPanel>
+      </ToggleButton>
 
       </StackPanel>
 
@@ -333,7 +343,7 @@
       </Border>
 
       <!-- Right to left: Settings at the far right (as in Crop PDF), then Copy (the main action), then Save. -->
-      <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+      <StackPanel x:Name="RightCommands" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
       <!-- Export (asked by the author, in place of Save): a small window with the format, whether the layout is applied,
            and Copy or Save. Its format shows on it (the mock-up's “Save · MP4”). -->
       <Button x:Name="ExportButton" Style="{StaticResource BarButton}" Click="ExportButton_Click" ToolTip="{local:Tr ExportToolTip}"
@@ -433,6 +443,7 @@
             <Grid x:Name="Stage" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Transparent"
                   MouseLeftButtonDown="Stage_MouseLeftButtonDown" MouseMove="Stage_MouseMove" MouseLeftButtonUp="Stage_MouseLeftButtonUp"
                   MouseDown="Stage_MouseDown" MouseUp="Stage_MouseUp" LostMouseCapture="Stage_LostMouseCapture"
+                  MouseRightButtonUp="Stage_MouseRightButtonUp"
                   MouseLeave="Stage_MouseLeave">
               <Image x:Name="Preview" Stretch="Fill" Cursor="Hand" RenderOptions.BitmapScalingMode="HighQuality"
                      MouseLeftButtonDown="Preview_MouseLeftButtonDown" MouseMove="Preview_MouseMove" />
@@ -444,14 +455,14 @@
             <ScrollBar x:Name="VScroll" Orientation="Vertical" HorizontalAlignment="Right" Visibility="Collapsed" Scroll="ViewScroll_Scroll" />
 
             <!-- Nothing to lay out yet. -->
-            <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440">
+            <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="640">
               <!-- The app's own icon (scripts\make-icons.ps1). -->
               <Image Source="Assets/ScreenClip.png" Width="80" Height="80" HorizontalAlignment="Center"
                      RenderOptions.BitmapScalingMode="HighQuality" />
 
               <TextBlock Text="{local:Tr EditorEmptyTitle}" FontSize="20" FontWeight="SemiBold" Margin="0,20,0,8"
                          HorizontalAlignment="Center" />
-              <TextBlock Text="{local:Tr EditorEmptyText}" TextWrapping="Wrap" TextAlignment="Center"
+              <TextBlock Text="{local:Tr EditorEmptyText}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="440"
                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
               <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                 <!-- Capturing first (asked by the author): the editor opened by hand is mostly seen by people who do not
@@ -463,6 +474,13 @@
                     <Path Style="{StaticResource IconPath}" Data="{StaticResource IconArea}"
                           Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                     <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr CaptureArea}" />
+                  </StackPanel>
+                </Button>
+                <!-- A video, straight in video mode (asked by the author). -->
+                <Button Padding="16,6" Margin="0,0,8,0" Click="RecordVideo_Click" AutomationProperties.Name="{local:Tr CaptureVideo}">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconVideo}" />
+                    <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr CaptureVideo}" />
                   </StackPanel>
                 </Button>
                 <Button Padding="16,6" Click="Import_Click" AutomationProperties.Name="{local:Tr EditorImport}">
@@ -511,7 +529,7 @@
           <!-- Size of the export, and what happened last (copied, saved). -->
           <!-- A video: play, the time, and the timeline (frames, the yellow handles that cut the start and the end,
                the playhead). -->
-          <Grid x:Name="VideoBar" Grid.Row="1" Margin="16,2,16,8" Visibility="Collapsed">
+          <Grid x:Name="VideoBar" Grid.Row="1" Margin="16,16,16,8" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="Auto" />
@@ -522,16 +540,44 @@
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
+            <!-- A handle between the picture and the timeline (asked by the author): up gives the tracks more room, as
+                 far as the picture stays seen; never smaller than at first; a double click puts it back. -->
+            <Thumb x:Name="TracksHandle" Grid.ColumnSpan="4" VerticalAlignment="Top" Height="6" Margin="0,-16,0,0"
+                   Cursor="SizeNS" DragDelta="TracksHandle_DragDelta" MouseDoubleClick="TracksHandle_MouseDoubleClick"
+                   ToolTip="{local:Tr TracksHandleToolTip}">
+              <Thumb.Template>
+                <ControlTemplate TargetType="Thumb">
+                  <Border Background="Transparent">
+                    <Border x:Name="Grip" Width="40" Height="4" CornerRadius="2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Background="{DynamicResource ControlStrongFillColorDefaultBrush}" Opacity="0.6" />
+                  </Border>
+                  <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                      <Setter TargetName="Grip" Property="Opacity" Value="1" />
+                    </Trigger>
+                  </ControlTemplate.Triggers>
+                </ControlTemplate>
+              </Thumb.Template>
+            </Thumb>
             <Button x:Name="PlayButton" Style="{DynamicResource AccentButtonStyle}" Width="40" Height="34" Padding="0"
                     VerticalAlignment="Center" Click="Play_Click">
               <TextBlock x:Name="PlayGlyph" Style="{StaticResource IconText}" FontSize="14" Text="&#xE768;" />
             </Button>
-            <TextBlock x:Name="VideoTimeText" Grid.Column="1" Margin="12,0,14,0" VerticalAlignment="Center" FontSize="12"
-                       Typography.NumeralAlignment="Tabular" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,14,0" VerticalAlignment="Center">
+              <TextBlock x:Name="VideoTimeText" VerticalAlignment="Center" FontSize="12" Typography.NumeralAlignment="Tabular" />
+              <!-- An animation's length, in seconds (or its end pulled on the timeline). -->
+              <StackPanel x:Name="AnimationLengthPanel" Orientation="Horizontal" Margin="6,0,0,0" Visibility="Collapsed">
+                <TextBox x:Name="AnimationLengthBox" Width="52" MinWidth="0" FontSize="12" Padding="6,4" TextAlignment="Right"
+                         KeyDown="AnimationLength_KeyDown" LostFocus="AnimationLength_LostFocus"
+                         ToolTip="{local:Tr AnimationLengthToolTip}" AutomationProperties.Name="{local:Tr AnimationLength}" />
+                <TextBlock Text="{local:Tr SecondsShort}" FontSize="12" Margin="4,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </StackPanel>
             <Grid x:Name="Timeline" Grid.Column="2" Height="58" Margin="0,-10,0,0" Background="Transparent" Cursor="Hand" ClipToBounds="False"
                   MouseLeftButtonDown="Timeline_MouseLeftButtonDown" MouseMove="Timeline_MouseMove"
-                  MouseLeftButtonUp="Timeline_MouseLeftButtonUp" SizeChanged="Timeline_SizeChanged">
+                  MouseLeftButtonUp="Timeline_MouseLeftButtonUp" SizeChanged="Timeline_SizeChanged" MouseRightButtonUp="Timeline_MouseRightButtonUp">
               <Border x:Name="FilmStrip" Margin="0,16,0,6" CornerRadius="4" ClipToBounds="True"
                       Background="{DynamicResource ControlAltFillColorSecondaryBrush}">
                 <Image x:Name="ThumbStrip" Stretch="Fill" RenderOptions.BitmapScalingMode="HighQuality" />
@@ -544,10 +590,28 @@
                  tracks keep the timeline's left edge and width, so that a time is at the same place on both. -->
             <ScrollViewer x:Name="TrackScroll" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Margin="0,4,-12,0" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed" Focusable="False">
-              <Canvas x:Name="TrackCanvas" HorizontalAlignment="Left" Background="Transparent" ClipToBounds="True"
+              <Canvas x:Name="TrackCanvas" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent" ClipToBounds="True"
                       MouseLeftButtonDown="TrackCanvas_MouseLeftButtonDown" MouseMove="TrackCanvas_MouseMove"
-                      MouseLeftButtonUp="TrackCanvas_MouseLeftButtonUp" LostMouseCapture="TrackCanvas_LostMouseCapture" />
+                      MouseLeftButtonUp="TrackCanvas_MouseLeftButtonUp" LostMouseCapture="TrackCanvas_LostMouseCapture"
+                      MouseRightButtonUp="TrackCanvas_MouseRightButtonUp" />
             </ScrollViewer>
+            <!-- The pieces (step 3 of the video): split at the playhead, remove the piece there or put it back. -->
+            <StackPanel x:Name="PieceButtons" Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,6,0,0">
+              <Button x:Name="SplitButton" Style="{StaticResource ZoomButton}" Click="Split_Click" ToolTip="{local:Tr SplitToolTip}"
+                      AutomationProperties.Name="{local:Tr SplitToolTip}">
+                <TextBlock Style="{StaticResource IconText}" FontSize="14" Text="&#xE8C6;" />
+              </Button>
+              <Button x:Name="RemovePieceButton" Style="{StaticResource ZoomButton}" Margin="4,0,0,0" Click="RemovePiece_Click"
+                      ToolTip="{local:Tr RemovePieceToolTip}" AutomationProperties.Name="{local:Tr RemovePieceToolTip}">
+                <TextBlock x:Name="RemovePieceGlyph" Style="{StaticResource IconText}" FontSize="14" Text="&#xE74D;" />
+              </Button>
+            </StackPanel>
+            <!-- The sounds: a row each (the computer and the microphone apart, or the one sound), its label on the left. -->
+            <StackPanel x:Name="SoundLabels" Grid.Row="2" Grid.ColumnSpan="2" Margin="0,6,0,0" Visibility="Collapsed" />
+            <Canvas x:Name="SoundCanvas" Grid.Row="2" Grid.Column="2" HorizontalAlignment="Left" Margin="0,6,0,0" Background="Transparent"
+                    Visibility="Collapsed" MouseLeftButtonDown="SoundCanvas_MouseLeftButtonDown" MouseMove="SoundCanvas_MouseMove"
+                    MouseLeftButtonUp="SoundCanvas_MouseLeftButtonUp" LostMouseCapture="SoundCanvas_LostMouseCapture"
+                    MouseRightButtonUp="SoundCanvas_MouseRightButtonUp" />
           </Grid>
 
           <DockPanel Grid.Row="2" Margin="16,0,16,10" LastChildFill="False">
@@ -828,6 +892,77 @@
                 <Border Style="{StaticResource SegmentBar}" Margin="0,0,0,10">
                   <UniformGrid x:Name="RecordedClickList" Rows="1" />
                 </Border>
+              </StackPanel>
+
+              <!-- A sound of a video chosen (step 3 of the video): its volume, its fades, muted or not. -->
+              <StackPanel x:Name="SoundRow">
+                <DockPanel>
+                  <TextBlock Text="{local:Tr SoundVolume}" FontSize="13" />
+                  <TextBlock x:Name="SoundVolumeValue" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="13"
+                             Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </DockPanel>
+                <Slider x:Name="SoundVolumeSlider" Minimum="0" Maximum="200" SmallChange="5" LargeChange="25" TickFrequency="5"
+                        IsSnapToTickEnabled="True" ValueChanged="SoundVolume_ValueChanged" Margin="0,2,0,10"
+                        AutomationProperties.Name="{local:Tr SoundVolume}" MouseDoubleClick="SliderReset_MouseDoubleClick"
+                        ToolTip="{local:Tr SliderResetToolTip}" />
+                <DockPanel>
+                  <TextBlock Text="{local:Tr SoundFadeIn}" FontSize="13" />
+                  <TextBlock x:Name="SoundFadeInValue" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="13"
+                             Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </DockPanel>
+                <Slider x:Name="SoundFadeInSlider" Minimum="0" Maximum="5" SmallChange="0.1" LargeChange="0.5" TickFrequency="0.1"
+                        IsSnapToTickEnabled="True" ValueChanged="SoundFadeIn_ValueChanged" Margin="0,2,0,10"
+                        AutomationProperties.Name="{local:Tr SoundFadeIn}" MouseDoubleClick="SliderReset_MouseDoubleClick"
+                        ToolTip="{local:Tr SliderResetToolTip}" />
+                <DockPanel>
+                  <TextBlock Text="{local:Tr SoundFadeOut}" FontSize="13" />
+                  <TextBlock x:Name="SoundFadeOutValue" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="13"
+                             Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </DockPanel>
+                <Slider x:Name="SoundFadeOutSlider" Minimum="0" Maximum="5" SmallChange="0.1" LargeChange="0.5" TickFrequency="0.1"
+                        IsSnapToTickEnabled="True" ValueChanged="SoundFadeOut_ValueChanged" Margin="0,2,0,10"
+                        AutomationProperties.Name="{local:Tr SoundFadeOut}" MouseDoubleClick="SliderReset_MouseDoubleClick"
+                        ToolTip="{local:Tr SliderResetToolTip}" />
+                <DockPanel Margin="0,0,0,10">
+                  <CheckBox x:Name="SoundMuteSwitch" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
+                            Checked="SoundMute_Changed" Unchecked="SoundMute_Changed" AutomationProperties.Name="{local:Tr SoundMuted}" />
+                  <TextBlock Text="{local:Tr SoundMuted}" FontSize="13" VerticalAlignment="Center" />
+                </DockPanel>
+                <!-- The piece of this sound clicked, silenced alone, the picture kept (asked by the author). -->
+                <Button x:Name="SoundSilenceButton" Click="SoundSilence_Click" HorizontalAlignment="Left" Margin="0,0,0,10">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource IconText}" FontSize="13" Text="&#xE74F;" />
+                    <TextBlock x:Name="SoundSilenceText" Style="{StaticResource BarLabel}" />
+                  </StackPanel>
+                </Button>
+              </StackPanel>
+
+              <!-- A piece of a video chosen (a click on its frames): its zoom, its frame on the picture (asked by the
+                   author); the Crop tool sets the size of the whole video. -->
+              <StackPanel x:Name="PieceRow">
+                <DockPanel>
+                  <TextBlock Text="{local:Tr PieceZoom}" FontSize="13" />
+                  <TextBlock x:Name="PieceZoomValue" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="13"
+                             Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </DockPanel>
+                <Slider x:Name="PieceZoomSlider" Minimum="100" Maximum="400" SmallChange="5" LargeChange="25" TickFrequency="5"
+                        IsSnapToTickEnabled="True" ValueChanged="PieceZoom_ValueChanged" Margin="0,2,0,10"
+                        AutomationProperties.Name="{local:Tr PieceZoom}" MouseDoubleClick="SliderReset_MouseDoubleClick"
+                        ToolTip="{local:Tr SliderResetToolTip}" />
+                <WrapPanel Margin="0,0,0,10">
+                  <Button x:Name="PieceResetButton" Click="PieceReset_Click" Margin="0,0,8,6">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Style="{StaticResource IconText}" FontSize="13" Text="&#xE9A6;" />
+                      <TextBlock Style="{StaticResource BarLabel}" Text="{local:Tr MenuResetFraming}" />
+                    </StackPanel>
+                  </Button>
+                  <Button x:Name="PieceRemoveButton" Click="RemovePiece_Click" Margin="0,0,0,6">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock x:Name="PieceRemoveGlyph" Style="{StaticResource IconText}" FontSize="13" Text="&#xE74D;" />
+                      <TextBlock x:Name="PieceRemoveText" Style="{StaticResource BarLabel}" />
+                    </StackPanel>
+                  </Button>
+                </WrapPanel>
               </StackPanel>
 
               <TextBlock x:Name="NextNumberText" FontSize="13" Margin="0,0,0,10" />

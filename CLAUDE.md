@@ -1,4 +1,4 @@
-﻿# CLAUDE.md
+# CLAUDE.md
 
 Guidance for Claude Code and contributors working on this repository. `README.md` (English) and
 `README.fr.md` (French) describe the project for users.
@@ -195,7 +195,54 @@ language. 221 tests. Step 2 and these changes committed together (not released).
 
 Released as 0.3.0 the same day, once the author had tried it (“from what I tested, it works well”).
 
-**Next**: the author's next ideas; video step 3 if needed (sound levels).
+Then **video step 3** (October 26, 2026, the author's answers: both sounds kept apart, meters on the capture bar,
+a volume and fades for each, the export mixing them; his additions: see the sounds on the timeline to cut them at
+the start or the end, split the video and remove a piece; then, choosing between the options shown in a mock-up,
+pieces removed greyed in place, and his own idea, three sound tracks in the MP4): see Technical choices › Video,
+step 3. Checked by Claude in the test instance with two made-up tones in place of the devices
+(`SCREENCLIP_RECORD_FAKESOUND=1`): the three tracks named and flagged, the editor's two sound rows, a piece removed
+skipped when playing and exporting, the volume, mute, fades and part of a sound measured in the MP4 exported (the
+tones' levels every half second), the capture bar's meters; not with the author's own sounds. 235 tests.
+
+The author's tries and asks the same day: a Windows 11 dialog in place of the message boxes (`EditorWindow.Dialog.cs`);
+**Copy as PNG** always, its format in Settings › Saving (`AppSettings.CopyFormat`: PNG, JPG, WebP); *Open ScreenClip*
+first in the tray menu; the Export window copies a GIF or a picture only (never an MP4), and *Image* became PNG and
+JPG; the tracks' scroll bar no longer over the handles, the playhead's line no longer cut; the tray menu kept inside
+the work area (it went under the taskbar). An **Image | Video switch** at the start of the capture bar (proposal A
+of three shown to him), and **Record a video** in the empty editor; the bar keeps its width from one to the other
+(asked by him: buttons moved under the mouse): “All screens” and a video's sounds and pointer share one place, the
+other hidden in it, and a meter turned off keeps its room. In a narrow editor, the command bar's buttons show
+their icons alone, their names in their tooltips (asked by the author: they ran over the tabs; `FitCommandBar`
+measures each side against half of what the tabs leave, the labels' parents invalidated first, since a group keeps
+its measured size otherwise; the tabs' names go last). An overflow (`Math.Abs(int.MinValue)` when the
+pointer was at x = 0) fixed. **Per-piece framing** (his idea: the Crop tool sets the video's size, a piece chosen is
+zoomed and moved on its own: `VideoEdit.Framings`). ✂ cuts the sounds too (they follow the pieces), **right-click
+menus** on the timeline, the tracks (with Hide / Show the layer, as its eye in the list, asked by the author; on an animated picture, the layer items alone) and the sounds, and **silence a sound in one piece** (`SoundOptions.Silenced`).
+The videos go to `Videos\ScreenClip` (Windows' Screen Recordings folder has a language-dependent name). Media
+Foundation lists a recording's sound tracks in no fixed order: each sound now has its own AAC rate, by which the
+editor finds it (see Video, step 3). The **recording bar** shows a meter per sound, a click mutes it from then on
+(`AudioRecorder.SetMuted`: silence in its track and out of the mix; asked by the author). **Several editors** (asked
+by him: a capture made while editing replaced the work): a capture, a video or a picture opens in an empty editor,
+else in a new one (`App.OpenEditor`), placed 32 px below and right of the last one. Checked in the test instance:
+the tones muted in the file from the click on (computer, then microphone), the bar shot during the countdown and
+after a mute, two captures from an editor holding a video giving two more editors. 239 tests.
+
+Then, asked by the author the same day: an **animated picture** (“Animate”: a pointer moving on a still picture,
+exported as a GIF or an MP4 of a length chosen; his choices: a button, a way with several steps, the length in a
+field and by the timeline's end), the **steps of a moving pointer** (A → B → C…, in videos too) with a **right-click
+menu** on it (his idea: add a step, smooth the way…), and a **handle** above the timeline that gives the tracks more
+room (never smaller than at first, the picture kept seen, back to the default in each new editor). See Technical
+choices › Animated picture. Checked in the test instance: Animate, A → B then two steps by click and by the menu, a
+step added on the way, smoothed, exported as GIF (60 frames, the pointer through every stop with its halos) and MP4,
+the length typed, pulled and undone, a still pointer made to move from the menu, playing, the steps on a recorded
+video, the handle; not with the author's mouse. 243 tests.
+
+Ideas kept by the author for later (from Windows' Snipping Tool): a color picker that copies the hex code (the
+overlay's magnifier shows it, without copying it), and a text extractor (OCR).
+
+Step 3 and all these changes committed together (not released).
+
+**Next**: the author tries all this; then a release when he asks.
 
 ## Commands
 
@@ -215,7 +262,9 @@ and the recording's bar and line stay in screenshots, as in developer mode), `SC
 records a moving window of its own through the real recording, the pointer apart following a made-up way, then opens
 it in the editor; `SCREENCLIP_RECORD_STILL=1`: the window stops after a second; `SCREENCLIP_RECORD_SIZE=1800x1000` and
 `SCREENCLIP_RECORD_PICTURE=<file>`: a large window whose whole picture moves, the heaviest to decode;
-`SCREENCLIP_RECORD_SCROLL=<file>`: a page that scrolls, for the README picture of the video editor),
+`SCREENCLIP_RECORD_SCROLL=<file>`: a page that scrolls, for the README picture of the video editor;
+`SCREENCLIP_RECORD_FAKESOUND=1`: two tones, 440 Hz for the computer and 660 Hz for the microphone, in place of the
+devices, for the recording and the meters: tests record no one's sound),
 `SCREENCLIP_INSTANCE=<name>` and `SCREENCLIP_SETTINGS=<file>` (Debug builds only: a second ScreenClip beside the one in
 use, with its own single-instance names, temp folder and settings file: tests never touch the author's app nor his
 settings; build it apart with `dotnet build src\ScreenClip -o <folder>`, since his dev build locks `bin`). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
@@ -310,8 +359,8 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
 
 | Folder | Role |
 |--------|------|
-| `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `BoxDetector` (blocks drawn on a picture), `ElementChain` (elements and blocks under the pointer as wheel levels), `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). `Video/`: `GifEncoder` (+ median cut, LZW), `Timecode`, `TrimRange`, `GifPacer`, `PointerTrack` (the pointer recorded apart: positions, shapes, clicks, smoothed way). `Annotations/`: `Annotation` (+ kinds and styles, `Palette`, `AnnotationOptions`, `AnnotationDefaults`, `AnnotationLayer`, `AnnotationHistory`), `AnnotationGeometry` (sizes, bounds, hit tests, handles), `AnnotationRenderer` (SkiaSharp drawing, `Flatten`, pixelation, the recorded pointer and click effects), `VideoTiming` (annotations in time: shown at a moment, the A → B pointer posed, bars moved and stretched, `Fingerprint`). `Typefaces` (Segoe UI for both). |
-| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow` (+ `EditorWindow.Annotate.cs`: the Edit tab; `EditorWindow.Video.cs`: a video, its timeline and export; `EditorWindow.Tracks.cs`: the tracks under the timeline and the recorded pointer's options; `EditorWindow.Export.cs`: the Export window and Copy; `EditorWindow.Dialog.cs`: its questions and messages; `EditorWindow.Script.cs`: the Debug script player), `RecordingBar`, `RecordingFrame`, `Video/` (`RecordingSession`, `ScreenRecorder`, `PointerRecorder`, `AudioRecorder`, `VideoReader`, `VideoPlayer`, `VideoExporter`, `Direct3D`, `RecordingTest` in Debug), `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `NativeMethods`. |
+| `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `BoxDetector` (blocks drawn on a picture), `ElementChain` (elements and blocks under the pointer as wheel levels), `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). `Video/`: `GifEncoder` (+ median cut, LZW), `Timecode`, `TrimRange`, `GifPacer`, `PointerTrack` (the pointer recorded apart: positions, shapes, clicks, smoothed way), `VideoEdit` (splits, pieces removed, what is kept and its times; `SoundOptions`), `Mp4Tracks` (an MP4's tracks, the sound tracks named and made alternates). `Annotations/`: `Annotation` (+ kinds and styles, `Palette`, `AnnotationOptions`, `AnnotationDefaults`, `AnnotationLayer`, `AnnotationHistory`), `AnnotationGeometry` (sizes, bounds, hit tests, handles), `AnnotationRenderer` (SkiaSharp drawing, `Flatten`, pixelation, the recorded pointer and click effects), `VideoTiming` (annotations in time: shown at a moment, the A → B pointer posed, bars moved and stretched, `Fingerprint`). `Typefaces` (Segoe UI for both). |
+| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow` (+ `EditorWindow.Annotate.cs`: the Edit tab; `EditorWindow.Video.cs`: a video, its timeline and export; `EditorWindow.Tracks.cs`: the tracks under the timeline and the recorded pointer's options; `EditorWindow.Export.cs`: the Export window and Copy; `EditorWindow.Sound.cs`: the pieces and the sounds of a video; `EditorWindow.Dialog.cs`: its questions and messages; `EditorWindow.Script.cs`: the Debug script player), `RecordingBar`, `RecordingFrame`, `Video/` (`RecordingSession`, `ScreenRecorder`, `PointerRecorder`, `AudioRecorder`, `SoundMeter`, `SoundTracks`, `SoundComposer`, `VideoReader`, `VideoPlayer`, `VideoExporter`, `Direct3D`, `RecordingTest` in Debug), `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `NativeMethods`. |
 | `installer/ScreenClip.iss` | Inno Setup (English/French): Program Files, Start menu, .NET 10 runtime check, closes the running app, gives Print Screen back, cleans HKCU and temp on uninstall. |
 | `scripts/` | `build.ps1`, `make-icons.ps1` (icon; generated files are committed). |
 | `.github/workflows/build.yml` | CI: build + tests on every push; on a `v*` tag, publishes the installer in a Release (pre-release when the tag has a `-`). |
@@ -402,11 +451,12 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
   (`IsBorderRequired` needs the 22621 SDK; the app still runs from 19041). Its assembly (and Vortice, NAudio) is only
   loaded when a video is recorded or opened: measured at rest with them in, 4.3 MB working set, none of them loaded.
 - **Video** (issue #2, step 1, October 25, 2026; the author's answers: sound of the computer and microphone at once,
-  built in steps, Ctrl+Alt+Print Screen, MP4 and GIF): the capture bar's **Video** toggle (`CaptureSession.IsVideo`,
+  built in steps, Ctrl+Alt+Print Screen, MP4 and GIF): the capture bar's **Image | Video** switch, its first
+  control (`CaptureSession.IsVideo`; a video's choices turn red; was a Video toggle among the modes, unclear to the author),
   the overlay's choice of area / window / screen, no “All screens”) starts a `RecordingSession`: a dashed red line
   around the area (`RecordingFrame`, click-through) and a bar under it (`RecordingBar`: time, pause, stop, start
   again, discard; never active, so the app filmed keeps the focus), both excluded from capture
-  (`WDA_EXCLUDEFROMCAPTURE`); a 3 s countdown during which the `ScreenRecorder` is made on a worker thread (the first
+  (`WDA_EXCLUDEFROMCAPTURE`); a 3 s countdown (its number hidden a tick before the recording starts: in developer mode the frame is filmed, and its last 1 was in the first frame) during which the `ScreenRecorder` is made on a worker thread (the first
   Media Foundation start takes ~2 s: made after the countdown, the first videos lost their first seconds). Area and
   window are recorded as the area of their monitor (menus and popups over them are filmed; a window followed by
   Windows.Graphics.Capture would lose its menus): `Direct3D.ForMonitor`, frames only when something changes, at most
@@ -418,7 +468,7 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
   to 48 kHz stereo; a thread clocked on the recording hands out 20 ms chunks 120 ms behind, so that both devices'
   packets are in; silence where the loopback sends nothing; paused time left out), AAC 160 kbit/s. Stop (the bar, the
   shortcut, a click on the icon) → `CaptureController.DeliverVideo`: saved (when the captures are) in
-  `AppSettings.EffectiveVideoFolder` (Videos\Screen Recordings, Settings › Saving), put on the clipboard as a file,
+  `AppSettings.EffectiveVideoFolder` (Videos\ScreenClip, Settings › Saving; Windows' Screen Recordings at first, whose name depends on the language: an English one was made beside the author's French one), put on the clipboard as a file,
   opened in the editor (always). The editor: `EditorWindow.Video.cs`; the frame at the playhead becomes `_capture`
   (so the Edit tab, the crop and the Layout tab work on every frame; their caches follow the picture), read by
   `VideoReader` on a worker (seek to the key frame before, decode up to the time; RGB32's fourth byte is set opaque, or
@@ -456,6 +506,39 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
   `VideoTiming.Fingerprint` of the moment changed). **Export**: 30 (MP4) or 15 (GIF) steps a second through the part
   kept, a frame written when the video's frame or the fingerprint changed (a still screen with a moving pointer is
   still smooth).
+- **Video, step 3** (October 26, 2026). **Three sound tracks** (the author's idea): with both sounds,
+  `AudioRecorder` hands out each 20 ms chunk as their mix and each sound apart, and `ScreenRecorder` writes three AAC
+  tracks; once the file is closed, `SoundTracks.Mark` names them (`ScreenClip mix`, `ScreenClip computer`,
+  `ScreenClip microphone`) and makes them alternates with only the mix enabled (`Mp4Tracks.MarkSounds` in Core,
+  tested: it rewrites the `moov` box, which Media Foundation writes last, so that the media data does not move):
+  every player plays the mix (QuickTime would play all the enabled tracks at once), and the editor finds the sounds
+  apart again by their names, even in a file opened later (`SoundTracks.Rows`: the computer and the microphone, else
+  the file's first sound alone). One sound: one track, named. **Meters** on the capture bar (`SoundMeter`: WASAPI
+  loopback or the microphone, the peak every 60 ms on a root scale, falling slowly): they listen only while the bar
+  shows the video's sounds on, never at rest. **The edit** (`VideoEdit` in Core, tested, kept in the layer so that it
+  is undone as the rest): `Splits` (✂, Ctrl+B, at the playhead; refused within 0.2 s of another or an end), `Removed`
+  (the piece at the playhead, Delete when the timeline was clicked last, or 🗑; never the last piece kept), shown in
+  place greyed and hatched on the timeline, the tracks and the sounds, with ↺ to put it back (the author's choice
+  among the options of a mock-up); `Kept(trim)` is what plays and is exported, and the time shown is in it
+  (`KeptTimeOf`), with its length. `Sounds`: per row, `SoundOptions` (volume 0–200 %, muted, the part it plays in,
+  fades in and out up to 5 s; `GainAt`). **Playing and the export** go through the pieces kept (`VideoPlayer` and
+  `VideoExporter` take them; `VideoPlayer.FramesOf` reads a piece); the sound is `SoundComposer`: each sound track read
+  apart, at its gain, summed, 5 ms faded at each join (no click), in 50 ms chunks. Media Foundation does not list
+  the tracks in the file's order (a recording's three sounds came as microphone, computer, mix), its stream ids are
+  not the tracks' and it gives no names: so each sound is written at its own AAC rate (mix 160 kbit/s, computer
+  128, microphone 96: `SoundTracks.BytesPerSecondOf`), and `AudioReader` finds a sound by the rate Media Foundation
+  tells (the fastest, the mix, with none asked); a file whose sounds share a rate opens with its mix alone.
+  `SoundOptions.Silenced`: pieces where a sound is silent, the picture kept (5 ms ramps). ✂ splits the sounds too
+  (the splits are the video's). **Framing** (`VideoEdit.Framings`, Core: a piece's zoom up to 4 and its center,
+  `Region`, `Apply` with a Mitchell cubic): applied after `Flatten` (the annotations zoom with the picture), in the
+  Edit view (the frame shown, dragged, its corners zoom), the Layout tab and the export; the Crop tool keeps setting
+  the whole video's size. Right-click menus (`ShowVideoMenu`): split, remove or restore a piece, silence a sound
+  there, mute, reset. **The recording bar**: a button per sound recorded with its meter (`SoundMeter`, while the bar
+  shows); a click mutes it from then on (`RecordingSession` keeps the choice from the countdown on,
+  `AudioRecorder.SetMuted` clears its samples: silence in its track, out of the mix). **The rows** (`EditorWindow.Sound.cs`): under the tracks, a row per sound with its label (the speaker
+  mutes it, its volume), its bar (its ends dragged cut it, the playhead following), its waveform (the peak every
+  10 ms, read in the background, on a root scale, as loud as it plays) and its fades as slopes; chosen, the Edit
+  panel shows its volume, fades and mute.
 - **Video frames** (the author: “the timeline lags”; measured on a 1800 × 1000 video moving all over). `VideoReader`
   reads the decoder's own NV12 frames, decoded by the graphics card (DXVA: a D3D11 video device and a DXGI device
   manager on the source reader; the processor when there is no card), and turns only the frame shown into RGB, on
@@ -481,6 +564,44 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
   of their own, so they go as a file in the temp folder (`FileDrop`: chats, mails, folders take it); a bitmap on white
   goes with both. Ctrl+S uses the Export choices (it opens the save dialog at once). The Layout tab
   has no File row any more. The save dialog starts on the format chosen (a type chosen there becomes it).
+- **Animated picture** (asked by the author, October 26, 2026; `EditorWindow.Animation.cs`): `AnnotationLayer.Animation`
+  (a length, null: a still picture; in the layer so that Animate and the length are undone as the rest).
+  `IsTimed` (a video or an animation) replaced `IsVideo` wherever time matters (timeline, tracks, moving pointers,
+  playing, the Export window's MP4 / GIF / frame); `IsVideo` stays for what needs a file (sounds, pieces, framing,
+  the recorded pointer). `SyncAnimation` (from `AnnotationsChanged`) keeps `_duration` and `_trim` in step with the
+  layer. The timeline shows `Span` (more than the length, so that its end is pulled further; set again when the
+  drag ends); only the end handle, which sets the length (1 to 60 s; the field beside the time too). Playing is
+  `VideoPlayer` without a file (the clock alone); the export is `VideoExporter.ExportStill` (one frame, a new one when
+  the overlay changes). A way made longer than the animation lengthens it (`Lengthened`); in a video it must fit
+  (`MotionNoRoom`). **Steps** (`PointerMotion.Stops`, `PointerStop`, Core, tested): each stop has its arrival and
+  leaving times and the handles of the part after it; `Legs`, `Keys` (leave, arrive / leave at each stop, arrive),
+  `WithKey` (the diamonds, kept in order), `WithNextStop` (the way taken on: a click with the Pointer tool when a
+  moving pointer is chosen), `WithStopOn` (a stop on the way, the curve cut in two by De Casteljau), `WithoutStop`,
+  `WithoutLastStop`, `Smoothed` (Catmull-Rom handles through the stops), `NearestOnPath`; a click at each arrival.
+  Handles carry an index (`AnnotationGeometry.Handles`: the part a curve handle bends, the stop); a point dragged
+  carries the curve handles on both sides of it (asked by the author). The overlay (frames, handles, ways) is clipped to the
+  picture's place, its margins included: a handle far off the picture drew its line across the window. Each arrival clicks or not (asked by the
+  author: `PointerStop.Clicks`, `PointerMotion.ClicksAtEnd`, `ClicksAt`; `WithClickAt`; the right-click menu's
+  “Click at this step” on a point); the points that click are drawn in the click's color, as their diamonds
+  (`ClickColor`), and so are their diamonds on the track: each in its point's color, a stop's arrival and leaving
+  joined by its wait (the author: four diamonds for three points did not match the picture); the effect (halo,
+  ripple, press) stays one for the whole way. The menu's “Click at this step” shows a ticked or empty box (the
+  menu's own check mark did not show). The right-click
+  menu on the picture (`PictureMenu`, also played by the script: `menu`, `menupick`). **The tracks' handle** (a
+  `Thumb` above the timeline): `_tracksExtra` added to the tracks' height, up to what leaves the picture 180 px.
+- **Microphone** (asked by the author, October 26, 2026; `Video/Microphones.cs`): Windows' default input
+  (`Role.Console`, Settings › Sound; it was the “communications” one, which a headset may take), or the one chosen
+  in Settings › Capture › Video or by a right click on the capture bar's microphone (nothing more on the bar, his
+  wish); `AppSettings.MicrophoneId` and its name (shown without asking Windows; the list is read when it opens, so
+  that Settings does not load NAudio); unplugged, Windows' default. The recording, the capture bar's meter and the
+  recording bar's meter use it.
+- **Several editors** (asked by the author, October 26, 2026): `App.OpenEditor` never replaces what an editor holds
+  (`EditorWindow.HasContent`): a capture, a video, a picture given or imported opens in an editor with nothing in it
+  (the one hidden for this capture first), else in a new one, 32 px below and right of the last one in front (further
+  when one is already there); with nothing to open (*Open ScreenClip*, the icon), the last editor in front comes
+  forward. An editor that asked for a capture comes back and, holding something, sends the capture to another
+  (`StartCapture`); editors hidden for a capture come back when it ends elsewhere (`ShowHiddenEditors`). Import,
+  paste and drop still replace, in the editor where they are done. The Debug script player runs in the first editor.
 - **Resident part**: `TrayHost` is an `HwndSource` that is never shown (top-level `WS_POPUP` + `WS_EX_TOOLWINDOW`, not
   message-only, so that the Restart Manager's `WM_CLOSE` and the end-of-session messages reach it). Notification icon
   through `Shell_NotifyIcon` (`NOTIFYICON_VERSION_4`, re-added on `TaskbarCreated`), no WinForms. The app icon comes
@@ -624,7 +745,6 @@ while unchanged, so that it follows the language.
 
 ## To do
 
-- Video, step 3 if needed: the levels of the sound of the computer and of the microphone.
 - Private bytes after the first capture (see Memory).
 - Optional: an area spanning several monitors.
 - Later (the author's idea, October 24, 2026): a macOS version. Core (SkiaSharp composition, selection, presets) is

@@ -31,6 +31,9 @@ public partial class RecordingFrame : Window
     }
 
     /// <summary>The countdown, or none.</summary>
+    /// <summary>Whether the countdown's number shows.</summary>
+    public bool ShowsCount => Countdown.Visibility == Visibility.Visible;
+
     public void ShowCount(int? seconds)
     {
         Countdown.Visibility = seconds is null ? Visibility.Collapsed : Visibility.Visible;

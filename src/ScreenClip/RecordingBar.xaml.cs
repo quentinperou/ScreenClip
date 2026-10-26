@@ -54,6 +54,66 @@ public partial class RecordingBar : Window
     public event EventHandler? StopClicked;
     public event EventHandler? RestartClicked;
     public event EventHandler? DiscardClicked;
+    internal event EventHandler<Video.SoundKind>? SoundToggled;
+
+    private Video.SoundMeter? _computerMeter, _microphoneMeter;
+    private System.Windows.Threading.DispatcherTimer? _meterTimer;
+    private bool _computerMuted, _microphoneMuted;
+
+    /// <summary>The sounds being recorded: a button each, with its meter (it listens while the bar is there).</summary>
+    public void ShowSounds(bool computer, bool microphone)
+    {
+        ComputerButton.Visibility = computer ? Visibility.Visible : Visibility.Collapsed;
+        MicrophoneButton.Visibility = microphone ? Visibility.Visible : Visibility.Collapsed;
+        if (computer)
+            _computerMeter = new Video.SoundMeter(Video.SoundKind.Computer);
+        if (microphone)
+            _microphoneMeter = new Video.SoundMeter(Video.SoundKind.Microphone);
+        ShowMuted(Video.SoundKind.Computer, false);
+        ShowMuted(Video.SoundKind.Microphone, false);
+        if (_computerMeter is null && _microphoneMeter is null)
+            return;
+        _meterTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
+        _meterTimer.Tick += (_, _) =>
+        {
+            ShowLevel(ComputerLevel, _computerMuted ? null : _computerMeter);
+            ShowLevel(MicrophoneLevel, _microphoneMuted ? null : _microphoneMeter);
+        };
+        _meterTimer.Start();
+        Closed += (_, _) =>
+        {
+            _meterTimer.Stop();
+            _computerMeter?.Dispose();
+            _microphoneMeter?.Dispose();
+        };
+    }
+
+    internal void ShowMuted(Video.SoundKind kind, bool muted)
+    {
+        bool computer = kind == Video.SoundKind.Computer;
+        if (computer)
+            _computerMuted = muted;
+        else
+            _microphoneMuted = muted;
+        var glyph = computer ? ComputerGlyph : MicrophoneGlyph;
+        var button = computer ? ComputerButton : MicrophoneButton;
+        glyph.Text = computer ? (muted ? "\uE74F" : "\uE767") : (muted ? "\uEC54" : "\uE720");
+        glyph.Opacity = muted ? 0.55 : 1;
+        string name = Strings.Get(computer ? "SystemSound" : "Microphone");
+        button.ToolTip = Strings.Format(muted ? "RecordingSoundOff" : "RecordingSoundOn", name);
+        System.Windows.Automation.AutomationProperties.SetName(button, name);
+    }
+
+    // A level as the meter's height, on a root scale, falling back slowly; muted, empty.
+    private static void ShowLevel(System.Windows.Controls.Border level, Video.SoundMeter? meter)
+    {
+        double height = meter is null ? 0 : 14 * Math.Min(1, Math.Sqrt(meter.TakeLevel()));
+        level.Height = meter is null ? 0 : Math.Max(height, level.Height - 1.4);
+    }
+
+    private void Computer_Click(object sender, RoutedEventArgs e) => SoundToggled?.Invoke(this, Video.SoundKind.Computer);
+
+    private void Microphone_Click(object sender, RoutedEventArgs e) => SoundToggled?.Invoke(this, Video.SoundKind.Microphone);
 
     /// <summary>The time recorded, or the countdown before it starts.</summary>
     public void ShowText(string text) => TimeText.Text = text;

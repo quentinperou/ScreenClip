@@ -81,6 +81,8 @@ public partial class EditorWindow
         _frameReader = reader;
         _duration = reader.Duration;
         _videoHasSound = reader.HasAudio;
+        LoadSounds(clip, reader.HasAudio);
+        _pieceChosen = false;
         _trim = TrimRange.All(_duration);
         _playhead = TimeSpan.Zero;
         Timeline.ToolTip = Strings.Get("VideoTimelineToolTip");
@@ -93,6 +95,7 @@ public partial class EditorWindow
         BuildThumbnails(clip.Path);
         ShowTimeline();
         ShowTracks();
+        ShowSounds();
         ShowEditPanel();
     }
 
@@ -142,9 +145,15 @@ public partial class EditorWindow
         _shownFrameAt = null;
         _cursorSelected = false;
         _trackDrag = null;
+        _soundDrag = null;
+        _soundRows = [];
+        _peaks = [];
+        _soundSelected = -1;
+        _pieceChosen = false;
         ThumbStrip.Source = null;
         TimelineMarks.Children.Clear();
         ShowTracks();
+        ShowSounds();
         ShowState();
     }
 
@@ -161,7 +170,8 @@ public partial class EditorWindow
         RequestRender();
     }
 
-    // Moving the playhead asks for its frame; a worker reads it (from the key frame before), the latest asked wins.
+    // Moving the playhead asks for its frame; a worker reads it (from the key frame before), the latest asked wins. A
+    // picture animated has no frame to read: only what is drawn over it moves.
     private void RequestFrame(TimeSpan time)
     {
         _playhead = time;
@@ -169,6 +179,8 @@ public partial class EditorWindow
         // What is drawn over the frame moves with the time even inside one frame (the pointer, an A → B pointer).
         if (HasTimedOverlay)
             RequestRender();
+        if (!IsVideo)
+            return;
         lock (_frameLock)
         {
             _wantedFrame = time;
@@ -257,22 +269,32 @@ public partial class EditorWindow
 
     private void Timeline_SizeChanged(object sender, SizeChangedEventArgs e)
     {
+        if (IsAnimation && e.PreviousSize.Width <= 0)
+            ShowStillStrip();
         ShowTimeline();
         ShowTracks();
+        ShowSounds();
     }
 
     private double XOf(TimeSpan time) =>
-        _duration <= TimeSpan.Zero ? 0 : Timeline.ActualWidth * Math.Clamp(time / _duration, 0, 1);
+        Span <= TimeSpan.Zero ? 0 : Timeline.ActualWidth * Math.Clamp(time / Span, 0, 1);
 
     private TimeSpan TimeAt(double x) =>
-        Timeline.ActualWidth <= 0 ? TimeSpan.Zero : _duration * Math.Clamp(x / Timeline.ActualWidth, 0, 1);
+        Timeline.ActualWidth <= 0 ? TimeSpan.Zero : Span * Math.Clamp(x / Timeline.ActualWidth, 0, 1);
 
-    /// <summary>The part kept (between the yellow handles), what is cut (darkened), and the playhead.</summary>
+    /// <summary>
+    /// The part kept (between the yellow handles), what is cut (darkened), the splits and the pieces removed, and the
+    /// playhead; its time is in what is kept (the export's), with its length.
+    /// </summary>
     private void ShowTimeline()
     {
-        if (!IsVideo)
+        if (!IsTimed)
             return;
-        VideoTimeText.Text = $"{Timecode.Format(_playhead, Decimal)} / {Timecode.Format(_duration, Decimal)}";
+        // An animation's length is the field next to it.
+        VideoTimeText.Text = IsVideo
+            ? $"{Timecode.Format(Edit.KeptTimeOf(_playhead, _trim), Decimal)} / {Timecode.Format(Edit.KeptLength(_trim), Decimal)}"
+            : $"{Timecode.Format(_playhead, Decimal)} /";
+        ShowPieceButtons();
         double width = Timeline.ActualWidth, height = Timeline.ActualHeight;
         TimelineMarks.Children.Clear();
         if (width <= 0)
@@ -284,8 +306,10 @@ public partial class EditorWindow
         var yellow = new SolidColorBrush(Color.FromRgb(0xFF, 0xC5, 0x3D));
         Add(new System.Windows.Shapes.Rectangle { Width = Math.Max(0, start), Height = bottom - top, Fill = cut }, 0, top);
         Add(new System.Windows.Shapes.Rectangle { Width = Math.Max(0, width - end), Height = bottom - top, Fill = cut }, end, top);
+        ShowPieces(top, bottom);
         Add(new System.Windows.Shapes.Rectangle { Width = Math.Max(0, end - start), Height = bottom - top + 4, Stroke = yellow, StrokeThickness = 2, RadiusX = 3, RadiusY = 3 }, start, top - 2);
-        foreach (double x in new[] { start, end })
+        // An animation starts at its start: its end alone is pulled, to make it longer or shorter.
+        foreach (double x in IsVideo ? new[] { start, end } : [end])
         {
             Add(new System.Windows.Shapes.Rectangle { Width = 10, Height = height - Above, Fill = yellow, RadiusX = 3, RadiusY = 3 }, x - 5, Above);
             Add(new System.Windows.Shapes.Rectangle { Width = 2, Height = 14, Fill = new SolidColorBrush(Color.FromRgb(0x8A, 0x61, 0x00)), RadiusX = 1, RadiusY = 1 }, x - 1, (height + Above) / 2 - 7);
@@ -296,6 +320,7 @@ public partial class EditorWindow
         Add(new System.Windows.Shapes.Rectangle { Width = 2, Height = height - Above + 7, Fill = red }, playhead - 1, Above - 3);
         Add(new System.Windows.Shapes.Ellipse { Width = 12, Height = 12, Fill = red }, playhead - 6, Above - 8);
         MoveTrackPlayhead();
+        MoveSoundPlayhead();
     }
 
     private void Add(UIElement element, double x, double y)
@@ -308,6 +333,8 @@ public partial class EditorWindow
     private TimelineGrip GripAt(double x)
     {
         double start = XOf(_trim.Start), end = XOf(_trim.End);
+        if (!IsVideo)
+            return Math.Abs(x - end) <= 8 ? TimelineGrip.End : TimelineGrip.Playhead;
         // The handle nearer the pointer wins (they may touch).
         if (Math.Abs(x - start) <= 8 && Math.Abs(x - start) <= Math.Abs(x - end))
             return TimelineGrip.Start;
@@ -318,11 +345,23 @@ public partial class EditorWindow
 
     private void Timeline_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (!IsVideo || _export is not null)
+        if (!IsTimed || _export is not null)
             return;
         StopPlayback();
-        double x = e.GetPosition(Timeline).X;
+        var at = e.GetPosition(Timeline);
+        // The ↺ of a piece removed puts it back.
+        if (RestoreButtonAt(at.X, at.Y) is { } removed)
+        {
+            CommitVideo(Edit.RestoreAt(removed.Start));
+            e.Handled = true;
+            return;
+        }
+        double x = at.X;
         _grip = GripAt(x);
+        // The piece there is chosen (asked by the author: a click on the video chooses it): its frame and zoom in the
+        // Edit panel, Delete removes it.
+        if (_grip == TimelineGrip.Playhead && IsVideo)
+            ChoosePiece();
         Timeline.CaptureMouse();
         MoveGrip(x);
         e.Handled = true;
@@ -330,7 +369,7 @@ public partial class EditorWindow
 
     private void Timeline_MouseMove(object sender, MouseEventArgs e)
     {
-        if (!IsVideo)
+        if (!IsTimed)
             return;
         double x = e.GetPosition(Timeline).X;
         if (_grip == TimelineGrip.None)
@@ -357,12 +396,22 @@ public partial class EditorWindow
                 _trim = _trim.WithStart(time);
                 RequestFrame(_trim.Start);
                 ShowTracks();
+                ShowSounds();
+                break;
+            case TimelineGrip.End when !IsVideo:
+                // An animation's end: its length, set when the button goes up (one step to undo).
+                _duration = time < MinAnimation ? MinAnimation : time > MaxAnimation ? MaxAnimation : time;
+                _trim = TrimRange.All(_duration);
+                RequestFrame(_duration);
+                ShowTracks();
+                ShowAnimationLength();
                 break;
             case TimelineGrip.End:
                 _trim = _trim.WithEnd(time, _duration);
                 // The last frame kept: just before the end.
                 RequestFrame(_trim.End - TimeSpan.FromMilliseconds(1));
                 ShowTracks();
+                ShowSounds();
                 break;
             case TimelineGrip.Playhead:
                 RequestFrame(_trim.Clamp(time));
@@ -373,9 +422,12 @@ public partial class EditorWindow
 
     private void EndGrip()
     {
+        bool length = _grip == TimelineGrip.End && IsAnimation;
         _grip = TimelineGrip.None;
         if (Timeline.IsMouseCaptured)
             Timeline.ReleaseMouseCapture();
+        if (length)
+            SetAnimationLength(_duration);
     }
 
     // ---------------------------------------------------------------- Playing
@@ -392,17 +444,21 @@ public partial class EditorWindow
 
     private void StartPlayback()
     {
-        if (_videoClip is not { } clip || _export is not null)
+        if (!IsTimed || _export is not null)
             return;
         CommitText();
         CancelDrag();
         // The player shows its own frames: the next frame asked is read again.
         lock (_frameLock)
             _shownFrameAt = null;
-        // From the playhead; from the start of the part kept when the playhead is at its end (or outside it).
-        var from = _playhead < _trim.Start || _playhead >= _trim.End - TimeSpan.FromMilliseconds(100) ? _trim.Start : _playhead;
+        // From the playhead through what is kept (the pieces removed skipped); from the start of it when the playhead is
+        // at its end.
+        var pieces = Edit.KeptFrom(_playhead, _trim);
+        if (pieces.Aggregate(TimeSpan.Zero, (sum, p) => sum + p.Length) < TimeSpan.FromMilliseconds(100))
+            pieces = Edit.Kept(_trim);
+        var end = pieces.Count > 0 ? pieces[^1].End : _trim.End;
         _playKey = 0;
-        _player = new VideoPlayer(clip.Path, from, _trim.End, _videoHasSound,
+        _player = new VideoPlayer(_videoClip?.Path, pieces, IsVideo ? SoundMaker(pieces) : null,
             (frame, time) =>
             {
                 _playhead = time;
@@ -417,7 +473,7 @@ public partial class EditorWindow
             () => Dispatcher.BeginInvoke(() =>
             {
                 StopPlayback();
-                _playhead = _trim.End;
+                _playhead = end;
                 ShowTimeline();
             }));
         ShowPlaying(true);
@@ -432,7 +488,7 @@ public partial class EditorWindow
         var at = player.Position;
         player.Dispose();
         ShowPlaying(false);
-        if (IsVideo)
+        if (IsTimed)
             RequestFrame(_trim.Clamp(at));
     }
 
@@ -448,26 +504,41 @@ public partial class EditorWindow
     /// <summary>Exports the part kept, as the editor shows it; false when cancelled or refused (said).</summary>
     private async Task<bool> ExportVideo(string target, bool gif)
     {
-        if (_videoClip is not { } clip || _capture is null || _export is not null)
+        if (!IsTimed || _capture is null || _export is not null)
             return false;
+        var source = _videoClip?.Path;
+        // A picture animated: the picture itself, copied by the export before it starts.
+        var still = source is null ? _capture : null;
         StopPlayback();
         CommitText();
         // What the frames are drawn with, fixed now: the export runs on another thread.
         var layer = _history.Current;
         var style = _style;
         var background = BackgroundImageFor(style);
-        var trim = _trim;
+        var pieces = Edit.Kept(_trim);
+        var length = Edit.KeptLength(_trim);
+        var sound = gif || !IsVideo ? null : SoundMaker(pieces);
         var track = Track;
         var kept = layer.Visible(_capture.Width, _capture.Height);
         // The layout applied, or the video with its annotations alone (the Export window's switch).
         bool laidOut = ExportsLayout;
         int width = laidOut ? ClipLayout.Measure(kept.Width, kept.Height, style).Width : kept.Width;
         bool pointer = track is { IsEmpty: false } && layer.Cursor.Shows;
+        // A piece zoomed in: the part shown, at the picture's size.
+        SKImage Framed(SKImage flat, TimeSpan time, bool owned)
+        {
+            if (layer.Video.FramingAt(time) is not { } framing)
+                return flat;
+            var framed = framing.Apply(flat);
+            if (owned)
+                flat.Dispose();
+            return framed;
+        }
         SKImage Render(SKImage frame, TimeSpan time, float scale)
         {
             if (!laidOut)
             {
-                var alone = AnnotationRenderer.Flatten(frame, layer, new VideoMoment(time, track));
+                var alone = Framed(AnnotationRenderer.Flatten(frame, layer, new VideoMoment(time, track)), time, owned: true);
                 if (scale >= 1)
                     return alone;
                 // Smaller for a GIF.
@@ -480,6 +551,7 @@ public partial class EditorWindow
                 }
             }
             var flat = layer.IsEmpty && !pointer ? frame : AnnotationRenderer.Flatten(frame, layer, new VideoMoment(time, track));
+            flat = Framed(flat, time, owned: !ReferenceEquals(flat, frame));
             try
             {
                 return Composer.Render(flat, style, scale, background);
@@ -492,8 +564,8 @@ public partial class EditorWindow
         }
         // What is drawn over the frames changes with the time (annotations that come and go, the pointer): a frame is
         // written whenever it changes, not only when the screen did.
-        bool timed = pointer || layer.Items.Any(a => a.Time is not null || a.Motion is not null);
-        Func<TimeSpan, int>? overlay = timed ? time => VideoTiming.Fingerprint(layer, new VideoMoment(time, track)) : null;
+        bool timed = pointer || layer.Items.Any(a => a.Time is not null || a.Motion is not null) || !layer.Video.Framings.IsEmpty;
+        Func<TimeSpan, int>? overlay = timed ? time => HashCode.Combine(VideoTiming.Fingerprint(layer, new VideoMoment(time, track)), layer.Video.FramingAt(time)) : null;
 
         var cancel = new CancellationTokenSource();
         _export = cancel;
@@ -510,9 +582,15 @@ public partial class EditorWindow
         var watch = System.Diagnostics.Stopwatch.StartNew();
         try
         {
-            _exportTask = Task.Run(() => VideoExporter.Export(clip.Path, target, gif, trim, Render, overlay, width, progress, cancel.Token));
+            _exportTask = Task.Run(() =>
+            {
+                if (source is not null)
+                    VideoExporter.Export(source, target, gif, pieces, Render, overlay, width, sound, progress, cancel.Token);
+                else
+                    VideoExporter.ExportStill(still!, target, gif, length, Render, overlay, width, progress, cancel.Token);
+            });
             await _exportTask;
-            DevLog.Write($"export: {(gif ? "GIF" : "MP4")} of {trim.Length}, {watch.Elapsed.TotalSeconds:0.0} s, {new FileInfo(target).Length / 1024} KB");
+            DevLog.Write($"export: {(gif ? "GIF" : "MP4")} of {length} in {pieces.Count} piece(s), {watch.Elapsed.TotalSeconds:0.0} s, {new FileInfo(target).Length / 1024} KB");
             return true;
         }
         catch (OperationCanceledException)
@@ -555,7 +633,7 @@ public partial class EditorWindow
     /// <summary>The save dialog, then the video (or a picture of the frame) written; true when written.</summary>
     private async Task<bool> SaveVideoAsync()
     {
-        if (!IsVideo || _export is not null)
+        if (!IsTimed || _export is not null)
             return false;
         StopPlayback();
         string folder = App.Settings.EffectiveVideoExportFolder;
@@ -618,7 +696,7 @@ public partial class EditorWindow
     // The GIF made as shown, in the temp folder, then on the clipboard as a file (chats take it so, and it moves).
     private async void CopyGif()
     {
-        if (!IsVideo || _export is not null)
+        if (!IsTimed || _export is not null)
             return;
         try
         {

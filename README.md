@@ -103,17 +103,25 @@ picture, annotations and layout included.
   captures; can be changed) or Copy; or **drag the preview** to an app or a folder.
   Once a file is written (Save, or a capture saved automatically), a notification at the bottom left opens it or
   shows it in its folder.
-- **New capture** from the editor: it steps aside while you choose, and comes back with the capture.
+- **New capture** from the editor: it steps aside while you choose, and comes back with the capture. What an editor
+  holds is never replaced: a capture made while a picture or a video is open opens in an editor of its own.
+- **Animate** a picture: it gets a length (5 s, set in seconds or by pulling the end of its timeline) and the
+  timeline of a video, so that a pointer moves on it (A → B → C…), its clicks show and annotations come and go; then
+  **Export ▾** makes a **GIF** or an **MP4** of it. **Animate** again makes it a still picture.
 
 ### Video
 
-- **Ctrl + Alt + Print Screen** (or **Video** on the capture bar, or the menu of the icon): choose an area, a window
+- **Ctrl + Alt + Print Screen** (or the **Image | Video** switch at the start of the capture bar, the editor's
+  **Record a video**, or the menu of the icon): choose an area, a window
   or a screen as for a picture, and the recording starts after a 3 second countdown (▶ on the recording's bar
   starts at once; Settings › Capture turns it off). The **sound of the computer**
   and the **microphone** are each turned on or off on the capture bar, and so is the **pointer apart** (on by
-  default): the mouse pointer is then recorded apart from the screen, to be redrawn or hidden in the editor.
-- While it records, a dashed red line marks the area and a small bar shows the time: **pause**, **stop**, **start
-  again**, **discard**. Neither is ever in the video. The same shortcut, or a click on the icon, stops it too.
+  default): the mouse pointer is then recorded apart from the screen, to be redrawn or hidden in the editor. A small
+  **meter** next to each sound shows that it is heard before you start. The microphone is Windows' default one, or
+  the one chosen in **Settings → Capture** (a right click on the microphone of the bar chooses it too).
+- While it records, a dashed red line marks the area and a small bar shows the time, a **meter** for each sound
+  (a click on it mutes that sound from then on, and again brings it back), **pause**, **stop**, **start again**,
+  **discard**. Neither is ever in the video. The same shortcut, or a click on the icon, stops it too.
 - The video opens in the **editor**: play it (**Space**), cut its start and end with the **yellow handles** of the
   timeline, crop it, annotate it and lay it out as a picture (everything applies to every frame). **Export ▾**
   chooses **MP4** (with the sound), an animated **GIF** (small, without sound) or a **PNG** or **JPG** of the frame
@@ -127,9 +135,23 @@ picture, annotations and layout included.
   **smoothed** (the shakes of the hand taken out), with its **clicks** shown (halo, ripple or press). The **eye** of
   each row of the list hides a layer, the recorded pointer included.
 - An **A → B pointer**: with the Pointer tool, drag from A to B; it moves there along a curve and clicks when it
-  arrives. Its diamonds on its track are when it leaves and arrives.
+  arrives. Then each click takes it on (A → B → C…), and a **right click** on it adds a step on its way, removes
+  one, smooths the way or makes it straight; on a point, it chooses whether the pointer clicks there (the points
+  where it clicks are yellow). Its diamonds on its track are when it leaves and arrives at each point.
+- The **handle** between the picture and the timeline gives the tracks more room (drag it up; a double click puts it
+  back).
+- **Pieces**: **✂** (**Ctrl + B**) splits the video and its sounds at the playhead; click a piece on the timeline and
+  press **Delete** (or **🗑**) to remove it. It stays in place, greyed, and **↺** puts it back; playing and the export
+  skip it. A piece chosen can be **reframed** on its own: zoom into it and drag the frame (the Crop tool sets the
+  size of the whole video). A **right click** on the timeline, a track or a sound offers what can be done there.
+- **Sounds**: under the tracks, the computer's sound and the microphone each have a row with their waveform. Drag the
+  ends of its bar to cut a sound at the start or the end; chosen, its **volume** (up to 200 %), its **fades** and
+  **mute** are in the Edit panel (the speaker on its left mutes it too). Click a piece of its row and press **Delete**
+  (or right click → **Silence this sound in this piece**) to mute a sound in one piece only, the picture kept. The MP4 exported mixes them as set.
+- A recording with both sounds keeps them apart: the MP4 has their mix, which every player plays, and each sound as
+  an alternate track, so that ScreenClip can still set them when the file is opened again.
 - With the pointer filmed with the screen, the video is saved automatically when the captures are, in
-  **Videos\Screen Recordings** (can be changed), and copied. With the pointer apart, the editor makes the video:
+  **Videos\ScreenClip** (can be changed), and copied. With the pointer apart, the editor makes the video:
   **Export ▾ → Save…** there (ScreenClip asks before an unsaved recording leaves the editor).
 
 <p align="center">
@@ -193,6 +215,7 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
   lay out; MP4 or GIF.
 - [x] Video, next: annotations that come and go on the timeline, the pointer redrawn, click effects, an A → B
   pointer.
+- [x] Video, step 3: the sounds apart (volume, fades, mute, cut at the start or the end), meters, pieces removed.
 
 ## Installation
 

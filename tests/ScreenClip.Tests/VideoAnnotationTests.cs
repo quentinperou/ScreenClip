@@ -173,6 +173,146 @@ public class VideoTimingTests
     }
 
     [Fact]
+    public void APointer_StopsOnItsWay_AndClicksAtEachStop()
+    {
+        var motion = new PointerMotion { From = new(0, 0), Curved = false, Eased = false, Leave = S(0), Arrive = S(1), Click = ClickEffect.Ripple };
+        var pointer = new Annotation { Kind = AnnotationKind.Pointer, Points = [new(100, 0)], Motion = motion };
+        // On to C: B becomes a stop, where it waits, then it goes on.
+        var on = VideoTiming.WithNextStop(pointer, new SKPoint(100, 200));
+        Assert.Equal(new SKPoint(100, 200), on.Start);
+        var stop = Assert.Single(on.Motion!.Stops);
+        Assert.Equal((new SKPoint(100, 0), S(1), S(1) + VideoTiming.StopPause), (stop.At, stop.Arrive, stop.Leave));
+        Assert.True(on.Motion.Arrive > stop.Leave);
+        Assert.Equal(new SKPoint(50, 0), VideoTiming.PositionAt(on, S(0.5)));
+        Assert.Equal(new SKPoint(100, 0), VideoTiming.PositionAt(on, S(1.2)));
+        var middle = stop.Leave + (on.Motion.Arrive - stop.Leave) / 2;
+        Assert.Equal(new SKPoint(100, 100), VideoTiming.PositionAt(on, middle));
+        Assert.Equal(new SKPoint(100, 200), VideoTiming.PositionAt(on, on.Motion.Arrive + S(1)));
+        // A click at the stop, and at the end.
+        Assert.NotNull(VideoTiming.Posed(on, S(1.1)).Click);
+        Assert.NotNull(VideoTiming.Posed(on, on.Motion.Arrive + S(0.1)).Click);
+        Assert.Null(VideoTiming.Posed(on, stop.Leave + S(0.1)).Click);
+        // Its way goes through the stop; the stop is a handle; taken away, it ends at B again.
+        Assert.Equal([new SKPoint(0, 0), new SKPoint(100, 0), new SKPoint(100, 200)], VideoTiming.Path(on));
+        Assert.Contains(AnnotationGeometry.Handles(on), h => h.Kind == HandleKind.MotionStop && h.Point == new SKPoint(100, 0));
+        var dragged = AnnotationGeometry.WithHandle(on, HandleKind.MotionStop, new SKPoint(120, 10), false, 0);
+        Assert.Equal(new SKPoint(120, 10), dragged.Motion!.Stops[0].At);
+        // The handles on both sides of a point go with it.
+        Assert.Equal(new SKPoint(on.Motion.Control2.X + 20, on.Motion.Control2.Y + 10), dragged.Motion.Control2);
+        Assert.Equal(new SKPoint(on.Motion.Stops[0].Control1.X + 20, on.Motion.Stops[0].Control1.Y + 10), dragged.Motion.Stops[0].Control1);
+        Assert.Equal(on.Motion.Control1, dragged.Motion.Control1);
+        var end = AnnotationGeometry.WithHandle(on, HandleKind.MotionTo, new SKPoint(110, 210), false);
+        Assert.Equal(new SKPoint(on.Motion.Stops[0].Control2.X + 10, on.Motion.Stops[0].Control2.Y + 10), end.Motion!.Stops[0].Control2);
+        var start = AnnotationGeometry.WithHandle(on, HandleKind.MotionFrom, new SKPoint(5, -5), false);
+        Assert.Equal(new SKPoint(on.Motion.Control1.X + 5, on.Motion.Control1.Y - 5), start.Motion!.Control1);
+        var back = VideoTiming.WithoutLastStop(on);
+        Assert.Equal((new SKPoint(100, 0), S(1)), (back.Start, back.Motion!.Arrive));
+        Assert.Empty(back.Motion.Stops);
+    }
+
+    [Fact]
+    public void AStop_PutOnTheWay_KeepsItsShape_AndTakenAway_JoinsIt()
+    {
+        var pointer = new Annotation
+        {
+            Kind = AnnotationKind.Pointer,
+            Points = [new(300, 0)],
+            Motion = VideoTiming.NewMotion(new SKPoint(0, 0), new SKPoint(300, 0), S(1), new AnnotationDefaults()),
+        };
+        var before = VideoTiming.PointOnLeg(pointer.Motion!.Legs(pointer.Start)[0], true, 0.75f);
+        var near = VideoTiming.NearestOnPath(pointer, VideoTiming.PointOnLeg(pointer.Motion.Legs(pointer.Start)[0], true, 0.5f));
+        Assert.Equal((0, 0.5f), (near.Leg, near.U));
+        var stopped = VideoTiming.WithStopOn(pointer, 0, 0.5f);
+        var stop = Assert.Single(stopped.Motion!.Stops);
+        // The way still goes through the same points (the curve cut in two).
+        var after = VideoTiming.PointOnLeg(stopped.Motion.Legs(stopped.Start)[1], true, 0.5f);
+        Assert.Equal(before.X, after.X, 2);
+        Assert.Equal(before.Y, after.Y, 2);
+        // It waits there, and arrives later by that wait.
+        Assert.Equal(VideoTiming.StopPause, stop.Leave - stop.Arrive);
+        Assert.Equal(pointer.Motion.Arrive + VideoTiming.StopPause, stopped.Motion.Arrive);
+        // Taken away: one part again, as long as before.
+        var joined = VideoTiming.WithoutStop(stopped, 0);
+        Assert.Empty(joined.Motion!.Stops);
+        Assert.Equal(pointer.Motion.Arrive, joined.Motion.Arrive);
+        // It starts as the first part did and ends as the second one did.
+        Assert.Equal(stopped.Motion.Control1, joined.Motion.Control1);
+        Assert.Equal(stopped.Motion.Stops[0].Control2, joined.Motion.Control2);
+    }
+
+    [Fact]
+    public void ASmoothedWay_FlowsThroughItsStops()
+    {
+        var pointer = new Annotation
+        {
+            Kind = AnnotationKind.Pointer,
+            Points = [new(200, 0)],
+            Motion = new PointerMotion { From = new(0, 0), Curved = false, Leave = S(0), Arrive = S(1) },
+        };
+        var on = VideoTiming.Smoothed(VideoTiming.WithNextStop(pointer, new SKPoint(400, 0)));
+        Assert.True(on.Motion!.Curved);
+        // Through B (200, 0) on a straight line, the handles on both sides of it are on that line.
+        var stop = on.Motion.Stops[0];
+        Assert.Equal(0, on.Motion.Control2.Y, 3);
+        Assert.Equal(0, stop.Control1.Y, 3);
+        Assert.True(on.Motion.Control2.X < 200 && stop.Control1.X > 200);
+    }
+
+    [Fact]
+    public void EachStep_ClicksOrNot()
+    {
+        var pointer = new Annotation
+        {
+            Kind = AnnotationKind.Pointer,
+            Points = [new(100, 0)],
+            Motion = new PointerMotion { From = new(0, 0), Curved = false, Leave = S(0), Arrive = S(1), Click = ClickEffect.Halo },
+        };
+        var on = VideoTiming.WithNextStop(pointer, new SKPoint(100, 200));
+        var stop = on.Motion!.Stops[0];
+        // No click at B: none there, still one at the end.
+        var quiet = VideoTiming.WithClickAt(on, 0, false);
+        Assert.False(quiet.Motion!.ClicksAt(1));
+        Assert.True(quiet.Motion.ClicksAt(3));
+        Assert.Null(VideoTiming.Posed(quiet, stop.Arrive + S(0.1)).Click);
+        Assert.NotNull(VideoTiming.Posed(quiet, quiet.Motion.Arrive + S(0.1)).Click);
+        // The end keeps its choice when the way goes on, and gets it back when the last step goes.
+        var silentEnd = VideoTiming.WithClickAt(on, 1, false);
+        Assert.False(VideoTiming.WithNextStop(silentEnd, new SKPoint(0, 300)).Motion!.Stops[1].Clicks);
+        Assert.False(VideoTiming.WithoutLastStop(VideoTiming.WithNextStop(silentEnd, new SKPoint(0, 300))).Motion!.ClicksAtEnd);
+        // No effect chosen: no click anywhere.
+        Assert.False((on.Motion with { Click = ClickEffect.None }).ClicksAt(1));
+    }
+
+    [Fact]
+    public void TheTimesOfAWay_StayInOrder()
+    {
+        var pointer = new Annotation
+        {
+            Kind = AnnotationKind.Pointer,
+            Points = [new(100, 0)],
+            Time = new ShowTime(S(0), S(6)),
+            Motion = new PointerMotion { Leave = S(1), Arrive = S(2) },
+        };
+        var on = VideoTiming.WithNextStop(pointer, new SKPoint(300, 0));
+        // Its bar grows to hold the new way.
+        Assert.True(on.Time!.Value.End >= on.Motion!.Arrive);
+        // A stop's arrival is kept after the leaving before it, and before its own leaving.
+        var keys = on.Motion.Keys();
+        Assert.Equal(4, keys.Length);
+        var early = VideoTiming.WithKey(on, 1, S(0), Duration);
+        Assert.Equal(S(1) + ShowTime.MinLength, early.Motion!.Stops[0].Arrive);
+        var late = VideoTiming.WithKey(on, 1, S(9), Duration);
+        Assert.Equal(on.Motion.Stops[0].Leave, late.Motion!.Stops[0].Arrive);
+        // Moved whole, every time goes with it; a shorter bar squeezes them in order.
+        var moved = VideoTiming.TimeMovedBy(on, S(0.5), Duration);
+        Assert.Equal(keys.Select(k => k + S(0.5)), moved.Motion!.Keys());
+        var shorter = VideoTiming.WithShowEnd(on, S(2.5), Duration).Motion!.Keys();
+        Assert.True(shorter[^1] <= S(2.5));
+        for (int i = 1; i < shorter.Length; i++)
+            Assert.True(shorter[i] >= shorter[i - 1]);
+    }
+
+    [Fact]
     public void TheFingerprint_ChangesOnlyWithWhatIsDrawn()
     {
         var track = new PointerTrack([new(S(0), 0, 0, 0, false), new(S(1), 0, 0, 0, false), new(S(1.1), 50, 0, 0, false)],

@@ -11,7 +11,7 @@ namespace ScreenClip;
 
 /// <summary>
 /// The Export button and its window (asked by the author, in place of Save): the format (MP4, GIF or the frame shown
-/// for a video; PNG, JPG or WebP for a picture), whether the layout is applied, the size it gives, then Copy or Save.
+/// for a video or a picture animated; PNG, JPG or WebP for a picture), whether the layout is applied, the size it gives, then Copy or Save.
 /// The same choices make what Ctrl+S gives, and the window's Copy (a GIF or a picture in the format chosen; no MP4).
 /// The bar's Copy makes a picture in the format of the settings, with or without the layout as this window says.
 /// </summary>
@@ -29,7 +29,7 @@ public partial class EditorWindow
     private ExportFormat FrameFormat => _style.Format == ExportFormat.Jpeg ? ExportFormat.Jpeg : ExportFormat.Png;
 
     /// <summary>The format of the picture Export makes: the style's, or a video frame's.</summary>
-    private ExportFormat PictureFormat => IsVideo ? FrameFormat : _style.Format;
+    private ExportFormat PictureFormat => IsTimed ? FrameFormat : _style.Format;
 
     /// <summary>What Save and Copy make apply the layout (else the capture with its annotations alone).</summary>
     private static bool ExportsLayout => App.Settings.ExportLayout;
@@ -37,14 +37,16 @@ public partial class EditorWindow
     // The format on the Export button: MP4 or GIF for a video (or the picture's for its frame), the picture's otherwise.
     private void ShowExportFormat()
     {
-        SaveFormat.Text = IsVideo && !SavesFrame ? (SavesGif ? "GIF" : "MP4") : FormatName(PictureFormat);
+        SaveFormat.Text = IsTimed && !SavesFrame ? (SavesGif ? "GIF" : "MP4") : FormatName(PictureFormat);
         // The bar's Copy always makes a picture (the frame shown, for a video), in the format of the settings: the
         // author wanted it plain, “Copy as PNG”, and not changing with Export.
         CopyText.Text = CopyLabel;
-        CopyButton.ToolTip = Strings.Get(IsVideo ? "CopyFrameToolTip" : "CopyPictureToolTip");
+        CopyButton.ToolTip = Strings.Get(IsTimed ? "CopyFrameToolTip" : "CopyPictureToolTip");
         // The window's Copy copies what it would save, but an MP4 (the author: a video is not something to paste).
-        ExportCopyButton.Visibility = IsVideo && SavesMp4 ? Visibility.Collapsed : Visibility.Visible;
-        ExportCopyButton.Content = IsVideo && SavesGif ? Strings.Get("CopyTheGif") : Strings.Format("CopyAs", FormatName(PictureFormat));
+        ExportCopyButton.Visibility = IsTimed && SavesMp4 ? Visibility.Collapsed : Visibility.Visible;
+        ExportCopyButton.Content = IsTimed && SavesGif ? Strings.Get("CopyTheGif") : Strings.Format("CopyAs", FormatName(PictureFormat));
+        // What is written on the bar changed (the format, “Animate” shown or not): it may now fit, or not.
+        FitCommandBar();
     }
 
     private static string CopyLabel => Strings.Format("CopyAs", FormatName(App.Settings.CopyFormat));
@@ -83,7 +85,7 @@ public partial class EditorWindow
             };
             ExportFormatList.Children.Add(button);
         }
-        if (IsVideo)
+        if (IsTimed)
         {
             Add("MP4", SavesMp4, Strings.Get("FormatMp4ToolTip"), () => App.Settings.VideoFormat = VideoFormat.Mp4);
             Add("GIF", SavesGif, Strings.Get("FormatGifToolTip"), () => App.Settings.VideoFormat = VideoFormat.Gif);
@@ -109,8 +111,8 @@ public partial class EditorWindow
     // What the choices give: the format's words (a video), the size and weight, the format on the button.
     private void ShowExportChoices()
     {
-        ExportFormatHint.Text = IsVideo ? Strings.Get(SavesGif ? "FormatGifToolTip" : SavesFrame ? "FormatFrameToolTip" : "FormatMp4ToolTip") : "";
-        ExportFormatHint.Visibility = IsVideo ? Visibility.Visible : Visibility.Collapsed;
+        ExportFormatHint.Text = IsTimed ? Strings.Get(SavesGif ? "FormatGifToolTip" : SavesFrame ? "FormatFrameToolTip" : "FormatMp4ToolTip") : "";
+        ExportFormatHint.Visibility = IsTimed ? Visibility.Visible : Visibility.Collapsed;
         ShowExportSize();
         ShowExportFormat();
     }
@@ -128,7 +130,7 @@ public partial class EditorWindow
         if (_capture is null)
             return;
         int request = ++_weighing;
-        if (IsVideo && !SavesFrame)
+        if (IsTimed && !SavesFrame)
         {
             if (SavesGif)
                 return;
@@ -136,8 +138,8 @@ public partial class EditorWindow
             int width = kept.Width, height = kept.Height;
             if (ExportsLayout && ClipLayout.Measure(kept.Width, kept.Height, _style) is var layout)
                 (width, height) = (layout.Width, layout.Height);
-            long bits = (long)(Media.Bitrate(width & ~1, height & ~1, ScreenRecorder.Fps) + (_videoHasSound ? 160_000 : 0));
-            ExportSize.Text = size + " · " + Strings.Format("SizeAbout", Weight((long)(bits * _trim.Length.TotalSeconds / 8)));
+            long bits = (long)(Media.Bitrate(width & ~1, height & ~1, ScreenRecorder.Fps) + (IsVideo && _videoHasSound ? 160_000 : 0));
+            ExportSize.Text = size + " · " + Strings.Format("SizeAbout", Weight((long)(bits * Edit.KeptLength(_trim).TotalSeconds / 8)));
             return;
         }
         var format = PictureFormat;
@@ -209,16 +211,16 @@ public partial class EditorWindow
     private void ExportCopy_Click(object sender, RoutedEventArgs e)
     {
         ExportPopup.IsOpen = false;
-        if (IsVideo && SavesGif)
+        if (IsTimed && SavesGif)
             CopyGif();
-        else if (!IsVideo || SavesFrame)
+        else if (!IsTimed || SavesFrame)
             Copy(PictureFormat);
     }
 
     private void ExportSave_Click(object sender, RoutedEventArgs e)
     {
         ExportPopup.IsOpen = false;
-        if (IsVideo)
+        if (IsTimed)
             SaveVideo();
         else
             Save();
@@ -236,13 +238,13 @@ public partial class EditorWindow
             var layout = ClipLayout.Measure(kept.Width, kept.Height, _style);
             (width, height) = (layout.Width, layout.Height);
         }
-        if (!IsVideo || SavesFrame)
+        if (!IsTimed || SavesFrame)
             return Strings.Format("EditorOutput", width, height, FormatName(PictureFormat));
         width &= ~1;
         height &= ~1;
         if (SavesGif && width > VideoExporter.GifMaxWidth)
             (width, height) = (VideoExporter.GifMaxWidth, (int)Math.Round(height * (double)VideoExporter.GifMaxWidth / width));
-        return Strings.Format("VideoOutput", width, height, SavesGif ? "GIF" : "MP4", Timecode.Format(_trim.Length, Decimal));
+        return Strings.Format("VideoOutput", width, height, SavesGif ? "GIF" : "MP4", Timecode.Format(Edit.KeptLength(_trim), Decimal));
     }
 
     /// <summary>
@@ -252,8 +254,12 @@ public partial class EditorWindow
     private SKImage RenderFull()
     {
         CommitText();
-        return ExportsLayout
-            ? Composer.Render(Flattened(), _style, 1, BackgroundImageFor(_style))
-            : AnnotationRenderer.Flatten(_capture!, _history.Current, Moment);
+        if (ExportsLayout)
+            return Composer.Render(Flattened(), _style, 1, BackgroundImageFor(_style));
+        var alone = AnnotationRenderer.Flatten(_capture!, _history.Current, Moment);
+        if (!IsVideo || _history.Current.Video.FramingAt(_playhead) is not { } framing)
+            return alone;
+        using (alone)
+            return framing.Apply(alone);
     }
 }

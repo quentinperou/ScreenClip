@@ -108,19 +108,29 @@ et mise en forme comprises.
   `Images\ScreenClip`, à part des captures ; modifiable) ou Copier ; ou **glisser l'aperçu** vers une application
   ou un dossier. Une fois un fichier écrit (Enregistrer, ou une capture enregistrée automatiquement), une notification en
   bas à gauche l'ouvre ou l'affiche dans son dossier.
-- **Nouvelle capture** depuis l'éditeur : il s'efface le temps de choisir, et revient avec la capture.
+- **Nouvelle capture** depuis l'éditeur : il s'efface le temps de choisir, et revient avec la capture. Ce qu'un
+  éditeur contient n'est jamais remplacé : une capture faite pendant qu'une image ou une vidéo est ouverte s'ouvre
+  dans un éditeur à elle.
+- **Animer** une image : elle reçoit une durée (5 s, réglée en secondes ou en tirant la fin de sa timeline) et la
+  timeline d'une vidéo, pour qu'un curseur s'y déplace (A → B → C…), que ses clics se voient et que des annotations
+  apparaissent et disparaissent ; puis **Exporter ▾** en fait un **GIF** ou un **MP4**. **Animer** à nouveau la
+  rend fixe.
 
 ### Vidéo
 
-- **Ctrl + Alt + Impr. écran** (ou **Vidéo** dans la barre de capture, ou le menu de l'icône) : choisissez une zone,
+- **Ctrl + Alt + Impr. écran** (ou l'interrupteur **Image | Vidéo** au début de la barre de capture, **Enregistrer
+  une vidéo** dans l'éditeur, ou le menu de l'icône) : choisissez une zone,
   une fenêtre ou un écran comme pour une image, et l'enregistrement démarre après un compte à rebours de 3 secondes
   (▶ dans la barre d'enregistrement démarre tout de suite ; Paramètres › Capture le désactive).
   Le **son de l'ordinateur** et le **micro** s'activent ou se coupent chacun dans la barre de capture, tout comme le
   **pointeur à part** (activé par défaut) : le pointeur de la souris est alors enregistré à part de l'écran, pour être
-  redessiné ou masqué dans l'éditeur.
-- Pendant l'enregistrement, un trait rouge pointillé entoure la zone et une petite barre montre la durée :
-  **pause**, **arrêter**, **recommencer**, **abandonner**. Ni l'un ni l'autre n'est jamais dans la vidéo. Le même
-  raccourci, ou un clic sur l'icône, l'arrête aussi.
+  redessiné ou masqué dans l'éditeur. Un petit **vumètre** à côté de chaque son montre qu'il est bien capté avant de
+  lancer. Le micro est celui de Windows par défaut, ou celui choisi dans **Paramètres → Capture** (un clic droit sur
+  le micro de la barre le choisit aussi).
+- Pendant l'enregistrement, un trait rouge pointillé entoure la zone et une petite barre montre la durée, un
+  **vumètre** par son (un clic dessus coupe ce son à partir de ce moment, un autre le remet), **pause**, **arrêter**,
+  **recommencer**, **abandonner**. Ni l'un ni l'autre n'est jamais dans la vidéo. Le même raccourci, ou un clic sur
+  l'icône, l'arrête aussi.
 - La vidéo s'ouvre dans l'**éditeur** : lisez-la (**Espace**), coupez son début et sa fin avec les **poignées jaunes**
   de la timeline, recadrez-la, annotez-la et mettez-la en forme comme une image (tout s'applique à chaque image).
   **Exporter ▾** choisit **MP4** (avec le son), **GIF** animé (léger, sans son) ou un **PNG** ou **JPG** de l'instant
@@ -135,9 +145,26 @@ et mise en forme comprises.
   **lissé** (les tremblements de la main effacés), avec ses **clics** (halo, onde ou enfoncé). L'**œil** de chaque
   ligne de la liste masque un calque, le pointeur filmé compris.
 - Un **curseur A → B** : avec l'outil Curseur, glissez de A à B ; il s'y déplace en courbe et clique à l'arrivée.
-  Ses losanges sur sa piste sont les moments où il part et arrive.
+  Chaque clic ensuite le prolonge (A → B → C…), et un **clic droit** dessus ajoute une étape sur son trajet, en
+  retire une, lisse le trajet ou le rend droit ; sur un point, il choisit si le curseur y clique (les points où il
+  clique sont jaunes). Ses losanges sur sa piste sont les moments où il part et arrive à
+  chaque point.
+- La **poignée** entre l'image et la timeline agrandit les pistes (tirez-la vers le haut ; un double-clic la remet).
+- **Morceaux** : **✂** (**Ctrl + B**) coupe la vidéo et ses sons à la tête de lecture ; cliquez un morceau sur la
+  timeline et appuyez sur **Suppr** (ou **🗑**) pour le retirer. Il reste en place, grisé, et **↺** le remet ; la
+  lecture et l'export le sautent. Un morceau choisi peut être **recadré** à part : zoomez dedans et glissez le cadre
+  (l'outil Recadrer fixe la taille de toute la vidéo). Un **clic droit** sur la timeline, une piste ou un son propose
+  ce qu'on peut y faire.
+- **Sons** : sous les pistes, le son de l'ordinateur et le micro ont chacun leur ligne, avec leur forme d'onde.
+  Tirez les bouts de sa barre pour couper un son au début ou à la fin ; choisi, son **volume** (jusqu'à 200 %), ses
+  **fondus** et **couper le son** sont dans le panneau Édition (le haut-parleur à sa gauche le coupe aussi).
+  Cliquez un morceau de sa ligne et appuyez sur **Suppr** (ou clic droit → **Couper ce son dans ce morceau**) pour
+  couper un son dans un seul morceau, l'image gardée. Le MP4
+  exporté les mélange comme réglé.
+- Un enregistrement avec les deux sons les garde à part : le MP4 contient leur mélange, que tous les lecteurs jouent,
+  et chaque son sur une piste alternative, pour que ScreenClip puisse encore les régler en rouvrant le fichier.
 - Avec le pointeur filmé avec l'écran, la vidéo est enregistrée automatiquement quand les captures le sont, dans
-  **Vidéos\Enregistrements d'écran** (modifiable), et copiée. Avec le pointeur à part, c'est l'éditeur qui fait la
+  **Vidéos\ScreenClip** (modifiable), et copiée. Avec le pointeur à part, c'est l'éditeur qui fait la
   vidéo : **Exporter ▾ → Enregistrer…** (ScreenClip demande avant qu'un enregistrement non sauvé quitte l'éditeur).
 
 <p align="center">
@@ -204,6 +231,8 @@ parfois le changement qu'à la prochaine ouverture de session.
   mettre en forme ; MP4 ou GIF.
 - [x] Vidéo, ensuite : des annotations qui apparaissent et disparaissent sur la timeline, le pointeur redessiné, des
   effets de clic, un curseur A → B.
+- [x] Vidéo, étape 3 : les sons à part (volume, fondus, couper, couper au début ou à la fin), vumètres, morceaux
+  supprimés.
 
 ## Installation
 

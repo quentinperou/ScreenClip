@@ -3,21 +3,27 @@ using System.Diagnostics;
 using System.Windows.Threading;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using ScreenClip.Core.Video;
 using SkiaSharp;
 
 namespace ScreenClip.Video;
 
 /// <summary>
-/// Plays a part of a video in the editor: frames decoded ahead on a thread, handed to the editor when they are due
-/// (it draws them with their annotations and layout), and the sound through the speakers. The sound is the clock when
-/// there is some, so that picture and sound stay together.
+/// Plays a video in the editor, through the pieces kept one after the other (what is removed is skipped): frames
+/// decoded ahead on a thread, handed to the editor when they are due (it draws them with their annotations and
+/// layout), and the sound through the speakers, as the editor mixes it (<see cref="SoundComposer"/>). The sound is the
+/// clock when there is some, so that picture and sound stay together. A still picture animated has no frames: only
+/// the time goes on, for what is drawn over it.
 /// </summary>
 internal sealed class VideoPlayer : IDisposable
 {
-    private readonly string _path;
-    private readonly TimeSpan _from, _to;
+    private readonly string? _path;
+    private readonly IReadOnlyList<Piece> _pieces;
+    private readonly TimeSpan _length;
     private readonly Action<SKImage?, TimeSpan> _show;
     private readonly Action _ended;
+    private readonly Func<SoundComposer?>? _composer;
+    // The frames with their time in what plays (from its start).
     private readonly BlockingCollection<(TimeSpan Time, SKImage Image)> _frames = new(boundedCapacity: 6);
     private readonly CancellationTokenSource _cancel = new();
     private readonly Stopwatch _clock = new();
@@ -29,39 +35,61 @@ internal sealed class VideoPlayer : IDisposable
     private TimeSpan? _lastShown;
     private bool _stopped;
 
+    /// <param name="pieces">What plays, in order, in the video's own times.</param>
+    /// <param name="sound">Makes the sound (null: none).</param>
     /// <param name="show">
-    /// Gets each frame due (the picture is then the editor's) and the time, on the UI thread; about sixty times a second
-    /// without a frame too, for what is drawn over it (a pointer moves while the screen stays still).
+    /// Gets each frame due (the picture is then the editor's) and the video's time, on the UI thread; about sixty times
+    /// a second without a frame too, for what is drawn over it (a pointer moves while the screen stays still).
     /// </param>
-    /// <param name="ended">The end of the part was reached.</param>
-    public VideoPlayer(string path, TimeSpan from, TimeSpan to, bool sound, Action<SKImage?, TimeSpan> show, Action ended)
+    /// <param name="ended">The end was reached.</param>
+    public VideoPlayer(string? path, IReadOnlyList<Piece> pieces, Func<SoundComposer?>? sound, Action<SKImage?, TimeSpan> show, Action ended)
     {
         _path = path;
-        _from = from;
-        _to = to;
+        _pieces = pieces;
+        _length = pieces.Aggregate(TimeSpan.Zero, (sum, p) => sum + p.Length);
         _show = show;
         _ended = ended;
-        if (sound)
-            _sound = new BufferedWaveProvider(new WaveFormat(48000, 16, 2)) { BufferDuration = TimeSpan.FromSeconds(4), ReadFully = true };
+        _composer = sound;
+        if (sound is not null)
+            _sound = new BufferedWaveProvider(new WaveFormat(SoundComposer.Rate, 16, 2)) { BufferDuration = TimeSpan.FromSeconds(4), ReadFully = true };
         _timer.Tick += (_, _) => Tick();
     }
 
-    /// <summary>Where the playing is.</summary>
-    public TimeSpan Position
+    /// <summary>Where the playing is, in the video's own time.</summary>
+    public TimeSpan Position => VideoTimeOf(Elapsed);
+
+    // Where the playing is in what plays.
+    private TimeSpan Elapsed
     {
         get
         {
             if (_output is { } output && output.PlaybackState == PlaybackState.Playing)
-                return _from + TimeSpan.FromSeconds(output.GetPosition() / (double)output.OutputWaveFormat.AverageBytesPerSecond);
-            return _from + _clock.Elapsed;
+                return TimeSpan.FromSeconds(output.GetPosition() / (double)output.OutputWaveFormat.AverageBytesPerSecond);
+            return _clock.Elapsed;
         }
+    }
+
+    private TimeSpan VideoTimeOf(TimeSpan elapsed)
+    {
+        foreach (var piece in _pieces)
+        {
+            if (elapsed < piece.Length)
+                return piece.Start + elapsed;
+            elapsed -= piece.Length;
+        }
+        return _pieces.Count > 0 ? _pieces[^1].End : TimeSpan.Zero;
     }
 
     public void Start()
     {
         var cancel = _cancel.Token;
-        _decoder = new Thread(() => Decode(cancel)) { IsBackground = true, Name = "ScreenClip video player" };
-        _decoder.Start();
+        if (_path is { } path)
+        {
+            _decoder = new Thread(() => Decode(path, cancel)) { IsBackground = true, Name = "ScreenClip video player" };
+            _decoder.Start();
+        }
+        else
+            _frames.CompleteAdding();
         if (_sound is not null)
         {
             _feeder = new Thread(() => Feed(cancel)) { IsBackground = true, Name = "ScreenClip sound player" };
@@ -85,36 +113,18 @@ internal sealed class VideoPlayer : IDisposable
         _timer.Start();
     }
 
-    private void Decode(CancellationToken cancel)
+    private void Decode(string path, CancellationToken cancel)
     {
         try
         {
-            using var reader = new VideoReader(_path);
-            reader.Seek(_from);
-            (TimeSpan Time, SKImage Image)? before = null;
-            while (!cancel.IsCancellationRequested && reader.Next() is { } frame)
+            using var reader = new VideoReader(path);
+            var before = TimeSpan.Zero;
+            foreach (var piece in _pieces)
             {
-                if (frame.Time < _from)
-                {
-                    // The frame shown at the start may begin before it.
-                    before?.Image.Dispose();
-                    before = frame;
-                    continue;
-                }
-                if (before is { } first)
-                {
-                    _frames.Add((_from, first.Image), cancel);
-                    before = null;
-                }
-                if (frame.Time >= _to)
-                {
-                    frame.Image.Dispose();
-                    break;
-                }
-                _frames.Add(frame, cancel);
+                foreach (var frame in FramesOf(reader, piece, cancel))
+                    _frames.Add((before + frame.Time, frame.Image), cancel);
+                before += piece.Length;
             }
-            if (before is { } only)
-                _frames.Add((_from, only.Image), cancel);
         }
         catch (OperationCanceledException)
         {
@@ -129,44 +139,73 @@ internal sealed class VideoPlayer : IDisposable
         }
     }
 
+    /// <summary>
+    /// The frames of a piece, with their time from its start: the one shown at its start first (it may begin before),
+    /// then the others up to its end. The pictures are the caller's.
+    /// </summary>
+    public static IEnumerable<(TimeSpan Time, SKImage Image)> FramesOf(VideoReader reader, Piece piece, CancellationToken cancel)
+    {
+        reader.Seek(piece.Start);
+        (TimeSpan Time, SKImage Image)? before = null;
+        try
+        {
+            while (reader.Next() is { } frame)
+            {
+                cancel.ThrowIfCancellationRequested();
+                if (frame.Time < piece.Start)
+                {
+                    before?.Image.Dispose();
+                    before = frame;
+                    continue;
+                }
+                if (before is { } first && frame.Time > piece.Start)
+                {
+                    before = null;
+                    yield return (TimeSpan.Zero, first.Image);
+                }
+                if (frame.Time >= piece.End)
+                {
+                    frame.Image.Dispose();
+                    yield break;
+                }
+                yield return (frame.Time - piece.Start, frame.Image);
+            }
+            if (before is { } only)
+            {
+                before = null;
+                yield return (TimeSpan.Zero, only.Image);
+            }
+        }
+        finally
+        {
+            before?.Image.Dispose();
+        }
+    }
+
     private void Feed(CancellationToken cancel)
     {
         try
         {
-            using var reader = new AudioReader(_path);
-            reader.Seek(_from);
-            while (!cancel.IsCancellationRequested && reader.Next() is { } block)
+            using var composer = _composer!();
+            if (composer is null)
+                return;
+            while (!cancel.IsCancellationRequested && composer.Next() is { } chunk)
             {
-                var (bytes, offset, count) = Trim(block.Time, block.Pcm, _from, _to);
-                if (block.Time >= _to)
-                    break;
-                if (count == 0)
-                    continue;
                 while (!cancel.IsCancellationRequested && _sound!.BufferedDuration > TimeSpan.FromSeconds(2))
                     Thread.Sleep(20);
-                _sound!.AddSamples(bytes, offset, count);
+                _sound!.AddSamples(chunk.Pcm, 0, chunk.Pcm.Length);
             }
         }
-        catch (SharpGen.Runtime.SharpGenException)
+        catch (Exception ex) when (ex is SharpGen.Runtime.SharpGenException or InvalidDataException)
         {
         }
-    }
-
-    /// <summary>The bytes of a block of sound at <paramref name="time"/> that fall between <paramref name="from"/> and <paramref name="to"/>.</summary>
-    public static (byte[] Bytes, int Offset, int Count) Trim(TimeSpan time, byte[] pcm, TimeSpan from, TimeSpan to)
-    {
-        const int Frame = 4, Rate = 48000;
-        int frames = pcm.Length / Frame;
-        int skip = time < from ? (int)Math.Min(frames, Math.Round((from - time).TotalSeconds * Rate)) : 0;
-        int keep = (int)Math.Clamp(Math.Round((to - time).TotalSeconds * Rate), 0, frames);
-        return (pcm, skip * Frame, Math.Max(0, keep - skip) * Frame);
     }
 
     private void Tick()
     {
         if (_stopped)
             return;
-        var now = Position;
+        var now = Elapsed;
         SKImage? latest = null;
         TimeSpan latestTime = default;
         while (true)
@@ -185,10 +224,10 @@ internal sealed class VideoPlayer : IDisposable
         }
         if (latest is not null || _lastShown is not { } last || now - last >= TimeSpan.FromMilliseconds(15))
         {
-            _show(latest, now < latestTime ? latestTime : now);
+            _show(latest, VideoTimeOf(now < latestTime ? latestTime : now));
             _lastShown = now;
         }
-        if (now >= _to || (_frames.IsCompleted && _pending is null && (_output is null || _sound!.BufferedDuration <= TimeSpan.Zero || now >= _to)))
+        if (now >= _length || (_path is not null && _frames.IsCompleted && _pending is null && (_output is null || _sound!.BufferedDuration <= TimeSpan.Zero)))
         {
             Stop();
             _ended();

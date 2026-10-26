@@ -27,6 +27,8 @@ namespace ScreenClip;
 /// </summary>
 public partial class EditorWindow
 {
+    private static bool _scripted;
+
     private async void RunScript(string path)
     {
         await Task.Delay(1200);
@@ -346,13 +348,157 @@ public partial class EditorWindow
                     case "motion":
                         MotionSwitch.IsChecked = rest == "on";
                         break;
+                    case "split":
+                        RequestFrame(TimeSpan.FromSeconds(numbers[0]));
+                        SplitHere();
+                        break;
+                    case "removepiece":
+                        RequestFrame(TimeSpan.FromSeconds(numbers[0]));
+                        _pieceChosen = true;
+                        RemovePieceHere();
+                        break;
+                    case "restorepiece":
+                        CommitVideo(Edit.RestoreAt(TimeSpan.FromSeconds(numbers[0])));
+                        break;
+                    case "streams":
+                    {
+                        // The streams Media Foundation sees in the video opened, and their kind.
+                        var lines = new List<string>();
+                        Video.Media.EnsureStarted();
+                        using (var reader = Vortice.MediaFoundation.MediaFactory.MFCreateSourceReaderFromURL(_videoClip!.Path, null))
+                        {
+                            for (int index = 0; index < 8; index++)
+                            {
+                                try
+                                {
+                                    using var type = reader.GetNativeMediaType(index, 0);
+                                    string name;
+                                    try
+                                    {
+                                        name = reader.GetPresentationAttribute(index, Vortice.MediaFoundation.StreamDescriptorAttributeKeys.StreamName).Value?.ToString() ?? "null";
+                                    }
+                                    catch (SharpGen.Runtime.SharpGenException ex)
+                                    {
+                                        name = $"no name {ex.HResult:X8}";
+                                    }
+                                    string rate;
+                                    try
+                                    {
+                                        rate = type.GetUInt32(Vortice.MediaFoundation.MediaTypeAttributeKeys.AudioAvgBytesPerSecond).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                                    }
+                                    catch (SharpGen.Runtime.SharpGenException)
+                                    {
+                                        rate = "-";
+                                    }
+                                    lines.Add($"stream {index}: {type.GetGUID(Vortice.MediaFoundation.MediaTypeAttributeKeys.MajorType)} '{name}' rate {rate}");
+                                }
+                                catch (SharpGen.Runtime.SharpGenException ex)
+                                {
+                                    lines.Add($"stream {index}: {ex.HResult:X8}");
+                                }
+                            }
+                        }
+                        using (var reader = Vortice.MediaFoundation.MediaFactory.MFCreateSourceReaderFromURL(_videoClip!.Path, null))
+                        {
+                            IntPtr pointer = reader.GetServiceForStream(Vortice.MediaFoundation.SourceReaderIndex.MediaSource, Guid.Empty, typeof(Vortice.MediaFoundation.IMFMediaSource).GUID);
+                            using var source = new Vortice.MediaFoundation.IMFMediaSource(pointer);
+                            using var presentation = source.CreatePresentationDescriptor();
+                            for (int index = 0; index < presentation.StreamDescriptorCount; index++)
+                            {
+                                presentation.GetStreamDescriptorByIndex(index, out var selected, out var descriptor);
+                                using (descriptor)
+                                    lines.Add($"descriptor {index}: id {descriptor.StreamIdentifier} selected {(bool)selected}");
+                            }
+                        }
+                        File.WriteAllLines(rest, lines);
+                        break;
+                    }
+                    case "piece":
+                        RequestFrame(TimeSpan.FromSeconds(numbers[0]));
+                        ChoosePiece();
+                        break;
+                    case "piecezoom":
+                        PieceZoomSlider.Value = numbers[0];
+                        break;
+                    case "silence":
+                        ToggleSilence((int)numbers[0], TimeSpan.FromSeconds(numbers[1]));
+                        break;
+                    case "soundselect":
+                        SelectSound((int)numbers[0]);
+                        break;
+                    case "soundvolume":
+                        SelectSound((int)numbers[0]);
+                        SoundVolumeSlider.Value = numbers[1];
+                        break;
+                    case "soundfade":
+                        SelectSound((int)numbers[0]);
+                        SoundFadeInSlider.Value = numbers[1];
+                        SoundFadeOutSlider.Value = numbers[2];
+                        break;
+                    case "soundmute":
+                        ToggleMute((int)numbers[0]);
+                        break;
+                    case "soundspan":
+                        CommitVideo(Edit.WithSound((int)numbers[0], Edit.Sound((int)numbers[0]).WithStart(TimeSpan.FromSeconds(numbers[1]), _duration).WithEnd(TimeSpan.FromSeconds(numbers[2]), _duration)));
+                        break;
+                    case "audiocheck":
+                    {
+                        // The two test tones (440 Hz, the computer; 660 Hz, the microphone) in a file's first sound, every
+                        // half second: how loud each is (to check a mix, its pieces and fades without listening).
+                        var files = rest.Split('|');
+                        var lines = new List<string>();
+                        // "video": the video open (a recording, whose name is not known beforehand).
+                        string source = files[0].Trim() == "video" && _videoClip is { } open ? open.Path : files[0].Trim();
+                        using (var reader = new Video.AudioReader(source))
+                        {
+                            var samples = new List<float>();
+                            while (reader.Next() is { } block)
+                            {
+                                for (int i = 0; i + 3 < block.Pcm.Length; i += 4)
+                                    samples.Add(BitConverter.ToInt16(block.Pcm, i) / 32768f);
+                            }
+                            int window = 24000;
+                            for (int start = 0; start + window <= samples.Count; start += window)
+                            {
+                                double Level(double frequency)
+                                {
+                                    double k = 2 * Math.Cos(2 * Math.PI * frequency / 48000), s1 = 0, s2 = 0;
+                                    for (int i = 0; i < window; i++)
+                                    {
+                                        double s0 = samples[start + i] + k * s1 - s2;
+                                        s2 = s1;
+                                        s1 = s0;
+                                    }
+                                    return Math.Sqrt(s1 * s1 + s2 * s2 - k * s1 * s2) / window * 2;
+                                }
+                                lines.Add($"{start / 48000.0:0.0} s: 440 {Level(440):0.000} 660 {Level(660):0.000}");
+                            }
+                            lines.Add($"length {samples.Count / 48000.0:0.00} s");
+                        }
+                        File.WriteAllLines(files[1].Trim(), lines);
+                        break;
+                    }
+                    case "soundinfo":
+                    {
+                        // The video's tracks as written, and the sound rows the editor makes of them.
+                        var lines = new List<string>();
+                        if (_videoClip is { } clip)
+                        {
+                            lines.AddRange(Core.Video.Mp4Tracks.Read(clip.Path).Select(t => $"track {t.Handler} '{t.Name}' enabled {t.Enabled} group {t.AlternateGroup}"));
+                            lines.AddRange(Video.SoundTracks.Rows(clip.Path).Select(r => $"row {r.Kind} track {r.Track}"));
+                        }
+                        File.WriteAllLines(rest, lines);
+                        break;
+                    }
                     case "state":
                     {
                         var lines = _history.Current.Items.Select(a =>
                             $"#{a.Id} {a.Kind} at {a.Start.X:0},{a.Start.Y:0} time {(a.Time is { } t ? $"{t.Start.TotalSeconds:0.00}-{t.End.TotalSeconds:0.00}" : "all")}"
-                            + (a.Motion is { } m ? $" motion from {m.From.X:0},{m.From.Y:0} {m.Leave.TotalSeconds:0.00}-{m.Arrive.TotalSeconds:0.00} click {m.Click}" : ""));
+                            + (a.Motion is { } m ? $" motion from {m.From.X:0},{m.From.Y:0} {m.Leave.TotalSeconds:0.00}-{m.Arrive.TotalSeconds:0.00} click {m.Click} curved {m.Curved}"
+                                + string.Concat(m.Stops.Select(st => $" stop {st.At.X:0},{st.At.Y:0} {st.Arrive.TotalSeconds:0.00}-{st.Leave.TotalSeconds:0.00}{(st.Clicks ? "" : " noclick")}"))
+                                + (m.ClicksAtEnd ? "" : " end noclick") : ""));
                         var cursor = _history.Current.Cursor;
-                        File.AppendAllText(path + ".log", $"state: duration {_duration.TotalSeconds:0.00}, playhead {_playhead.TotalSeconds:0.00}, cursor {cursor.Style} {cursor.Size}% smooth {cursor.Smooth} click {cursor.Click}, "
+                        File.AppendAllText(path + ".log", $"state: animation {(_history.Current.Animation is { } animation ? animation.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) : "none")}, duration {_duration.TotalSeconds:0.00}, playhead {_playhead.TotalSeconds:0.00}, cursor {cursor.Style} {cursor.Size}% smooth {cursor.Smooth} click {cursor.Click}, "
                             + $"track {(Track is { } track ? $"{track.Samples.Count} samples, {track.Shapes.Count} shapes, {track.Clicks.Count} clicks" : "none")}\n"
                             + string.Concat(lines.Select(l => "  " + l + "\n")));
                         break;
@@ -386,12 +532,116 @@ public partial class EditorWindow
                     case "dialog":
                         CloseDialog((int)numbers[0]);
                         break;
+                    case "animate":
+                        ToggleAnimation();
+                        break;
+                    case "animlength":
+                        SetAnimationLength(TimeSpan.FromSeconds(numbers[0]));
+                        break;
+                    case "menu":
+                    {
+                        // What a right click there offers, written to the file (the menu not shown).
+                        var items = PictureMenu(new SKPoint(numbers[0], numbers[1]));
+                        File.WriteAllLines(rest.Split(' ', 3)[2], items.Select(i => i.Key));
+                        break;
+                    }
+                    case "menupick":
+                    {
+                        string key = rest.Split(' ', 3)[2];
+                        PictureMenu(new SKPoint(numbers[0], numbers[1])).First(i => i.Key == key).Act();
+                        break;
+                    }
+                    case "timelinedrag":
+                    {
+                        // A press on the timeline at a time, dragged to another (seconds), as the mouse does.
+                        await Settle();
+                        _grip = GripAt(XOf(TimeSpan.FromSeconds(numbers[0])));
+                        for (int step = 1; step <= 8; step++)
+                        {
+                            MoveGrip(XOf(TimeSpan.FromSeconds(numbers[0] + (numbers[1] - numbers[0]) * step / 8)));
+                            await Task.Delay(20);
+                        }
+                        EndGrip();
+                        break;
+                    }
+                    case "size":
+                        // The window that large (DIPs), to see the command bar in a narrow one.
+                        WindowState = WindowState.Normal;
+                        Width = numbers[0];
+                        Height = numbers[1];
+                        break;
+                    case "barfit":
+                    {
+                        // What the command bar measures, with its names and without.
+                        var any = new Size(double.PositiveInfinity, double.PositiveInfinity);
+                        var lines = new List<string> { $"bar {CommandBar.ActualWidth:0}, labels {BarLabels().Count}" };
+                        foreach (var (sides, tabs) in new[] { (true, true), (false, true), (false, false) })
+                        {
+                            ShowBarLabels(sides, tabs);
+                            foreach (var group in new FrameworkElement[] { LeftCommands, TabBar, RightCommands })
+                                group.Measure(any);
+                            lines.Add($"sides {sides} tabs {tabs}: left {LeftCommands.DesiredSize.Width:0}, tabs {TabBar.DesiredSize.Width:0}, right {RightCommands.DesiredSize.Width:0}");
+                        }
+                        FitCommandBar();
+                        File.WriteAllLines(rest, lines);
+                        break;
+                    }
+                    case "micchoices":
+                        // The microphones offered, the one chosen first in the settings.
+                        File.WriteAllLines(rest, Video.Microphones.All().Select(c => (c.Id is null ? "default: " : "device: ") + c.Name));
+                        break;
+                    case "trackmenu":
+                    {
+                        // What a right click on track row n at a time (seconds) offers, written to the file; closed.
+                        await Settle();
+                        var rows = TrackRows();
+                        int row = (int)numbers[0];
+                        var opened = ShowVideoMenu(TrackCanvas, TimeSpan.FromSeconds(numbers[1]), -1, rows[row], rows[row] is null);
+                        string file = rest.Split(' ', 3)[2];
+                        File.WriteAllLines(file, opened?.Items.OfType<System.Windows.Controls.MenuItem>().Select(i => i.Header?.ToString() ?? "") ?? []);
+                        if (opened is not null)
+                        {
+                            // The menu as a picture too, next to the file.
+                            await Task.Delay(400);
+                            var menuDpi = VisualTreeHelper.GetDpi(opened);
+                            var picture = new RenderTargetBitmap((int)(opened.ActualWidth * menuDpi.DpiScaleX), (int)(opened.ActualHeight * menuDpi.DpiScaleY), 96 * menuDpi.DpiScaleX, 96 * menuDpi.DpiScaleY, PixelFormats.Pbgra32);
+                            picture.Render(opened);
+                            var png = new PngBitmapEncoder();
+                            png.Frames.Add(BitmapFrame.Create(picture));
+                            using (var stream = File.Create(file + ".png"))
+                                png.Save(stream);
+                            opened.IsOpen = false;
+                        }
+                        break;
+                    }
+                    case "tracksextra":
+                        _tracksExtra = numbers[0];
+                        ShowTracks();
+                        break;
+                    case "capture":
+                        // A capture asked by this editor ("capture RepeatArea": no overlay to choose in).
+                        StartCapture(Enum.Parse<Services.ShortcutAction>(rest.Trim()));
+                        break;
+                    case "editors":
+                        // Every editor: shown or not, what it holds, where.
+                        File.WriteAllLines(rest, Application.Current.Windows.OfType<EditorWindow>().Select(e =>
+                            $"editor{(e == this ? " (script)" : "")} visible {e.IsVisible} content {e.HasContent} video {e.IsVideo} at {e.Left:0},{e.Top:0} active {e.IsActive}"));
+                        break;
                     case "settingsshot":
                     {
-                        // Settings › Saving, its own window as a picture, then closed.
-                        App.OpenSettings(SettingsPage.Saving);
+                        // Settings › Saving (or the page named after the file), its own window as a picture, then closed;
+                        // on the Capture page, scrolled to the microphone.
+                        string[] words = rest.Split(' ');
+                        var page = words.Length > 1 ? Enum.Parse<SettingsPage>(words[1]) : SettingsPage.Saving;
+                        rest = words[0];
+                        App.OpenSettings(page);
                         await Task.Delay(800);
                         var settings = Application.Current.Windows.OfType<SettingsWindow>().First();
+                        if (page == SettingsPage.Capture)
+                        {
+                            settings.MicrophoneBox.BringIntoView();
+                            await Task.Delay(400);
+                        }
                         var content = (FrameworkElement)settings.Content;
                         var dpi = VisualTreeHelper.GetDpi(settings);
                         var bitmap = new RenderTargetBitmap((int)(content.ActualWidth * dpi.DpiScaleX), (int)(content.ActualHeight * dpi.DpiScaleY), 96 * dpi.DpiScaleX, 96 * dpi.DpiScaleY, PixelFormats.Pbgra32);

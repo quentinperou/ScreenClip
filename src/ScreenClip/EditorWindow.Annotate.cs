@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ScreenClip.Core;
 using ScreenClip.Core.Annotations;
+using ScreenClip.Core.Video;
 using ScreenClip.Services;
 using SkiaSharp;
 
@@ -40,7 +41,7 @@ public partial class EditorWindow
         new(EditTool.Mask, Key.B, "M3,3 H7 V7 H3 Z M11,3 H15 V7 H11 Z M7,7 H11 V11 H7 Z M3,11 H7 V15 H3 Z M11,11 H15 V15 H11 Z", AnnotationKind.Mask),
     ];
 
-    private enum DragMode { Draw, Move, Handle, CropNew, CropMove, CropEdges, Motion }
+    private enum DragMode { Draw, Move, Handle, CropNew, CropMove, CropEdges, Motion, FramingMove, FramingZoom }
 
     [Flags]
     private enum Edges { None = 0, Left = 1, Top = 2, Right = 4, Bottom = 8 }
@@ -52,8 +53,10 @@ public partial class EditorWindow
         public required AnnotationLayer Base { get; init; }
         public Annotation? Original { get; init; }
         public HandleKind Handle { get; init; }
+        public int HandleIndex { get; init; }
         public Edges Edges { get; init; }
         public PixelRect Crop { get; init; }
+        public Framing Framing { get; init; }
         public List<SKPoint> Stroke { get; } = [];
         public bool Moved { get; set; }
     }
@@ -235,6 +238,7 @@ public partial class EditorWindow
             RequestRender();  // the view goes back to the part kept
         _tool = tool;
         _cursorSelected = false;
+        _soundSelected = -1;
         // A drawing tool keeps the annotation chosen only if it is one of its own (its options are then shown).
         if (Selected is { } selected && tool != EditTool.Select && ToolOf(selected.Kind) != tool)
             _selectedId = null;
@@ -266,6 +270,8 @@ public partial class EditorWindow
         _history.Reset(AnnotationLayer.Empty);
         _selectedId = null;
         _cursorSelected = false;
+        _soundSelected = -1;
+        _pieceChosen = false;
         _live = null;
         DropFlattened();
         _viewBase?.Dispose();
@@ -273,6 +279,7 @@ public partial class EditorWindow
         _zoom = null;
         _viewOrigin = default;
         ShowEditPanel();
+        SyncAnimation();
     }
 
     private void DropFlattened()
@@ -292,13 +299,21 @@ public partial class EditorWindow
         var layer = _history.Current;
         var moment = Moment;
         bool pointer = moment?.Track is { IsEmpty: false } && layer.Cursor.Shows;
-        if (layer.IsEmpty && !pointer)
+        // A piece of video zoomed in: the part shown, at the picture's size (asked by the author).
+        var framing = IsVideo ? layer.Video.FramingAt(_playhead) : null;
+        if (layer.IsEmpty && !pointer && framing is null)
             return _capture!;
-        int key = moment is null ? 0 : VideoTiming.Fingerprint(layer, moment);
+        int key = HashCode.Combine(moment is null ? 0 : VideoTiming.Fingerprint(layer, moment), framing);
         if (_flattened is null || !ReferenceEquals(_flattenedFor, layer) || !ReferenceEquals(_flattenedFrom, _capture) || _flattenedKey != key)
         {
             DropFlattened();
             _flattened = AnnotationRenderer.Flatten(_capture!, layer, moment);
+            if (framing is { } framed)
+            {
+                var whole = _flattened;
+                _flattened = framed.Apply(whole);
+                whole.Dispose();
+            }
             _flattenedFor = layer;
             _flattenedFrom = _capture;
             _flattenedKey = key;
@@ -319,8 +334,11 @@ public partial class EditorWindow
     {
         if (_selectedId is { } id && Layer.Find(id) is null)
             _selectedId = null;
+        SyncAnimation();
         ShowEditPanel();
         ShowTracks();
+        ShowSounds();
+        ShowTimeline();
         RequestRender();
     }
 
@@ -567,7 +585,30 @@ public partial class EditorWindow
     private void ShowOverlay(DpiScale dpi)
     {
         Overlay.Children.Clear();
+        // Drawn inside the picture's place only (its margins included): a curve handle far off the picture drew its
+        // line across the window (the author).
+        if (PreviewHost.ActualWidth > 0 && PreviewHost.IsAncestorOf(Overlay))
+        {
+            var place = PreviewHost.TransformToDescendant(Overlay).TransformBounds(new Rect(PreviewHost.RenderSize));
+            var margin = PreviewHost.Margin;
+            Overlay.Clip = new RectangleGeometry(new Rect(place.X - margin.Left, place.Y - margin.Top,
+                place.Width + margin.Left + margin.Right, place.Height + margin.Top + margin.Bottom));
+        }
         var accent = (Brush)FindResource("AccentFillColorDefaultBrush");
+        if (IsVideo && _pieceChosen && _tool == EditTool.Select)
+        {
+            // The part of the picture this piece shows: what is outside is shaded, its corners zoom.
+            var rect = FramingRect(Layer);
+            var shade = new GeometryGroup { FillRule = FillRule.EvenOdd };
+            var kept = Layer.Visible(_capture!.Width, _capture.Height);
+            shade.Children.Add(new RectangleGeometry(new Rect(ToView(new SKPoint(kept.X, kept.Y)), ToView(new SKPoint(kept.Right, kept.Bottom)))));
+            shade.Children.Add(new RectangleGeometry(rect));
+            Overlay.Children.Add(new System.Windows.Shapes.Path { Data = shade, Fill = new SolidColorBrush(Color.FromArgb(0x80, 0, 0, 0)) });
+            AddFrame(rect, accent, dashed: false);
+            foreach (var corner in new[] { rect.TopLeft, rect.TopRight, rect.BottomLeft, rect.BottomRight })
+                AddHandle(corner, accent);
+            return;
+        }
         if (_tool == EditTool.Crop)
         {
             var kept = Layer.Visible(_capture!.Width, _capture.Height);
@@ -591,7 +632,7 @@ public partial class EditorWindow
         // The one under the pointer (asked by the author): a light dashed frame, so that what a click takes is seen.
         if (_hoveredId is { } hovered && hovered != _selectedId && Layer.Find(hovered) is { } over && IsShownNow(over) && _drag is null)
         {
-            var overBounds = AnnotationGeometry.Bounds(IsVideo ? VideoTiming.Posed(over, _playhead) : over, AnnotationScale);
+            var overBounds = AnnotationGeometry.Bounds(IsTimed ? VideoTiming.Posed(over, _playhead) : over, AnnotationScale);
             var overFrame = new Rect(ToView(new SKPoint(overBounds.Left, overBounds.Top)), ToView(new SKPoint(overBounds.Right, overBounds.Bottom)));
             overFrame.Inflate(3, 3);
             AddFrame(overFrame, accent, dashed: true);
@@ -599,38 +640,63 @@ public partial class EditorWindow
         }
         if (Selected is not { } selected || _editingTextId == selected.Id || !IsShownNow(selected))
             return;
-        var posed = IsVideo ? VideoTiming.Posed(selected, _playhead) : selected;
+        var posed = IsTimed ? VideoTiming.Posed(selected, _playhead) : selected;
         var bounds = AnnotationGeometry.Bounds(posed, AnnotationScale);
         var frame = new Rect(ToView(new SKPoint(bounds.Left, bounds.Top)), ToView(new SKPoint(bounds.Right, bounds.Bottom)));
         frame.Inflate(3, 3);
         AddFrame(frame, accent, dashed: true);
         if (selected.Motion is { } motion)
         {
-            // Its way, dashed; the lines to the square handles that bend it; A and B round.
+            // Its way, dashed; the lines to the square handles that bend each part; its points round and lettered: A,
+            // then each stop, then its end.
             var way = new System.Windows.Shapes.Polyline { Stroke = accent, StrokeThickness = 1.5, StrokeDashArray = [5, 3] };
             foreach (var point in VideoTiming.Path(selected))
                 way.Points.Add(ToView(point));
             Overlay.Children.Add(way);
             if (motion.Curved)
             {
-                foreach (var (end, control) in new[] { (motion.From, motion.Control1), (selected.Start, motion.Control2) })
-                    Overlay.Children.Add(new System.Windows.Shapes.Line { X1 = ToView(end).X, Y1 = ToView(end).Y, X2 = ToView(control).X, Y2 = ToView(control).Y, Stroke = accent, StrokeThickness = 1, Opacity = 0.7 });
+                foreach (var leg in motion.Legs(selected.Start))
+                {
+                    foreach (var (end, control) in new[] { (leg.From, leg.Control1), (leg.To, leg.Control2) })
+                        Overlay.Children.Add(new System.Windows.Shapes.Line { X1 = ToView(end).X, Y1 = ToView(end).Y, X2 = ToView(control).X, Y2 = ToView(control).Y, Stroke = accent, StrokeThickness = 1, Opacity = 0.7 });
+                }
             }
-            foreach (var (kind, point) in AnnotationGeometry.Handles(selected))
+            // The points where it clicks in the color of the clicks on its track (asked by the author).
+            var clicking = new SolidColorBrush(ClickColor);
+            foreach (var (kind, point, index) in AnnotationGeometry.Handles(selected))
             {
-                if (kind is HandleKind.MotionFrom or HandleKind.MotionTo)
-                    AddEndHandle(ToView(point), accent, kind == HandleKind.MotionFrom ? "A" : "B");
-                else
-                    AddHandle(ToView(point), accent);
+                switch (kind)
+                {
+                    case HandleKind.MotionFrom:
+                        AddEndHandle(ToView(point), accent, "A");
+                        break;
+                    case HandleKind.MotionStop:
+                        bool stopClicks = motion.ClicksAt(1 + 2 * index);
+                        AddEndHandle(ToView(point), stopClicks ? clicking : accent, Letter(index + 1), stopClicks);
+                        break;
+                    case HandleKind.MotionTo:
+                        bool endClicks = motion.ClicksAt(1 + 2 * motion.Stops.Count);
+                        AddEndHandle(ToView(point), endClicks ? clicking : accent, Letter(motion.Stops.Count + 1), endClicks);
+                        break;
+                    default:
+                        AddHandle(ToView(point), accent);
+                        break;
+                }
             }
             return;
         }
-        foreach (var (_, point) in AnnotationGeometry.Handles(selected))
+        foreach (var (_, point, _) in AnnotationGeometry.Handles(selected))
             AddHandle(ToView(point), accent);
     }
 
-    // A or B of a moving pointer: a round handle with its letter.
-    private void AddEndHandle(Point center, Brush brush, string letter)
+    // The letter of a point of a way: A, B, C… then A again after Z.
+    private static string Letter(int index) => ((char)('A' + index % 26)).ToString();
+
+    /// <summary>The color of a click: the points where a moving pointer clicks, and their diamonds on its track.</summary>
+    private static readonly Color ClickColor = Color.FromRgb(0xF7, 0xA0, 0x15);
+
+    // A point of a moving pointer's way: a round handle with its letter (dark on the click's color).
+    private void AddEndHandle(Point center, Brush brush, string letter, bool click = false)
     {
         var handle = new Border
         {
@@ -640,7 +706,7 @@ public partial class EditorWindow
             Background = brush,
             BorderBrush = Brushes.White,
             BorderThickness = new Thickness(1.5),
-            Child = new TextBlock { Text = letter, FontSize = 9, FontWeight = FontWeights.Bold, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
+            Child = new TextBlock { Text = letter, FontSize = 9, FontWeight = FontWeights.Bold, Foreground = click ? new SolidColorBrush(Color.FromRgb(0x1B, 0x1B, 0x1B)) : Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
         };
         Canvas.SetLeft(handle, center.X - 8);
         Canvas.SetTop(handle, center.Y - 8);
@@ -648,7 +714,7 @@ public partial class EditorWindow
     }
 
     // The annotation on top under a point, among those that show at the playhead of a video.
-    private Annotation? HitAt(AnnotationLayer layer, SKPoint point, float tolerance) => IsVideo
+    private Annotation? HitAt(AnnotationLayer layer, SKPoint point, float tolerance) => IsTimed
         ? layer.HitTestAt(point, AnnotationScale, tolerance, _playhead)
         : layer.HitTest(point, AnnotationScale, tolerance);
 
@@ -712,6 +778,18 @@ public partial class EditorWindow
         var layer = _history.Current;
         float scale = AnnotationScale, tolerance = Tolerance();
 
+        // A piece of video chosen: its frame on the picture is moved, its corners zoom.
+        if (IsVideo && _pieceChosen && _tool == EditTool.Select && FramingGripAt(point) is { } framingGrip)
+        {
+            StartDrag(new Drag { Mode = framingGrip, Start = point, Base = layer, Framing = PieceFraming(layer) });
+            return false;
+        }
+        if (_pieceChosen)
+        {
+            _pieceChosen = false;
+            ShowTimeline();
+        }
+
         if (_tool == EditTool.Crop)
         {
             var kept = layer.Visible(_capture.Width, _capture.Height);
@@ -724,17 +802,28 @@ public partial class EditorWindow
         // The handles of the annotation chosen come first, whatever the tool.
         if (Selected is { } selected && IsShownNow(selected))
         {
-            foreach (var (kind, handle) in AnnotationGeometry.Handles(selected))
+            foreach (var (kind, handle, index) in AnnotationGeometry.Handles(selected))
             {
                 if (AnnotationGeometry.Distance(handle, point) <= Tolerance(7))
                 {
-                    StartDrag(new Drag { Mode = DragMode.Handle, Start = point, Base = layer, Original = selected, Handle = kind });
+                    StartDrag(new Drag { Mode = DragMode.Handle, Start = point, Base = layer, Original = selected, Handle = kind, HandleIndex = index });
                     return false;
                 }
             }
         }
 
         var hit = HitAt(layer, point, tolerance);
+        // A moving pointer chosen, the Pointer tool: a click elsewhere takes its way on there (A → B → C…), its new end
+        // still moved while the button is down.
+        if (_tool == EditTool.Pointer && hit is null && IsTimed && Selected is { Motion: not null } moving && IsShownNow(moving))
+        {
+            if (WithWayTo(layer, moving, point) is { } longer && longer.Find(moving.Id) is { } taken)
+            {
+                StartDrag(new Drag { Mode = DragMode.Handle, Start = point, Base = longer, Original = taken, Handle = HandleKind.MotionTo, Moved = true }, adding: longer);
+                RequestFrame(taken.Motion!.Arrive);
+            }
+            return false;
+        }
         var tool = Tools.First(t => t.Tool == _tool);
         // The Select tool picks; the tools that place one thing pick their own kind (a pointer is moved, a text edited).
         bool picks = _tool == EditTool.Select || (hit is not null && tool.Kind == hit.Kind && _tool is EditTool.Text or EditTool.Number or EditTool.Pointer);
@@ -777,7 +866,7 @@ public partial class EditorWindow
                 _live = layer.Add(annotation, out var added);
                 Select(added.Id);
                 // In a video, a pointer dragged from A to B moves there.
-                var mode = IsVideo && kindToDraw == AnnotationKind.Pointer ? DragMode.Motion : DragMode.Move;
+                var mode = IsTimed && kindToDraw == AnnotationKind.Pointer ? DragMode.Motion : DragMode.Move;
                 StartDrag(new Drag { Mode = mode, Start = point, Base = layer, Original = added, Moved = true }, adding: _live);
                 return false;
             }
@@ -864,14 +953,34 @@ public partial class EditorWindow
                 break;
             }
             case DragMode.Handle:
-                _live = drag.Base.Replace(AnnotationGeometry.WithHandle(drag.Original!, drag.Handle, point, shift));
+                _live = drag.Base.Replace(AnnotationGeometry.WithHandle(drag.Original!, drag.Handle, point, shift, drag.HandleIndex));
                 break;
             case DragMode.Motion:
             {
                 // A pointer just put in a video: dragged far enough, it goes from where the drag began to here.
                 var original = drag.Original!;
                 bool far = AnnotationGeometry.Distance(drag.Start, point) > Tolerance(12);
-                _live = drag.Base.Add(far ? original with { Points = [point], Motion = MotionAt(drag.Start, point) } : original, out _);
+                _live = Lengthened(drag.Base.Add(far ? original with { Points = [point], Motion = MotionAt(drag.Start, point) } : original, out _));
+                break;
+            }
+            case DragMode.FramingMove:
+            {
+                var kept = drag.Base.Visible(width, height);
+                var region = drag.Framing.Region(kept.Width, kept.Height);
+                region.Offset(dx, dy);
+                var moved = drag.Framing.CenteredOn(region, kept.Width, kept.Height);
+                _live = drag.Base with { Video = drag.Base.Video.WithFraming(drag.Framing.Range, moved.Zoom, moved.X, moved.Y) };
+                break;
+            }
+            case DragMode.FramingZoom:
+            {
+                // A corner pulled: the frame stays centered where it is, as large as the corner says.
+                var kept = drag.Base.Visible(width, height);
+                var region = drag.Framing.Region(kept.Width, kept.Height);
+                float cx = kept.X + region.MidX, cy = kept.Y + region.MidY;
+                double zoom = Math.Min(kept.Width / Math.Max(1.0, 2 * Math.Abs(point.X - cx)), kept.Height / Math.Max(1.0, 2 * Math.Abs(point.Y - cy)));
+                var center = drag.Framing.CenteredOn(region, kept.Width, kept.Height);
+                _live = drag.Base with { Video = drag.Base.Video.WithFraming(drag.Framing.Range, Math.Clamp(zoom, 1, Framing.MaxZoom), center.X, center.Y) };
                 break;
             }
             case DragMode.CropNew:
@@ -964,6 +1073,11 @@ public partial class EditorWindow
     private void ShowHoverCursor(SKPoint point)
     {
         Cursor cursor = CursorOf(_tool);
+        if (IsVideo && _pieceChosen && _tool == EditTool.Select && FramingGripAt(point) is { } grip)
+        {
+            Stage.Cursor = grip == DragMode.FramingZoom ? Cursors.SizeNWSE : Cursors.SizeAll;
+            return;
+        }
         if (_tool == EditTool.Crop)
         {
             var kept = Layer.Visible(_capture!.Width, _capture.Height);
@@ -1046,8 +1160,10 @@ public partial class EditorWindow
     {
         _selectedId = id;
         _cursorSelected = false;
+        _soundSelected = -1;
         ShowEditPanel();
         ShowTracks();
+        ShowSounds();
         RequestRender();
     }
 
@@ -1243,6 +1359,44 @@ public partial class EditorWindow
         if (!_initialized || !_editTab)
             return;
         _syncingEdit = true;
+        bool sound = IsVideo && _soundSelected >= 0 && _soundSelected < _soundRows.Count;
+        SoundRow.Visibility = Show(sound);
+        bool piece = IsVideo && _pieceChosen && !sound && _selectedId is null && !_cursorSelected;
+        PieceRow.Visibility = Show(piece);
+        if (piece)
+        {
+            RecordedPointerRow.Visibility = ToolKeyCap.Visibility = Visibility.Collapsed;
+            ToolName.Text = Strings.Get(Edit.Splits.Count > 0 ? "PieceTitle" : "PieceWhole");
+            ToolIcon.Content = new TextBlock { Text = "\uE714", FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"), FontSize = 16 };
+            ToolHelp.Text = Strings.Get("PieceHelp");
+            ColorRow.Visibility = SizeRow.Visibility = StyleRow.Visibility = PointerRow.Visibility = Visibility.Collapsed;
+            NextNumberText.Visibility = CropRow.Visibility = SelectionRow.Visibility = Visibility.Collapsed;
+            ShowPiecePanel();
+            UndoButton.IsEnabled = _history.CanUndo;
+            RedoButton.IsEnabled = _history.CanRedo;
+            ClearAllButton.IsEnabled = !_history.Current.Items.IsEmpty;
+            if (listToo)
+                ShowAnnotationList();
+            _syncingEdit = false;
+            return;
+        }
+        if (sound)
+        {
+            RecordedPointerRow.Visibility = ToolKeyCap.Visibility = Visibility.Collapsed;
+            ToolName.Text = SoundName(_soundSelected);
+            ToolIcon.Content = new TextBlock { Text = SoundGlyph(_soundRows[_soundSelected].Kind), FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"), FontSize = 16 };
+            ToolHelp.Text = Strings.Get("SoundHelp");
+            ColorRow.Visibility = SizeRow.Visibility = StyleRow.Visibility = PointerRow.Visibility = Visibility.Collapsed;
+            NextNumberText.Visibility = CropRow.Visibility = SelectionRow.Visibility = Visibility.Collapsed;
+            ShowSoundPanel();
+            UndoButton.IsEnabled = _history.CanUndo;
+            RedoButton.IsEnabled = _history.CanRedo;
+            ClearAllButton.IsEnabled = !_history.Current.Items.IsEmpty;
+            if (listToo)
+                ShowAnnotationList();
+            _syncingEdit = false;
+            return;
+        }
         bool cursor = _cursorSelected && HasRecordedPointer;
         RecordedPointerRow.Visibility = Show(cursor);
         ToolKeyCap.Visibility = Show(!cursor);
@@ -1267,7 +1421,7 @@ public partial class EditorWindow
         ToolName.Text = selected?.Motion is not null ? Strings.Get("AnnotListMotion") : Strings.Get("Tool" + info.Tool);
         ToolKey.Text = info.Key.ToString();
         ToolIcon.Content = ToolPath(info.Icon, 18);
-        ToolHelp.Text = info.Tool == EditTool.Pointer && IsVideo
+        ToolHelp.Text = info.Tool == EditTool.Pointer && IsTimed
             ? Strings.Get(selected?.Motion is not null ? "MotionHelp" : "ToolPointerVideoHelp")
             : Strings.Get("Tool" + info.Tool + "Help");
 
@@ -1322,8 +1476,8 @@ public partial class EditorWindow
                 HaloSwitch.IsChecked = shown.Halo;
                 // The ring of a still pointer; a moving one shows its click when it arrives instead.
                 HaloRow.Visibility = Show(shown.Motion is null);
-                MotionRow.Visibility = Show(IsVideo && selected is not null);
-                if (IsVideo && selected is not null)
+                MotionRow.Visibility = Show(IsTimed && selected is not null);
+                if (IsTimed && selected is not null)
                     ShowMotionOptions(selected);
             }
         }
@@ -1635,6 +1789,17 @@ public partial class EditorWindow
         {
             case Key.Delete or Key.Back when Selected is not null:
                 DeleteSelected();
+                return true;
+            case Key.Escape when _soundSelected >= 0:
+                _soundSelected = -1;
+                ShowEditPanel();
+                ShowSounds();
+                return true;
+            case Key.Escape when _pieceChosen:
+                _pieceChosen = false;
+                ShowEditPanel();
+                ShowTimeline();
+                RequestRender();
                 return true;
             case Key.Escape:
                 if (_drag is not null)

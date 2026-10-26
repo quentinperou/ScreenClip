@@ -109,8 +109,12 @@ public partial class EditorWindow : Window
         SetTool(EditTool.Select);
         SetTab(App.Settings.EditorTab == EditorTab.Edit);
 #if DEBUG
-        if (Environment.GetEnvironmentVariable("SCREENCLIP_EDIT_SCRIPT") is { Length: > 0 } script)
+        // Played by the first editor only: the ones it opens are seen through it.
+        if (Environment.GetEnvironmentVariable("SCREENCLIP_EDIT_SCRIPT") is { Length: > 0 } script && !_scripted)
+        {
+            _scripted = true;
             Loaded += (_, _) => RunScript(script);
+        }
 #endif
     }
 
@@ -165,14 +169,108 @@ public partial class EditorWindow : Window
         bool hasPicture = _capture is not null;
         EmptyState.Visibility = hasPicture ? Visibility.Collapsed : Visibility.Visible;
         Preview.Visibility = hasPicture ? Visibility.Visible : Visibility.Collapsed;
-        DragHint.Visibility = hasPicture && !_editTab && !IsVideo ? Visibility.Visible : Visibility.Collapsed;
-        VideoBar.Visibility = IsVideo ? Visibility.Visible : Visibility.Collapsed;
+        DragHint.Visibility = hasPicture && !_editTab && !IsTimed ? Visibility.Visible : Visibility.Collapsed;
+        VideoBar.Visibility = IsTimed ? Visibility.Visible : Visibility.Collapsed;
+        PieceButtons.Visibility = IsVideo ? Visibility.Visible : Visibility.Collapsed;
+        // “Animate”: a picture only (a video is in time already); checked while it is animated.
+        AnimateButton.Visibility = hasPicture && !IsVideo ? Visibility.Visible : Visibility.Collapsed;
+        AnimateButton.IsChecked = IsAnimation;
         ToolRail.IsEnabled = EditPanel.IsEnabled = hasPicture;
         ZoomBar.Visibility = hasPicture && _editTab ? Visibility.Visible : Visibility.Collapsed;
         CopyButton.IsEnabled = ExportButton.IsEnabled = hasPicture;
         if (!hasPicture)
             OutputText.Text = "";
         ShowExportFormat();
+    }
+
+    // ---------------------------------------------------------------- A narrow window
+
+    private List<(TextBlock Label, ButtonBase Button, object? ToolTip)>? _barLabels;
+
+    private void CommandBar_SizeChanged(object sender, SizeChangedEventArgs e) => FitCommandBar();
+
+    /// <summary>
+    /// The command bar in a narrow window: its buttons show their icons alone (asked by the author: they ran over the
+    /// tabs), their names in their tooltips; the tabs' names go last.
+    /// </summary>
+    private void FitCommandBar()
+    {
+        double width = CommandBar.ActualWidth;
+        if (!_initialized || width <= 0)
+            return;
+        ShowBarLabels(sides: true, tabs: true);
+        if (BarFits(width))
+            return;
+        ShowBarLabels(sides: false, tabs: true);
+        if (!BarFits(width))
+            ShowBarLabels(sides: false, tabs: false);
+    }
+
+    // The tabs stay in the middle: each side has half of what they leave.
+    private bool BarFits(double width)
+    {
+        var any = new Size(double.PositiveInfinity, double.PositiveInfinity);
+        foreach (var group in new FrameworkElement[] { LeftCommands, TabBar, RightCommands })
+            group.Measure(any);
+        double side = (width - TabBar.DesiredSize.Width) / 2;
+        return LeftCommands.DesiredSize.Width <= side && RightCommands.DesiredSize.Width <= side;
+    }
+
+    private void ShowBarLabels(bool sides, bool tabs)
+    {
+        foreach (var (label, button, tip) in BarLabels())
+        {
+            bool shown = IsInside(button, TabBar) ? tabs : sides;
+            label.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
+            // Measured again up to the bar: a group's size is kept until something in it says it changed.
+            for (DependencyObject? element = label; element is not null && element != CommandBar; element = VisualTreeHelper.GetParent(element))
+                (element as UIElement)?.InvalidateMeasure();
+            // Its name in its tooltip when it is not written, with its shortcut; Copy says what it copies already.
+            if (button != CopyButton)
+                button.ToolTip = shown ? tip : tip is string keys && keys.StartsWith("Ctrl", StringComparison.Ordinal) ? $"{label.Text} ({keys})" : tip ?? label.Text;
+        }
+    }
+
+    // The names on the command bar's buttons (the BarLabel texts), with their buttons and own tooltips.
+    private List<(TextBlock Label, ButtonBase Button, object? ToolTip)> BarLabels()
+    {
+        if (_barLabels is not null)
+            return _barLabels;
+        var style = (Style)FindResource("BarLabel");
+        var labels = new List<(TextBlock, ButtonBase, object?)>();
+        void Collect(DependencyObject parent)
+        {
+            foreach (var child in LogicalTreeHelper.GetChildren(parent).OfType<DependencyObject>())
+            {
+                if (child is TextBlock text && text.Style == style && OwnerButton(text) is { } button)
+                    labels.Add((text, button, button.ToolTip));
+                else
+                    Collect(child);
+            }
+        }
+        foreach (var group in new FrameworkElement[] { LeftCommands, TabBar, RightCommands })
+            Collect(group);
+        return _barLabels = labels;
+    }
+
+    private static ButtonBase? OwnerButton(DependencyObject element)
+    {
+        for (var parent = LogicalTreeHelper.GetParent(element); parent is not null; parent = LogicalTreeHelper.GetParent(parent))
+        {
+            if (parent is ButtonBase button)
+                return button;
+        }
+        return null;
+    }
+
+    private static bool IsInside(DependencyObject element, DependencyObject ancestor)
+    {
+        for (var parent = LogicalTreeHelper.GetParent(element); parent is not null; parent = LogicalTreeHelper.GetParent(parent))
+        {
+            if (parent == ancestor)
+                return true;
+        }
+        return false;
     }
 
     private void Import_Click(object sender, RoutedEventArgs e) => Import();
@@ -226,16 +324,27 @@ public partial class EditorWindow : Window
 
     private void CaptureArea_Click(object sender, RoutedEventArgs e) => StartCapture(ShortcutAction.Area);
 
+    private void RecordVideo_Click(object sender, RoutedEventArgs e) => StartCapture(ShortcutAction.Video);
+
+    /// <summary>A picture or a video is open: a new capture goes to an editor of its own.</summary>
+    internal bool HasContent => _capture is not null;
+
     // The editor steps aside while the screen is frozen, and comes back with the capture (a video: once recorded).
+    // What it holds stays: the capture then opens in another editor (asked by the author).
     private void StartCapture(ShortcutAction action)
     {
         StopPlayback();
         Hide();
         App.Capture.RunForEditor(action, clip =>
         {
+            Show();
+            if (clip is not null && HasContent)
+            {
+                App.OpenEditor(clip: clip);
+                return;
+            }
             if (clip is not null)
                 Load(clip.Image, clip.TakenAt);
-            Show();
             Activate();
         });
     }
@@ -822,7 +931,9 @@ public partial class EditorWindow : Window
             : slider == RadiusSlider ? StylePresets.Default.Radius
             : slider == ShadowSlider ? StylePresets.Default.Shadow
             : slider == PointerSizeSlider ? Core.Annotations.AnnotationDefaults.DefaultPointerSize
-            : 100; // the recorded pointer: its size on the screen
+            : slider == SoundFadeInSlider || slider == SoundFadeOutSlider ? 0
+            : slider == PieceZoomSlider ? 100
+            : 100; // the recorded pointer: its size on the screen; a sound: as recorded
         e.Handled = true;
     }
 
@@ -875,7 +986,11 @@ public partial class EditorWindow : Window
 
     // ---------------------------------------------------------------- Preview
 
-    private void PreviewHost_SizeChanged(object sender, SizeChangedEventArgs e) => RequestRender();
+    private void PreviewHost_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        KeepPreviewSeen();
+        RequestRender();
+    }
 
     // Several changes in a row (a slider dragged) give one drawing, once the UI is idle.
     private void RequestRender()
@@ -1162,12 +1277,35 @@ public partial class EditorWindow : Window
             return;
         }
         bool inTextBox = Keyboard.FocusedElement is TextBox;
-        // A video: Space plays and pauses, in both tabs.
-        if (IsVideo && e.Key == Key.Space && Keyboard.Modifiers == ModifierKeys.None && !inTextBox && _export is null)
+        // A video, or a picture animated: Space plays and pauses, in both tabs.
+        if (IsTimed && e.Key == Key.Space && Keyboard.Modifiers == ModifierKeys.None && !inTextBox && _export is null)
         {
             TogglePlay();
             e.Handled = true;
             return;
+        }
+        // A video: Ctrl+B splits at the playhead; Delete removes the piece chosen on the timeline.
+        if (IsVideo && !inTextBox && _export is null)
+        {
+            if (e.Key == Key.B && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                SplitHere();
+                e.Handled = true;
+                return;
+            }
+            if (e.Key is Key.Delete or Key.Back && Keyboard.Modifiers == ModifierKeys.None && _pieceChosen && _selectedId is null)
+            {
+                RemovePieceHere();
+                e.Handled = true;
+                return;
+            }
+            // A sound chosen: its piece there silenced, the picture kept (asked by the author).
+            if (e.Key is Key.Delete or Key.Back && Keyboard.Modifiers == ModifierKeys.None && _soundSelected >= 0 && _selectedId is null)
+            {
+                ToggleSilence(_soundSelected, _pieceAt);
+                e.Handled = true;
+                return;
+            }
         }
         if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && e.Key == Key.Z && !inTextBox)
         {
@@ -1224,7 +1362,7 @@ public partial class EditorWindow : Window
                 e.Handled = true;
                 break;
             case Key.S:
-                if (IsVideo)
+                if (IsTimed)
                     SaveVideo();
                 else
                     Save();

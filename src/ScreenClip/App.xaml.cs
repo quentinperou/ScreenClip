@@ -193,15 +193,20 @@ public partial class App : Application
         }
     }
 
+    // The editor last in front: “Open ScreenClip” brings it back.
+    private static EditorWindow? _lastEditor;
+
+    /// <summary>
+    /// Opens a capture, a video or a picture in an editor, or with nothing to open brings the last editor to the front.
+    /// What an editor holds is never replaced (asked by the author: a capture made while editing lost the work): an
+    /// editor with nothing in it takes it, else a new one opens beside the others.
+    /// </summary>
     internal static void OpenEditor(string? picturePath = null, Clip? clip = null, VideoClip? video = null, bool import = false)
     {
         EnsureTheme();
-        var editor = Current.Windows.OfType<EditorWindow>().FirstOrDefault();
-        if (editor is null)
-        {
-            editor = new EditorWindow();
-            editor.Closed += (_, _) => MemoryTrim.Soon();
-        }
+        bool opening = clip is not null || video is not null || picturePath is not null || import;
+        var editor = opening ? EmptyEditor() : LatestEditor() ?? NewEditor();
+        ShowHiddenEditors(except: editor);
         if (clip is not null)
         {
             editor.Load(clip.Image, clip.TakenAt);
@@ -244,11 +249,54 @@ public partial class App : Application
             DevLog.Write($"developer mode on, ScreenClip {Updater.CurrentVersion}, Windows {Environment.OSVersion.Version}");
     }
 
-    /// <summary>An editor hidden for a recording that was discarded comes back.</summary>
-    internal static void ShowHiddenEditor()
+    private static EditorWindow? LatestEditor() =>
+        _lastEditor ?? Current.Windows.OfType<EditorWindow>().LastOrDefault();
+
+    // An editor with nothing in it (the one hidden for this capture first), else a new one.
+    private static EditorWindow EmptyEditor() =>
+        Current.Windows.OfType<EditorWindow>().Where(e => !e.HasContent)
+            .OrderBy(e => e.IsVisible).ThenBy(e => e != _lastEditor).FirstOrDefault() ?? NewEditor();
+
+    private static EditorWindow NewEditor()
     {
-        if (Current.Windows.OfType<EditorWindow>().FirstOrDefault() is { IsVisible: false } editor)
-            editor.Show();
+        var editor = new EditorWindow();
+        // A little below and right of the editor in front, where no other one is (centered when there is none).
+        if (LatestEditor() is { IsVisible: true, WindowState: WindowState.Normal } last)
+        {
+            var others = Current.Windows.OfType<EditorWindow>().Where(e => e != editor && e.IsVisible).ToList();
+            double left = last.Left + 32, top = last.Top + 32;
+            while (others.Any(e => Math.Abs(e.Left - left) < 4 && Math.Abs(e.Top - top) < 4))
+            {
+                left += 32;
+                top += 32;
+            }
+            if (left + editor.Width <= SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth
+                && top + editor.Height <= SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight)
+            {
+                editor.WindowStartupLocation = WindowStartupLocation.Manual;
+                editor.Left = left;
+                editor.Top = top;
+            }
+        }
+        editor.Activated += (_, _) => _lastEditor = editor;
+        editor.Closed += (_, _) =>
+        {
+            if (_lastEditor == editor)
+                _lastEditor = null;
+            MemoryTrim.Soon();
+        };
+        _lastEditor ??= editor;
+        return editor;
+    }
+
+    /// <summary>The editors hidden for a capture or a recording come back (it was cancelled, or opens elsewhere).</summary>
+    internal static void ShowHiddenEditors(EditorWindow? except = null)
+    {
+        foreach (var editor in Current.Windows.OfType<EditorWindow>().ToList())
+        {
+            if (editor != except && !editor.IsVisible)
+                editor.Show();
+        }
     }
 
     /// <summary>ScreenClip is quitting: the editor closes without asking about a video not saved.</summary>

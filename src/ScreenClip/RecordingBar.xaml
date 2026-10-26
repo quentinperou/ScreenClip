@@ -31,6 +31,24 @@
       </Setter>
       <Setter Property="Background" Value="Transparent" />
     </Style>
+    <Style x:Key="SoundButton" TargetType="Button">
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Back" Height="30" Padding="8,0" CornerRadius="15" Background="Transparent">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Back" Property="Background" Value="#30FFFFFF" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
     <Style x:Key="Glyph" TargetType="TextBlock">
       <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
       <Setter Property="FontSize" Value="13" />
@@ -48,6 +66,23 @@
       <Ellipse x:Name="Dot" Width="10" Height="10" Fill="#FF4D4F" VerticalAlignment="Center" Margin="0,0,9,0" />
       <TextBlock x:Name="TimeText" Foreground="White" FontSize="13" VerticalAlignment="Center" MinWidth="44" Margin="0,0,8,0"
                  Typography.NumeralAlignment="Tabular" />
+      <!-- The sounds recorded, each with its meter: a click mutes it from now on (asked by the author). -->
+      <Button x:Name="ComputerButton" Style="{StaticResource SoundButton}" Click="Computer_Click" Visibility="Collapsed">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock x:Name="ComputerGlyph" Style="{StaticResource Glyph}" Text="&#xE767;" />
+          <Border Width="4" Height="14" Margin="4,0,0,0" CornerRadius="2" VerticalAlignment="Center" Background="#40FFFFFF">
+            <Border x:Name="ComputerLevel" Height="0" VerticalAlignment="Bottom" CornerRadius="2" Background="#3DD68C" />
+          </Border>
+        </StackPanel>
+      </Button>
+      <Button x:Name="MicrophoneButton" Style="{StaticResource SoundButton}" Click="Microphone_Click" Margin="0,0,6,0" Visibility="Collapsed">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock x:Name="MicrophoneGlyph" Style="{StaticResource Glyph}" Text="&#xE720;" />
+          <Border Width="4" Height="14" Margin="4,0,0,0" CornerRadius="2" VerticalAlignment="Center" Background="#40FFFFFF">
+            <Border x:Name="MicrophoneLevel" Height="0" VerticalAlignment="Bottom" CornerRadius="2" Background="#3DD68C" />
+          </Border>
+        </StackPanel>
+      </Button>
       <!-- During the countdown: start at once (asked by the author). -->
       <Button x:Name="StartNowButton" Style="{StaticResource PillButton}" Click="StartNow_Click">
         <TextBlock Style="{StaticResource Glyph}" Text="&#xE768;" />

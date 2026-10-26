@@ -193,7 +193,8 @@ internal sealed class CaptureController
             return;
         }
         App.EnsureTheme();
-        Deliver(ScreenGrabber.Grab(area), MonitorOf(area, ScreenGrabber.Monitors()));
+        var image = DemoScreen.IsOn ? Crop(DemoScreen.Grab(ScreenGrabber.VirtualScreen, ScreenGrabber.Monitors()), ScreenGrabber.VirtualScreen, area) : ScreenGrabber.Grab(area);
+        Deliver(image, MonitorOf(area, ScreenGrabber.Monitors()));
         MemoryTrim.Soon();
     }
 

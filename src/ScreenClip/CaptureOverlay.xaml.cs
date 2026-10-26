@@ -83,7 +83,11 @@ public partial class CaptureOverlay : Window
         Root.MouseRightButtonUp += Root_MouseRightButtonUp;
         Root.MouseWheel += Root_MouseWheel;
         _session.ElementsFound += Session_ElementsFound;
-        Closed += (_, _) => _session.ElementsFound -= Session_ElementsFound;
+        Closed += (_, _) =>
+        {
+            _session.ElementsFound -= Session_ElementsFound;
+            StopMeters();
+        };
         Root.MouseLeave += (_, _) =>
         {
             _pointerInside = false;
@@ -131,10 +135,14 @@ public partial class CaptureOverlay : Window
         AreaButton.IsChecked = _session.Mode == CaptureMode.Area;
         WindowButton.IsChecked = _session.Mode == CaptureMode.Window;
         ScreenButton.IsChecked = _session.Mode == CaptureMode.Screen;
-        // A video films one screen: all of them at once is for pictures.
-        AllScreensButton.Visibility = _session.HasSeveralScreens && !_session.IsVideo ? Visibility.Visible : Visibility.Collapsed;
-        VideoButton.IsChecked = _session.IsVideo;
-        AudioOptions.Visibility = _session.IsVideo ? Visibility.Visible : Visibility.Collapsed;
+        // A video films one screen: all of them at once is for pictures. Hidden, not gone: it keeps the bar's width.
+        AllScreensButton.Visibility = !_session.HasSeveralScreens ? Visibility.Collapsed : _session.IsVideo ? Visibility.Hidden : Visibility.Visible;
+        ImageKindButton.IsChecked = !_session.IsVideo;
+        VideoKindButton.IsChecked = _session.IsVideo;
+        // The mode chosen in the accent for a picture, red for a video, as the switch.
+        Resources["ModeCheckedBrush"] = _session.IsVideo ? new SolidColorBrush(Color.FromRgb(0xC4, 0x2B, 0x1C)) : FindResource("AccentFillColorDefaultBrush");
+        Resources["ModeCheckedTextBrush"] = _session.IsVideo ? Brushes.White : FindResource("TextOnAccentFillColorPrimaryBrush");
+        AudioOptions.Visibility = _session.IsVideo ? Visibility.Visible : Visibility.Hidden;
         ShowAudio();
         _syncingMode = false;
         ResetDrag();
@@ -159,7 +167,13 @@ public partial class CaptureOverlay : Window
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => _session.Cancel();
 
-    private void Video_Click(object sender, RoutedEventArgs e) => _session.SetVideo(VideoButton.IsChecked == true);
+    // Picture or video (on Checked: the keyboard and UI Automation too).
+    private void Kind_Checked(object sender, RoutedEventArgs e)
+    {
+        if (_syncingMode)
+            return;
+        _session.SetVideo(sender == VideoKindButton);
+    }
 
     // The sound and the pointer of the video, kept for the next one (on Checked: the keyboard and UI Automation too).
     private void Audio_Changed(object sender, RoutedEventArgs e)
@@ -182,7 +196,8 @@ public partial class CaptureOverlay : Window
         SystemSoundGlyph.Text = sound ? "\uE767" : "\uE74F";
         MicrophoneGlyph.Text = microphone ? "\uE720" : "\uEC54";
         string soundText = Strings.Format(sound ? "AudioOn" : "AudioOff", Strings.Get("SystemSound"));
-        string microphoneText = Strings.Format(microphone ? "AudioOn" : "AudioOff", Strings.Get("Microphone"));
+        string microphoneText = Strings.Format(microphone ? "AudioOn" : "AudioOff", Strings.Get("Microphone"))
+            + "\n" + Strings.Format("MicrophoneRightClick", Video.Microphones.ChosenName);
         SystemSoundButton.ToolTip = soundText;
         MicrophoneButton.ToolTip = microphoneText;
         System.Windows.Automation.AutomationProperties.SetName(SystemSoundButton, Strings.Get("SystemSound"));
@@ -193,6 +208,94 @@ public partial class CaptureOverlay : Window
         PointerButton.ToolTip = Strings.Get(apart ? "PointerApartOn" : "PointerApartOff");
         System.Windows.Automation.AutomationProperties.SetName(PointerButton, Strings.Get("PointerApart"));
         _syncingAudio = false;
+        ShowMeters();
+    }
+
+    // The microphones, the one recorded checked: another one chosen is recorded (and heard by the meter) at once.
+    private void Microphone_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        var menu = new ContextMenu { PlacementTarget = MicrophoneButton, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
+        var choices = Video.Microphones.All();
+        var chosen = choices.FirstOrDefault(c => c.Id == App.Settings.MicrophoneId) ?? choices[0];
+        foreach (var choice in choices)
+        {
+            var item = new MenuItem { Header = choice.Name, IsChecked = choice == chosen };
+            item.Click += (_, _) =>
+            {
+                Video.Microphones.Choose(choice);
+                _microphoneMeter?.Dispose();
+                _microphoneMeter = null;
+                ShowAudio();
+            };
+            menu.Items.Add(item);
+        }
+        if (choices.Count == 1)
+            menu.Items.Add(new MenuItem { Header = Strings.Get("MicrophoneNone"), IsEnabled = false });
+        menu.IsOpen = true;
+        e.Handled = true;
+    }
+
+    // ---------------------------------------------------------------- Sound meters
+
+    private Video.SoundMeter? _systemMeter, _microphoneMeter;
+    private System.Windows.Threading.DispatcherTimer? _meterTimer;
+
+    // The meters listen while the bar shows the video's sounds on, and only then.
+    private void ShowMeters()
+    {
+        bool video = _showBars && _session.IsVideo;
+        bool sound = video && App.Settings.RecordSystemSound, microphone = video && App.Settings.RecordMicrophone;
+        if (sound && _systemMeter is null)
+            _systemMeter = new Video.SoundMeter(Video.SoundKind.Computer);
+        else if (!sound && _systemMeter is not null)
+        {
+            _systemMeter.Dispose();
+            _systemMeter = null;
+        }
+        if (microphone && _microphoneMeter is null)
+            _microphoneMeter = new Video.SoundMeter(Video.SoundKind.Microphone);
+        else if (!microphone && _microphoneMeter is not null)
+        {
+            _microphoneMeter.Dispose();
+            _microphoneMeter = null;
+        }
+        // A meter off keeps its place: the buttons after it do not move.
+        SystemSoundMeter.Visibility = _systemMeter is { Works: true } ? Visibility.Visible : Visibility.Hidden;
+        MicrophoneMeter.Visibility = _microphoneMeter is { Works: true } ? Visibility.Visible : Visibility.Hidden;
+        if (_systemMeter is null && _microphoneMeter is null)
+        {
+            _meterTimer?.Stop();
+            return;
+        }
+        if (_meterTimer is null)
+        {
+            _meterTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
+            _meterTimer.Tick += (_, _) =>
+            {
+                ShowLevel(SystemSoundLevel, _systemMeter);
+                ShowLevel(MicrophoneLevel, _microphoneMeter);
+            };
+        }
+        _meterTimer.Start();
+    }
+
+    // A level as the meter's height: on a root scale, so that a voice at a normal distance fills half of it; it falls
+    // back slowly, as meters do.
+    private static void ShowLevel(System.Windows.Controls.Border level, Video.SoundMeter? meter)
+    {
+        if (meter is null)
+            return;
+        double height = 16 * Math.Min(1, Math.Sqrt(meter.TakeLevel()));
+        level.Height = Math.Max(height, level.Height - 1.5);
+    }
+
+    private void StopMeters()
+    {
+        _meterTimer?.Stop();
+        _systemMeter?.Dispose();
+        _systemMeter = null;
+        _microphoneMeter?.Dispose();
+        _microphoneMeter = null;
     }
 
     private void FillHints()
@@ -287,7 +390,9 @@ public partial class CaptureOverlay : Window
         if (window is null)
             return; // the desktop: a click takes the screen
         bool outside = _elements.Count == 0 || !_elements[0].Contains(_pointerX, _pointerY);
-        bool moved = Math.Abs(_pointerX - _lookupX) + Math.Abs(_pointerY - _lookupY) > 8;
+        // In longs: the first lookup starts from int.MinValue, and 0 - int.MinValue has no int (Math.Abs threw at the
+        // left or top edge of the screen).
+        bool moved = Math.Abs((long)_pointerX - _lookupX) + Math.Abs((long)_pointerY - _lookupY) > 8;
         if (outside || moved)
         {
             (_lookupX, _lookupY) = (_pointerX, _pointerY);

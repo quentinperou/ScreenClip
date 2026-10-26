@@ -17,6 +17,8 @@ public enum HandleKind
     MotionControl1,
     MotionControl2,
     MotionTo,
+    /// <summary>A stop on its way (its index among the stops).</summary>
+    MotionStop,
 }
 
 /// <summary>
@@ -276,35 +278,78 @@ public static class AnnotationGeometry
 
     // ---------------------------------------------------------------- Handles
 
-    /// <summary>The points that reshape the annotation; none for those that are only moved.</summary>
-    public static (HandleKind Kind, SKPoint Point)[] Handles(Annotation annotation)
+    /// <summary>
+    /// The points that reshape the annotation, none for those that are only moved; <c>Index</c> tells which part of a
+    /// pointer's way a handle bends, or which stop it is.
+    /// </summary>
+    public static (HandleKind Kind, SKPoint Point, int Index)[] Handles(Annotation annotation)
     {
         switch (annotation.Kind)
         {
             case AnnotationKind.Arrow or AnnotationKind.Line:
                 return IsCurved(annotation)
-                    ? [(HandleKind.Start, annotation.Start), (HandleKind.Bend, CurveMiddle(annotation)), (HandleKind.End, annotation.End)]
-                    : [(HandleKind.Start, annotation.Start), (HandleKind.End, annotation.End)];
+                    ? [(HandleKind.Start, annotation.Start, 0), (HandleKind.Bend, CurveMiddle(annotation), 0), (HandleKind.End, annotation.End, 0)]
+                    : [(HandleKind.Start, annotation.Start, 0), (HandleKind.End, annotation.End, 0)];
             case AnnotationKind.Pointer when annotation.Motion is { } motion:
-                return motion.Curved
-                    ? [(HandleKind.MotionFrom, motion.From), (HandleKind.MotionControl1, motion.Control1),
-                        (HandleKind.MotionControl2, motion.Control2), (HandleKind.MotionTo, annotation.Start)]
-                    : [(HandleKind.MotionFrom, motion.From), (HandleKind.MotionTo, annotation.Start)];
+            {
+                var handles = new List<(HandleKind, SKPoint, int)> { (HandleKind.MotionFrom, motion.From, 0) };
+                var legs = motion.Legs(annotation.Start);
+                for (int i = 0; i < legs.Length && motion.Curved; i++)
+                {
+                    handles.Add((HandleKind.MotionControl1, legs[i].Control1, i));
+                    handles.Add((HandleKind.MotionControl2, legs[i].Control2, i));
+                }
+                for (int i = 0; i < motion.Stops.Count; i++)
+                    handles.Add((HandleKind.MotionStop, motion.Stops[i].At, i));
+                handles.Add((HandleKind.MotionTo, annotation.Start, 0));
+                return [.. handles];
+            }
             case AnnotationKind.Rectangle or AnnotationKind.Ellipse or AnnotationKind.Mask:
                 var r = annotation.Rect;
                 return
                 [
-                    (HandleKind.TopLeft, new SKPoint(r.Left, r.Top)), (HandleKind.TopRight, new SKPoint(r.Right, r.Top)),
-                    (HandleKind.BottomLeft, new SKPoint(r.Left, r.Bottom)), (HandleKind.BottomRight, new SKPoint(r.Right, r.Bottom)),
+                    (HandleKind.TopLeft, new SKPoint(r.Left, r.Top), 0), (HandleKind.TopRight, new SKPoint(r.Right, r.Top), 0),
+                    (HandleKind.BottomLeft, new SKPoint(r.Left, r.Bottom), 0), (HandleKind.BottomRight, new SKPoint(r.Right, r.Bottom), 0),
                 ];
             default:
                 return [];
         }
     }
 
-    /// <summary>The annotation with <paramref name="handle"/> dragged to <paramref name="point"/>; Shift keeps 45° steps or a square.</summary>
-    public static Annotation WithHandle(Annotation annotation, HandleKind handle, SKPoint point, bool constrain)
+    // A handle of part <paramref name="leg"/> of a way (its first, or its second), moved by (dx, dy); the handles of a
+    // part after the first belong to the stop it leaves from.
+    private static PointerMotion ShiftControl(PointerMotion motion, int leg, bool second, float dx, float dy)
     {
+        SKPoint Shift(SKPoint p) => new(p.X + dx, p.Y + dy);
+        if (leg == 0)
+            return second ? motion with { Control2 = Shift(motion.Control2) } : motion with { Control1 = Shift(motion.Control1) };
+        if (leg > motion.Stops.Count)
+            return motion;
+        var stop = motion.Stops[leg - 1];
+        stop = second ? stop with { Control2 = Shift(stop.Control2) } : stop with { Control1 = Shift(stop.Control1) };
+        return motion with { Stops = motion.Stops.SetItem(leg - 1, stop) };
+    }
+
+    /// <summary>The annotation with <paramref name="handle"/> dragged to <paramref name="point"/>; Shift keeps 45° steps or a square.</summary>
+    public static Annotation WithHandle(Annotation annotation, HandleKind handle, SKPoint point, bool constrain, int index = 0)
+    {
+        // The handles of the parts of a way after its first one belong to the stop it leaves from.
+        if (handle is HandleKind.MotionControl1 or HandleKind.MotionControl2 && index > 0 && annotation.Motion is { } way && index <= way.Stops.Count)
+        {
+            var stop = way.Stops[index - 1];
+            stop = handle == HandleKind.MotionControl1 ? stop with { Control1 = point } : stop with { Control2 = point };
+            return annotation with { Motion = way with { Stops = way.Stops.SetItem(index - 1, stop) } };
+        }
+        // A point of a way carries the handles on both sides of it, so that the curve keeps its shape there (asked
+        // by the author).
+        if (handle == HandleKind.MotionStop && annotation.Motion is { } stopping && index >= 0 && index < stopping.Stops.Count)
+        {
+            var at = stopping.Stops[index].At;
+            float sx = point.X - at.X, sy = point.Y - at.Y;
+            var moved = stopping with { Stops = stopping.Stops.SetItem(index, stopping.Stops[index] with { At = point }) };
+            moved = ShiftControl(ShiftControl(moved, index, true, sx, sy), index + 1, false, sx, sy);
+            return annotation with { Motion = moved };
+        }
         switch (handle)
         {
             case HandleKind.Start:
@@ -312,11 +357,17 @@ public static class AnnotationGeometry
             case HandleKind.End:
                 return annotation with { Points = [annotation.Start, Constrain(annotation.Start, point, constrain)] };
             case HandleKind.MotionFrom when annotation.Motion is { } motion:
-                return annotation with { Motion = motion with { From = point } };
+                return annotation with { Motion = ShiftControl(motion with { From = point }, 0, false, point.X - motion.From.X, point.Y - motion.From.Y) };
             case HandleKind.MotionControl1 when annotation.Motion is { } motion:
                 return annotation with { Motion = motion with { Control1 = point } };
             case HandleKind.MotionControl2 when annotation.Motion is { } motion:
                 return annotation with { Motion = motion with { Control2 = point } };
+            case HandleKind.MotionTo when annotation.Motion is { } ending:
+                return annotation with
+                {
+                    Points = [point],
+                    Motion = ShiftControl(ending, ending.Stops.Count, true, point.X - annotation.Start.X, point.Y - annotation.Start.Y),
+                };
             case HandleKind.MotionTo:
                 return annotation with { Points = [point] };
             case HandleKind.Bend:

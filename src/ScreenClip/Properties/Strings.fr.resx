@@ -22,6 +22,18 @@
   <data name="AboutVersion" xml:space="preserve">
     <value>Version {0} · licence MIT</value>
   </data>
+  <data name="Animate" xml:space="preserve">
+    <value>Animer</value>
+  </data>
+  <data name="AnimateToolTip" xml:space="preserve">
+    <value>Donner une durée et une timeline à cette image : un curseur s'y déplace, des annotations apparaissent, puis exportez un GIF ou un MP4</value>
+  </data>
+  <data name="AnimationLength" xml:space="preserve">
+    <value>Durée de l'animation</value>
+  </data>
+  <data name="AnimationLengthToolTip" xml:space="preserve">
+    <value>Durée de l'animation, en secondes (1 à 60) ; ou tirez sa fin sur la timeline</value>
+  </data>
   <data name="AnnotClearAll" xml:space="preserve">
     <value>Tout effacer</value>
   </data>
@@ -263,7 +275,7 @@
     <value>Glissez l'image vers une application (mail, messagerie, Word…) pour l'y déposer</value>
   </data>
   <data name="EditorEmptyText" xml:space="preserve">
-    <value>Faites une capture, ou importez une image : collez-la (Ctrl+V) ou glissez-la ici.</value>
+    <value>Faites une capture ou une vidéo, ou importez une image : collez-la (Ctrl+V) ou glissez-la ici.</value>
   </data>
   <data name="EditorEmptyTitle" xml:space="preserve">
     <value>Mettez en forme une capture</value>
@@ -309,6 +321,9 @@
   </data>
   <data name="EditorReset" xml:space="preserve">
     <value>Réinitialiser</value>
+  </data>
+  <data name="EditorSeconds" xml:space="preserve">
+    <value>{0} s</value>
   </data>
   <data name="EditorShadow" xml:space="preserve">
     <value>Ombre</value>
@@ -463,6 +478,9 @@
   <data name="HintWheel" xml:space="preserve">
     <value>Molette : plus grand ou plus petit</value>
   </data>
+  <data name="ImageModeToolTip" xml:space="preserve">
+    <value>Prendre une image de la zone, de la fenêtre ou de l'écran choisi</value>
+  </data>
   <data name="KeyAlt" xml:space="preserve">
     <value>Alt</value>
   </data>
@@ -523,14 +541,80 @@
   <data name="MaskSolid" xml:space="preserve">
     <value>Pavé</value>
   </data>
+  <data name="MenuAddStop" xml:space="preserve">
+    <value>Ajouter une étape ici</value>
+  </data>
+  <data name="MenuClickHere" xml:space="preserve">
+    <value>Clic à cette étape</value>
+  </data>
+  <data name="MenuContinueWay" xml:space="preserve">
+    <value>Continuer le trajet jusqu'ici</value>
+  </data>
+  <data name="MenuDelete" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="MenuFramePiece" xml:space="preserve">
+    <value>Recadrer ce passage…</value>
+  </data>
+  <data name="MenuMovePointer" xml:space="preserve">
+    <value>Faire bouger ce curseur (A → B)</value>
+  </data>
+  <data name="MenuRemoveLastStop" xml:space="preserve">
+    <value>Retirer la dernière étape</value>
+  </data>
+  <data name="MenuRemovePiece" xml:space="preserve">
+    <value>Supprimer ce morceau</value>
+  </data>
+  <data name="MenuRemoveStop" xml:space="preserve">
+    <value>Retirer cette étape</value>
+  </data>
+  <data name="MenuResetFraming" xml:space="preserve">
+    <value>Tout afficher</value>
+  </data>
+  <data name="MenuRestorePiece" xml:space="preserve">
+    <value>Remettre ce morceau</value>
+  </data>
+  <data name="MenuSilencePiece" xml:space="preserve">
+    <value>Couper ce son dans ce morceau</value>
+  </data>
+  <data name="MenuSmoothWay" xml:space="preserve">
+    <value>Lisser le trajet</value>
+  </data>
+  <data name="MenuSplitHere" xml:space="preserve">
+    <value>Couper ici</value>
+  </data>
+  <data name="MenuUnsilencePiece" xml:space="preserve">
+    <value>Remettre ce son dans ce morceau</value>
+  </data>
+  <data name="MenuWayCurved" xml:space="preserve">
+    <value>Trajet en courbe</value>
+  </data>
+  <data name="MenuWayStraight" xml:space="preserve">
+    <value>Trajet droit</value>
+  </data>
   <data name="Microphone" xml:space="preserve">
     <value>Micro</value>
+  </data>
+  <data name="MicrophoneDefault" xml:space="preserve">
+    <value>Par défaut de Windows</value>
+  </data>
+  <data name="MicrophoneDefaultNamed" xml:space="preserve">
+    <value>Par défaut de Windows ({0})</value>
+  </data>
+  <data name="MicrophoneNone" xml:space="preserve">
+    <value>Aucun micro trouvé</value>
+  </data>
+  <data name="MicrophoneRightClick" xml:space="preserve">
+    <value>Clic droit : choisir le micro ({0})</value>
   </data>
   <data name="ModeAllScreens" xml:space="preserve">
     <value>Tous les écrans</value>
   </data>
   <data name="ModeArea" xml:space="preserve">
     <value>Zone</value>
+  </data>
+  <data name="ModeImage" xml:space="preserve">
+    <value>Image</value>
   </data>
   <data name="ModeScreen" xml:space="preserve">
     <value>Plein écran</value>
@@ -542,10 +626,13 @@
     <value>Fenêtre</value>
   </data>
   <data name="MotionClick" xml:space="preserve">
-    <value>Clic à l'arrivée</value>
+    <value>Effet du clic</value>
   </data>
   <data name="MotionHelp" xml:space="preserve">
-    <value>Glissez A et B sur l'image ; les poignées carrées courbent le trajet. Sur la timeline, glissez les losanges pour changer quand il part et arrive.</value>
+    <value>Glissez ses points sur l'image ; les poignées carrées courbent le trajet. Avec l'outil Curseur, un clic ailleurs le prolonge jusque-là (A → B → C…). Il clique aux points jaunes : clic droit sur un point pour cliquer ou non, ou sur le trajet pour ajouter une étape, le lisser… Sur la timeline, glissez les losanges pour changer quand il part et arrive.</value>
+  </data>
+  <data name="MotionNoRoom" xml:space="preserve">
+    <value>Plus de temps dans la vidéo pour ce trajet : raccourcissez-le ou faites-le partir plus tôt</value>
   </data>
   <data name="MotionPace" xml:space="preserve">
     <value>Mouvement</value>
@@ -585,6 +672,18 @@
   </data>
   <data name="OpenFolder" xml:space="preserve">
     <value>Ouvrir</value>
+  </data>
+  <data name="PieceHelp" xml:space="preserve">
+    <value>Faites glisser le cadre sur l'image pour choisir ce que montre ce morceau ; ses coins zooment. L'outil Recadrer règle le format de toute la vidéo.</value>
+  </data>
+  <data name="PieceTitle" xml:space="preserve">
+    <value>Ce morceau</value>
+  </data>
+  <data name="PieceWhole" xml:space="preserve">
+    <value>La vidéo</value>
+  </data>
+  <data name="PieceZoom" xml:space="preserve">
+    <value>Zoom</value>
   </data>
   <data name="PointerApart" xml:space="preserve">
     <value>Pointeur à part</value>
@@ -742,6 +841,12 @@
   <data name="RecordingSaving" xml:space="preserve">
     <value>Enregistrement…</value>
   </data>
+  <data name="RecordingSoundOff" xml:space="preserve">
+    <value>{0} : coupé (cliquez pour l'enregistrer à nouveau)</value>
+  </data>
+  <data name="RecordingSoundOn" xml:space="preserve">
+    <value>{0} : enregistré (cliquez pour le couper à partir de maintenant)</value>
+  </data>
   <data name="RecordingStartNow" xml:space="preserve">
     <value>Démarrer maintenant</value>
   </data>
@@ -754,6 +859,15 @@
   <data name="Redo" xml:space="preserve">
     <value>Rétablir</value>
   </data>
+  <data name="RemovePieceRefused" xml:space="preserve">
+    <value>Le dernier morceau gardé ne peut pas être supprimé.</value>
+  </data>
+  <data name="RemovePieceToolTip" xml:space="preserve">
+    <value>Supprimer le morceau sous la tête de lecture (Suppr)</value>
+  </data>
+  <data name="RestorePieceToolTip" xml:space="preserve">
+    <value>Remettre ce morceau</value>
+  </data>
   <data name="Save" xml:space="preserve">
     <value>Enregistrer</value>
   </data>
@@ -765,6 +879,9 @@
   </data>
   <data name="ScaleSmall" xml:space="preserve">
     <value>Petit</value>
+  </data>
+  <data name="SecondsShort" xml:space="preserve">
+    <value>s</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Paramètres</value>
@@ -822,6 +939,12 @@
   </data>
   <data name="SettingsLanguageDescription" xml:space="preserve">
     <value>Langue de l'application.</value>
+  </data>
+  <data name="SettingsMicrophone" xml:space="preserve">
+    <value>Micro</value>
+  </data>
+  <data name="SettingsMicrophoneDescription" xml:space="preserve">
+    <value>Celui qu'une vidéo enregistre quand son micro est activé. Un clic droit sur le micro de la barre de capture le choisit aussi.</value>
   </data>
   <data name="SettingsOpenEditor" xml:space="preserve">
     <value>Ouvrir l'éditeur</value>
@@ -905,7 +1028,7 @@
     <value>Là où vont les vidéos enregistrées, quand elles sont enregistrées automatiquement.</value>
   </data>
   <data name="SettingsVideoFolderReset" xml:space="preserve">
-    <value>Revenir au dossier par défaut (Vidéos\Enregistrements d'écran)</value>
+    <value>Revenir au dossier par défaut (Vidéos\ScreenClip)</value>
   </data>
   <data name="ShapeFilled" xml:space="preserve">
     <value>Plein</value>
@@ -996,6 +1119,45 @@
   </data>
   <data name="SliderResetToolTip" xml:space="preserve">
     <value>Double-clic : retour à la valeur par défaut</value>
+  </data>
+  <data name="SoundComputer" xml:space="preserve">
+    <value>Ordinateur</value>
+  </data>
+  <data name="SoundFadeIn" xml:space="preserve">
+    <value>Fondu au début</value>
+  </data>
+  <data name="SoundFadeOut" xml:space="preserve">
+    <value>Fondu à la fin</value>
+  </data>
+  <data name="SoundHelp" xml:space="preserve">
+    <value>Tirez les bouts de sa barre sous la timeline pour choisir où il joue. Cliquez un morceau et appuyez sur Suppr pour le couper là, l'image gardée.</value>
+  </data>
+  <data name="SoundMicrophone" xml:space="preserve">
+    <value>Micro</value>
+  </data>
+  <data name="SoundMix" xml:space="preserve">
+    <value>Son</value>
+  </data>
+  <data name="SoundMute" xml:space="preserve">
+    <value>Couper ce son</value>
+  </data>
+  <data name="SoundMuted" xml:space="preserve">
+    <value>Coupé</value>
+  </data>
+  <data name="SoundUnknown" xml:space="preserve">
+    <value>Son</value>
+  </data>
+  <data name="SoundUnmute" xml:space="preserve">
+    <value>Remettre ce son</value>
+  </data>
+  <data name="SoundVolume" xml:space="preserve">
+    <value>Volume</value>
+  </data>
+  <data name="SplitRefused" xml:space="preserve">
+    <value>Trop près d'une coupe ou d'un bout pour couper ici.</value>
+  </data>
+  <data name="SplitToolTip" xml:space="preserve">
+    <value>Couper à la tête de lecture (Ctrl+B)</value>
   </data>
   <data name="StopRecording" xml:space="preserve">
     <value>Arrêter l'enregistrement</value>
@@ -1133,7 +1295,7 @@
     <value>Cliquez là où va le pointeur de la souris ; glissez-le pour le déplacer. Le vrai n'est jamais capturé.</value>
   </data>
   <data name="ToolPointerVideoHelp" xml:space="preserve">
-    <value>Cliquez là où va le pointeur de la souris. Glissez de A à B : il s'y déplace dans la vidéo, avec un clic.</value>
+    <value>Cliquez là où va le pointeur de la souris. Glissez de A à B : il s'y déplace, avec un clic ; cliquez ensuite pour aller vers C, D…</value>
   </data>
   <data name="ToolRectangle" xml:space="preserve">
     <value>Rectangle</value>
@@ -1155,6 +1317,9 @@
   </data>
   <data name="ToolToolTip" xml:space="preserve">
     <value>{0} ({1})</value>
+  </data>
+  <data name="TracksHandleToolTip" xml:space="preserve">
+    <value>Glissez vers le haut pour agrandir les pistes ; double-clic pour revenir</value>
   </data>
   <data name="TrayClickEditor" xml:space="preserve">
     <value>Ouvrir l'éditeur</value>

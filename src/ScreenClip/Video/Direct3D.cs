@@ -145,7 +145,7 @@ internal static class Media
     }
 
     /// <summary>AAC, 160 kbit/s stereo.</summary>
-    public static IMFMediaType Aac()
+    public static IMFMediaType Aac(uint bytesPerSecond = 20000)
     {
         var type = MediaFactory.MFCreateMediaType();
         type.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Audio);
@@ -153,7 +153,7 @@ internal static class Media
         type.Set(MediaTypeAttributeKeys.AudioNumChannels, 2u);
         type.Set(MediaTypeAttributeKeys.AudioSamplesPerSecond, 48000u);
         type.Set(MediaTypeAttributeKeys.AudioBitsPerSample, 16u);
-        type.Set(MediaTypeAttributeKeys.AudioAvgBytesPerSecond, 20000u);
+        type.Set(MediaTypeAttributeKeys.AudioAvgBytesPerSecond, bytesPerSecond);
         return type;
     }
 

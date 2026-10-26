@@ -74,6 +74,9 @@ public class LocalizationTests
         // Strings.Get("Shortcut" + action): one per capture action.
         foreach (string action in new[] { "Area", "Window", "Screen", "RepeatArea", "AllScreens", "Video" })
             Assert.Contains("Shortcut" + action, keys);
+        // A video's sounds, by what they are (the app's SoundKind).
+        foreach (string kind in new[] { "Mix", "Computer", "Microphone", "Unknown" })
+            Assert.Contains("Sound" + kind, keys);
         // The editor: a name per background swatch, preset and window frame.
         static string Capitalize(string id) => char.ToUpperInvariant(id[0]) + id[1..];
         foreach (var background in Backgrounds.All)

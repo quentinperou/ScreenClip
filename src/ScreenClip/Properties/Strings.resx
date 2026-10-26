@@ -22,6 +22,18 @@
   <data name="AboutVersion" xml:space="preserve">
     <value>Version {0} · MIT license</value>
   </data>
+  <data name="Animate" xml:space="preserve">
+    <value>Animate</value>
+  </data>
+  <data name="AnimateToolTip" xml:space="preserve">
+    <value>Give this picture a length and a timeline: a pointer moves on it, annotations come and go, then export a GIF or an MP4</value>
+  </data>
+  <data name="AnimationLength" xml:space="preserve">
+    <value>Length of the animation</value>
+  </data>
+  <data name="AnimationLengthToolTip" xml:space="preserve">
+    <value>Length of the animation, in seconds (1 to 60); or pull its end on the timeline</value>
+  </data>
   <data name="AnnotClearAll" xml:space="preserve">
     <value>Clear all</value>
   </data>
@@ -263,7 +275,7 @@
     <value>Drag the picture to an app (mail, chat, Word…) to drop it there</value>
   </data>
   <data name="EditorEmptyText" xml:space="preserve">
-    <value>Take a capture, or import a picture: paste it (Ctrl+V) or drop it here.</value>
+    <value>Take a capture or a video, or import a picture: paste it (Ctrl+V) or drop it here.</value>
   </data>
   <data name="EditorEmptyTitle" xml:space="preserve">
     <value>Lay out a screenshot</value>
@@ -309,6 +321,9 @@
   </data>
   <data name="EditorReset" xml:space="preserve">
     <value>Reset</value>
+  </data>
+  <data name="EditorSeconds" xml:space="preserve">
+    <value>{0} s</value>
   </data>
   <data name="EditorShadow" xml:space="preserve">
     <value>Shadow</value>
@@ -463,6 +478,9 @@
   <data name="HintWheel" xml:space="preserve">
     <value>Wheel: larger or smaller</value>
   </data>
+  <data name="ImageModeToolTip" xml:space="preserve">
+    <value>Take a picture of the area, the window or the screen you choose</value>
+  </data>
   <data name="KeyAlt" xml:space="preserve">
     <value>Alt</value>
   </data>
@@ -523,14 +541,80 @@
   <data name="MaskSolid" xml:space="preserve">
     <value>Solid</value>
   </data>
+  <data name="MenuAddStop" xml:space="preserve">
+    <value>Add a step here</value>
+  </data>
+  <data name="MenuClickHere" xml:space="preserve">
+    <value>Click at this step</value>
+  </data>
+  <data name="MenuContinueWay" xml:space="preserve">
+    <value>Take the way on to here</value>
+  </data>
+  <data name="MenuDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="MenuFramePiece" xml:space="preserve">
+    <value>Reframe this part…</value>
+  </data>
+  <data name="MenuMovePointer" xml:space="preserve">
+    <value>Make this pointer move (A → B)</value>
+  </data>
+  <data name="MenuRemoveLastStop" xml:space="preserve">
+    <value>Remove the last step</value>
+  </data>
+  <data name="MenuRemovePiece" xml:space="preserve">
+    <value>Remove this piece</value>
+  </data>
+  <data name="MenuRemoveStop" xml:space="preserve">
+    <value>Remove this step</value>
+  </data>
+  <data name="MenuResetFraming" xml:space="preserve">
+    <value>Show all of it</value>
+  </data>
+  <data name="MenuRestorePiece" xml:space="preserve">
+    <value>Put this piece back</value>
+  </data>
+  <data name="MenuSilencePiece" xml:space="preserve">
+    <value>Silence this sound in this piece</value>
+  </data>
+  <data name="MenuSmoothWay" xml:space="preserve">
+    <value>Smooth the way</value>
+  </data>
+  <data name="MenuSplitHere" xml:space="preserve">
+    <value>Split here</value>
+  </data>
+  <data name="MenuUnsilencePiece" xml:space="preserve">
+    <value>Hear this sound in this piece again</value>
+  </data>
+  <data name="MenuWayCurved" xml:space="preserve">
+    <value>Curved way</value>
+  </data>
+  <data name="MenuWayStraight" xml:space="preserve">
+    <value>Straight way</value>
+  </data>
   <data name="Microphone" xml:space="preserve">
     <value>Microphone</value>
+  </data>
+  <data name="MicrophoneDefault" xml:space="preserve">
+    <value>Windows default</value>
+  </data>
+  <data name="MicrophoneDefaultNamed" xml:space="preserve">
+    <value>Windows default ({0})</value>
+  </data>
+  <data name="MicrophoneNone" xml:space="preserve">
+    <value>No microphone found</value>
+  </data>
+  <data name="MicrophoneRightClick" xml:space="preserve">
+    <value>Right click: choose the microphone ({0})</value>
   </data>
   <data name="ModeAllScreens" xml:space="preserve">
     <value>All screens</value>
   </data>
   <data name="ModeArea" xml:space="preserve">
     <value>Area</value>
+  </data>
+  <data name="ModeImage" xml:space="preserve">
+    <value>Picture</value>
   </data>
   <data name="ModeScreen" xml:space="preserve">
     <value>Full screen</value>
@@ -542,10 +626,13 @@
     <value>Window</value>
   </data>
   <data name="MotionClick" xml:space="preserve">
-    <value>Click on arrival</value>
+    <value>Click effect</value>
   </data>
   <data name="MotionHelp" xml:space="preserve">
-    <value>Drag A and B on the picture; the square handles bend the way. On the timeline, drag the diamonds to change when it leaves and arrives.</value>
+    <value>Drag its points on the picture; the square handles bend the way. With the Pointer tool, a click elsewhere takes it on there (A → B → C…). It clicks at the yellow points: right click a point to click there or not, or the way to add a step, smooth it… On the timeline, drag the diamonds to change when it leaves and arrives.</value>
+  </data>
+  <data name="MotionNoRoom" xml:space="preserve">
+    <value>No time left in the video for this way: shorten it or start it sooner</value>
   </data>
   <data name="MotionPace" xml:space="preserve">
     <value>Movement</value>
@@ -585,6 +672,18 @@
   </data>
   <data name="OpenFolder" xml:space="preserve">
     <value>Open</value>
+  </data>
+  <data name="PieceHelp" xml:space="preserve">
+    <value>Drag the frame on the picture to choose what this piece shows; its corners zoom. The Crop tool sets the size of the whole video.</value>
+  </data>
+  <data name="PieceTitle" xml:space="preserve">
+    <value>This piece</value>
+  </data>
+  <data name="PieceWhole" xml:space="preserve">
+    <value>The video</value>
+  </data>
+  <data name="PieceZoom" xml:space="preserve">
+    <value>Zoom</value>
   </data>
   <data name="PointerApart" xml:space="preserve">
     <value>Pointer apart</value>
@@ -742,6 +841,12 @@
   <data name="RecordingSaving" xml:space="preserve">
     <value>Saving…</value>
   </data>
+  <data name="RecordingSoundOff" xml:space="preserve">
+    <value>{0}: muted (click to record it again)</value>
+  </data>
+  <data name="RecordingSoundOn" xml:space="preserve">
+    <value>{0}: recorded (click to mute it from now on)</value>
+  </data>
   <data name="RecordingStartNow" xml:space="preserve">
     <value>Start now</value>
   </data>
@@ -754,6 +859,15 @@
   <data name="Redo" xml:space="preserve">
     <value>Redo</value>
   </data>
+  <data name="RemovePieceRefused" xml:space="preserve">
+    <value>The last piece kept cannot be removed.</value>
+  </data>
+  <data name="RemovePieceToolTip" xml:space="preserve">
+    <value>Remove the piece at the playhead (Delete)</value>
+  </data>
+  <data name="RestorePieceToolTip" xml:space="preserve">
+    <value>Put this piece back</value>
+  </data>
   <data name="Save" xml:space="preserve">
     <value>Save</value>
   </data>
@@ -765,6 +879,9 @@
   </data>
   <data name="ScaleSmall" xml:space="preserve">
     <value>Small</value>
+  </data>
+  <data name="SecondsShort" xml:space="preserve">
+    <value>s</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
@@ -822,6 +939,12 @@
   </data>
   <data name="SettingsLanguageDescription" xml:space="preserve">
     <value>Language of the app.</value>
+  </data>
+  <data name="SettingsMicrophone" xml:space="preserve">
+    <value>Microphone</value>
+  </data>
+  <data name="SettingsMicrophoneDescription" xml:space="preserve">
+    <value>The one a video records when its microphone is on. A right click on the microphone of the capture bar chooses it too.</value>
   </data>
   <data name="SettingsOpenEditor" xml:space="preserve">
     <value>Open the editor</value>
@@ -905,7 +1028,7 @@
     <value>Where the videos recorded go when they are saved automatically.</value>
   </data>
   <data name="SettingsVideoFolderReset" xml:space="preserve">
-    <value>Back to the default folder (Videos\Screen Recordings)</value>
+    <value>Back to the default folder (Videos\ScreenClip)</value>
   </data>
   <data name="ShapeFilled" xml:space="preserve">
     <value>Filled</value>
@@ -996,6 +1119,45 @@
   </data>
   <data name="SliderResetToolTip" xml:space="preserve">
     <value>Double click: back to the default</value>
+  </data>
+  <data name="SoundComputer" xml:space="preserve">
+    <value>Computer</value>
+  </data>
+  <data name="SoundFadeIn" xml:space="preserve">
+    <value>Fade in</value>
+  </data>
+  <data name="SoundFadeOut" xml:space="preserve">
+    <value>Fade out</value>
+  </data>
+  <data name="SoundHelp" xml:space="preserve">
+    <value>Drag the ends of its bar under the timeline to choose where it plays. Click a piece of it and press Delete to silence it there, the picture kept.</value>
+  </data>
+  <data name="SoundMicrophone" xml:space="preserve">
+    <value>Microphone</value>
+  </data>
+  <data name="SoundMix" xml:space="preserve">
+    <value>Sound</value>
+  </data>
+  <data name="SoundMute" xml:space="preserve">
+    <value>Mute this sound</value>
+  </data>
+  <data name="SoundMuted" xml:space="preserve">
+    <value>Muted</value>
+  </data>
+  <data name="SoundUnknown" xml:space="preserve">
+    <value>Sound</value>
+  </data>
+  <data name="SoundUnmute" xml:space="preserve">
+    <value>Turn this sound back on</value>
+  </data>
+  <data name="SoundVolume" xml:space="preserve">
+    <value>Volume</value>
+  </data>
+  <data name="SplitRefused" xml:space="preserve">
+    <value>Too close to a split or an end to split here.</value>
+  </data>
+  <data name="SplitToolTip" xml:space="preserve">
+    <value>Split at the playhead (Ctrl+B)</value>
   </data>
   <data name="StopRecording" xml:space="preserve">
     <value>Stop the recording</value>
@@ -1133,7 +1295,7 @@
     <value>Click where the mouse pointer goes; drag it to move it. The real one is never captured.</value>
   </data>
   <data name="ToolPointerVideoHelp" xml:space="preserve">
-    <value>Click where the mouse pointer goes. Drag from A to B: it moves there in the video, with a click.</value>
+    <value>Click where the mouse pointer goes. Drag from A to B: it moves there, with a click; then click on to C, D…</value>
   </data>
   <data name="ToolRectangle" xml:space="preserve">
     <value>Rectangle</value>
@@ -1155,6 +1317,9 @@
   </data>
   <data name="ToolToolTip" xml:space="preserve">
     <value>{0} ({1})</value>
+  </data>
+  <data name="TracksHandleToolTip" xml:space="preserve">
+    <value>Drag up to give the tracks more room; double click to put it back</value>
   </data>
   <data name="TrayClickEditor" xml:space="preserve">
     <value>Open the editor</value>

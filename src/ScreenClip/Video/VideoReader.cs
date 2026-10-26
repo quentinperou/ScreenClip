@@ -391,29 +391,99 @@ internal readonly struct YuvToRgb
     private static int Clamp(int value) => value < 0 ? 0 : value > 255 ? 255 : value;
 }
 
-/// <summary>The sound of a video, as 48 kHz 16-bit stereo PCM, from a given time.</summary>
+/// <summary>
+/// A sound of a video, as 48 kHz 16-bit stereo PCM, from a given time: its first sound track, or another one by its
+/// id (a recording's sounds apart, <see cref="SoundTracks"/>).
+/// </summary>
 internal sealed class AudioReader : IDisposable
 {
     private readonly IMFSourceReader _reader;
+    private readonly int _stream;
 
-    public AudioReader(string path)
+    public AudioReader(string path, int? track = null)
     {
         Media.EnsureStarted();
         _reader = MediaFactory.MFCreateSourceReaderFromURL(path, null);
+        _stream = StreamOf(_reader, track);
         _reader.SetStreamSelection(SourceReaderIndex.AllStreams, false);
-        _reader.SetStreamSelection(SourceReaderIndex.FirstAudioStream, true);
+        _reader.SetStreamSelection(_stream, true);
         using var pcm = Media.Pcm();
-        _reader.SetCurrentMediaType(SourceReaderIndex.FirstAudioStream, pcm);
+        _reader.SetCurrentMediaType(_stream, pcm);
+    }
+
+    // The reader's index of the sound stream at that AAC rate: Media Foundation does not list the tracks in the file's
+    // order, and its stream ids are not the tracks' (seen on a recording's three sounds), but it tells each one's rate,
+    // which the recorder makes different for each (SoundTracks.BytesPerSecondOf). With no rate, the fastest one (the
+    // mix of a recording), else the first.
+    private static int StreamOf(IMFSourceReader reader, int? bytesPerSecond)
+    {
+        int first = -1, fastest = -1;
+        uint best = 0;
+        for (int index = 0; index < 32; index++)
+        {
+            uint rate;
+            try
+            {
+                using var type = reader.GetNativeMediaType(index, 0);
+                if (type.GetGUID(MediaTypeAttributeKeys.MajorType) != MediaTypeGuids.Audio)
+                    continue;
+                rate = type.GetUInt32(MediaTypeAttributeKeys.AudioAvgBytesPerSecond);
+            }
+            catch (SharpGen.Runtime.SharpGenException ex) when (ex.HResult == unchecked((int)0xC00D36B3))
+            {
+                break; // MF_E_INVALIDSTREAMNUMBER: past the last stream
+            }
+            catch (SharpGen.Runtime.SharpGenException)
+            {
+                rate = 0; // no rate told
+            }
+            if (bytesPerSecond is { } wanted && rate == wanted)
+                return index;
+            if (first < 0)
+                first = index;
+            // The last of equal ones: Media Foundation lists a recording's sounds last first, its mix last.
+            if (rate >= best)
+            {
+                best = rate;
+                fastest = index;
+            }
+        }
+        return fastest >= 0 ? fastest : first >= 0 ? first : throw new InvalidDataException("This video has no sound.");
     }
 
     public void Seek(TimeSpan time) => _reader.SetCurrentPosition(Math.Max(0, time.Ticks));
+
+    /// <summary>The AAC rate (bytes a second) of each sound of a file, as Media Foundation tells them.</summary>
+    public static IReadOnlyList<uint> Rates(string path)
+    {
+        Media.EnsureStarted();
+        var rates = new List<uint>();
+        using var reader = MediaFactory.MFCreateSourceReaderFromURL(path, null);
+        for (int index = 0; index < 32; index++)
+        {
+            try
+            {
+                using var type = reader.GetNativeMediaType(index, 0);
+                if (type.GetGUID(MediaTypeAttributeKeys.MajorType) == MediaTypeGuids.Audio)
+                    rates.Add(type.GetUInt32(MediaTypeAttributeKeys.AudioAvgBytesPerSecond));
+            }
+            catch (SharpGen.Runtime.SharpGenException ex) when (ex.HResult == unchecked((int)0xC00D36B3))
+            {
+                break;
+            }
+            catch (SharpGen.Runtime.SharpGenException)
+            {
+            }
+        }
+        return rates;
+    }
 
     /// <summary>The next block of sound and its time, or null at the end.</summary>
     public (TimeSpan Time, byte[] Pcm)? Next()
     {
         while (true)
         {
-            using var sample = _reader.ReadSample(SourceReaderIndex.FirstAudioStream, SourceReaderControlFlag.None, out _, out var flags, out long time);
+            using var sample = _reader.ReadSample(_stream, SourceReaderControlFlag.None, out _, out var flags, out long time);
             if (flags.HasFlag(SourceReaderFlag.EndOfStream) || flags.HasFlag(SourceReaderFlag.Error))
                 return null;
             if (sample is null)
