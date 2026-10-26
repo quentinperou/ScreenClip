@@ -24,6 +24,10 @@
 
 ## Features
 
+<p align="center">
+  <img src=".github/demo.gif" width="800" alt="A 20-second demo: Print Screen freezes the screen and outlines the element under the pointer; the capture is laid out (margin, rounded corners, shadow, background, macOS window, 3D tilt); annotations come one after the other (a frame, a highlighter, a blur, a curved arrow, a bubble, a pointer); then the video editor with its timeline and tracks">
+</p>
+
 ### Capture
 
 - **Print Screen** captures an area, **Alt + Print Screen** a window, **Ctrl + Print Screen** the whole screen,
@@ -127,6 +131,10 @@ picture, annotations and layout included.
 - With the pointer filmed with the screen, the video is saved automatically when the captures are, in
   **Videos\Screen Recordings** (can be changed), and copied. With the pointer apart, the editor makes the video:
   **Export ▾ → Save…** there (ScreenClip asks before an unsaved recording leaves the editor).
+
+<p align="center">
+  <img src=".github/video.png" width="800" alt="The video editor: a recorded web page with a red frame around a card and a speech bubble “Ten cards a page”, and a mouse pointer moving from A to B along a dashed curve; under the video, the timeline with its frames and yellow handles, then the tracks: the recorded pointer (hidden) with its clicks, the A → B pointer with its two diamonds and the bars of the annotations at their moments; on the right, the options of the A → B pointer (path, movement, click on arrival) and the list of annotations">
+</p>
 
 ### Windows' Print Screen key
 

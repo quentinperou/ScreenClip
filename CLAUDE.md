@@ -211,7 +211,8 @@ and the recording's bar and line stay in screenshots, as in developer mode), `SC
 `EditorWindow.Script.cs`; writes `<file>.done` at the end), `SCREENCLIP_RECORD_TEST=<seconds>` (Debug builds only:
 records a moving window of its own through the real recording, the pointer apart following a made-up way, then opens
 it in the editor; `SCREENCLIP_RECORD_STILL=1`: the window stops after a second; `SCREENCLIP_RECORD_SIZE=1800x1000` and
-`SCREENCLIP_RECORD_PICTURE=<file>`: a large window whose whole picture moves, the heaviest to decode),
+`SCREENCLIP_RECORD_PICTURE=<file>`: a large window whose whole picture moves, the heaviest to decode;
+`SCREENCLIP_RECORD_SCROLL=<file>`: a page that scrolls, for the README picture of the video editor),
 `SCREENCLIP_INSTANCE=<name>` and `SCREENCLIP_SETTINGS=<file>` (Debug builds only: a second ScreenClip beside the one in
 use, with its own single-instance names, temp folder and settings file: tests never touch the author's app nor his
 settings; build it apart with `dotnet build src\ScreenClip -o <folder>`, since his dev build locks `bin`). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
@@ -244,28 +245,60 @@ again (and the `HKCU\Software\ScreenClip` key).
 
 ### README pictures
 
+All the scripts run a ScreenClip of their own, never the author's app nor his settings: `.local\readme\common.ps1`
+starts the Debug build in `.local\readme\app` (`dotnet build src\ScreenClip -c Debug -o .local\readme\app`) as a
+test instance (`SCREENCLIP_INSTANCE=readme`, `SCREENCLIP_SETTINGS=.local\readme\readme-settings.json`, removed
+afterwards), and finds its windows by its process id. The author's ScreenClip must be quit for `capture-pieces.ps1`
+(it holds the shortcuts, which would show refused in Settings › Capture).
+
 `.github/screenshot.png` (English) and `.github/screenshot.fr.png` (French), 1560 × 1000, at the top of the READMEs:
 the real editor (laying out a capture of the Settings window, `.local\readme\pieces\demo-<lang>.png`, on the “ocean”
 background, no frame), the notification menu and the capture bar, light theme, on the gradient of the icon with
 rounded corners and shadows. The author first had the Settings window there, then asked for the editor in its place.
-The test `settings.json` of the script also holds the demo style; it is removed afterwards (the author's is put
-aside and back). Made by `.local\readme\capture-pieces.ps1` (UI Automation and posted messages, fictitious save
-folder `D:\Captures`; it takes the Settings window's Capture page as `demo-<lang>.png` first, then lays it out in
-the editor; the menu is opened with `WM_CONTEXTMENU`, since a left click on the icon captures) then
-`.local\readme\compose.ps1` (System.Drawing); `.local\README.md` lists the local tools. Retake them when the UI
-changes (last: October 24, 2026, with the Edit and Layout tabs).
+The test settings of the script also hold the demo style. Made by `.local\readme\capture-pieces.ps1` (UI Automation
+and posted messages, fictitious save folder `D:\Captures`; it takes the Settings window's Capture page as
+`demo-<lang>.png` first, then lays it out in the editor's Layout tab; the menu is opened with `WM_CONTEXTMENU`, since
+a left click on the icon captures; the capture bar over the made-up desktop of `SCREENCLIP_DEMO_SCREEN`, not the real
+screen) then `.local\readme\compose.ps1` (System.Drawing); `.local\README.md` lists the local tools. Retake them
+when the UI changes (last: October 26, 2026, all six and the new video one: Export, Copy as PNG, the Video mode,
+Open ScreenClip in the menu).
 
 `.github/edit.png` / `edit.fr.png` (1600 × 1068, under the Edit tab in the READMEs): the real Edit tab on the
 Settings capture (`pieces\demo-<lang>.png`), annotated by the Debug script player: `.local\readme\edit\edit-<lang>.txt`
-played by `.local\readme\edit\script-run.ps1 -Script … -Lang … -Picture … -Shot …` (test settings, `PrintWindow`
-of the editor), then laid out by `.local\readme\frame` (1600 px). The coordinates are the capture's pixels; the
+played by `.local\readme\edit\script-run.ps1 -Script … -Lang … -Picture … -Shot …` (the README instance,
+`PrintWindow` of the editor), then laid out by `.local\readme\frame` (1600 px). The coordinates are the capture's pixels; the
 French page is taller (its descriptions wrap), so each language has its own script.
+
+`.github/video.png` / `video.fr.png` (1600 × 1068, at the end of the Video section of the READMEs; asked by the
+author, October 26, 2026): the real video editor on a recording of a made-up product page that scrolls
+(`.local\readme\video\page.html` rendered by headless Chrome to `page-<lang>.png`, 960 × 1500), annotated in time by
+the script player (`video-<lang>.txt`: a frame around a card and a bubble at its moment, the top of the page and
+the steps framed earlier and later, the recorded pointer hidden by its eye, an A → B pointer chosen, the playhead in
+the middle of its way). `.local\readme\video\shoot-video.ps1 -Lang en|fr -Shot …` runs the README instance with the
+Debug recording test on that page (`SCREENCLIP_RECORD_SCROLL`: the page scrolls on the recording's own clock, still,
+down, still, down, still; 960 × 600 at the top left of the primary screen, the pointer apart along a made-up way),
+takes the editor and deletes the recording; then `.local\readme\frame`. It films that part of the real screen: look
+at the picture before using it.
+
+`.github/demo.gif` (800 × 450, 15 fps, 20 s, ~5 MB; at the top of Features in both READMEs; asked by the author,
+October 26, 2026: “a short motion-design demo, in English”): drawn frame by frame by `.local\readme\demo` (a console
+on Core: SkiaSharp, `Composer` and `AnnotationRenderer` themselves, from the README pieces: an intro on the icon's
+gradient, then 1 Capture (the Print Screen key pressed, the made-up desktop, the overlay, a push-in on the element
+outlined), 2 Lay it out (the Settings capture laid out live: margin, corners and shadow growing, background, macOS
+window, 3D tilt; the style's whole numbers cross-faded so that it grows smoothly), 3 Annotate (the Edit picture's
+annotations coming one by one), 4 Record videos (the video editor picture, a push-in on the tracks), an end card
+with the repository). `dotnet run -c Release` writes `.local\readme\demo\out\screenclip-demo.mp4` (1600 × 900,
+30 fps, 3 Mbit/s, ~7 MB, Media Foundation: for GitHub's own video player, uploaded by the author, under 10 MB) then
+the GIF with Core's `GifEncoder`, its frames drawn at full size and halved (small text stays readable) and brought
+to 5 bits a channel by an ordered dither first (the author found the first GIF banded: the gradients now mix two
+steps; ~3 MB → ~5 MB); `--preview 3.75 9.6 …` writes frames as PNG, `--mp4` the MP4 alone. Retake the
+pieces first when the UI changes.
 
 `.github/selection.png` / `selection.fr.png` (1600 × 951, under “Capture” in the READMEs; asked by the author from the
 mock-up, made from the real overlay instead since the mock-up's had handles, a delay and keys the app does not have):
 the real area overlay over a made-up desktop, a sheet of prints outlined. `.local\readme\scene\scene.html` (`?lang=fr`)
-rendered by headless Chrome to `scene-<lang>.png`; `.local\readme\shoot-selection.ps1 -Lang en|fr` starts the dev
-build with `SCREENCLIP_DEMO_SCREEN` (that picture frozen on every monitor, one handle-less window per monitor: the
+rendered by headless Chrome to `scene-<lang>.png`; `.local\readme\shoot-selection.ps1 -Lang en|fr` starts the README
+instance with `SCREENCLIP_DEMO_SCREEN` (that picture frozen on every monitor, one handle-less window per monitor: the
 blocks come from the picture), posts `WM_HOTKEY` then `WM_MOUSEMOVE` at a point to the overlay (WPF takes the posted
 position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core) lays it out with `Composer`
 (violet, 5 %, corners 14, shadow 55, 1600 px wide).

@@ -16,17 +16,27 @@ namespace ScreenClip.Video;
 /// </summary>
 internal static class RecordingTest
 {
+    // The countdown before the recording starts (the stop is timed from the start of the test).
+    private const double Countdown = 3.2;
+
     public static void Run(double seconds)
     {
         App.EnsureTheme();
         var text = new TextBlock { FontSize = 48, FontWeight = FontWeights.SemiBold, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         var ball = new System.Windows.Shapes.Ellipse { Width = 50, Height = 50, Fill = Brushes.White, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
-        var root = new Grid { Children = { ball, text } };
+        // SCREENCLIP_RECORD_SCROLL=<picture>: a page scrolled as someone reading it would, from its top to its end
+        // (the README picture of the video editor); no ball, no time.
+        var page = Environment.GetEnvironmentVariable("SCREENCLIP_RECORD_SCROLL") is { Length: > 0 } pageFile && File.Exists(pageFile)
+            ? new System.Windows.Controls.Image { Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(pageFile)), Stretch = Stretch.Uniform }
+            : null;
+        Panel root = page is null ? new Grid { Children = { ball, text } } : new Canvas { Children = { page }, Background = Brushes.White };
         // SCREENCLIP_RECORD_SIZE=1800x1000 and SCREENCLIP_RECORD_PICTURE=<file>: a large window whose whole picture
         // moves at each frame, as a video played on the screen (the heaviest to decode).
         var size = Environment.GetEnvironmentVariable("SCREENCLIP_RECORD_SIZE")?.Split('x');
         double width = size is { Length: 2 } && double.TryParse(size[0], out double w0) ? w0 : 480;
         double height = size is { Length: 2 } && double.TryParse(size[1], out double h0) ? h0 : 300;
+        if (page is not null)
+            page.Width = width;
         ImageBrush? picture = Environment.GetEnvironmentVariable("SCREENCLIP_RECORD_PICTURE") is { Length: > 0 } file && File.Exists(file)
             ? new ImageBrush(new System.Windows.Media.Imaging.BitmapImage(new Uri(file))) { TileMode = TileMode.FlipXY, ViewportUnits = BrushMappingMode.Absolute, Stretch = Stretch.None }
             : null;
@@ -46,12 +56,22 @@ internal static class RecordingTest
             Content = root,
         };
         var clock = System.Diagnostics.Stopwatch.StartNew();
+        double scrolled = 0;
         var animation = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(16) };
         // SCREENCLIP_RECORD_STILL=1: the window stops moving after a second (only the pointer moves then).
         bool still = Environment.GetEnvironmentVariable("SCREENCLIP_RECORD_STILL") == "1";
         animation.Tick += (_, _) =>
         {
             double t = clock.Elapsed.TotalSeconds;
+            if (page is not null)
+            {
+                // On the recording's own clock (Media Foundation may take a moment to start), and only forward: once
+                // stopped, the session is gone.
+                if (RecordingSession.Current is { } session)
+                    scrolled = Math.Max(scrolled, Math.Clamp(session.Recorded.TotalSeconds / seconds, 0, 1));
+                Canvas.SetTop(page, -Math.Max(0, page.ActualHeight - height) * ScrolledShare(scrolled));
+                return;
+            }
             if (still && t > 1)
                 return;
             text.Text = $"{t:0.0} s";
@@ -83,7 +103,7 @@ internal static class RecordingTest
                 return ((float)(w * (0.5 + 0.32 * Math.Cos(s * 1.7))), (float)(h * (0.5 + 0.3 * Math.Sin(s * 2.3))), s % 1.2 is > 0.6 and < 0.75);
             };
             RecordingSession.Begin(area, CaptureController.MonitorOf(area, monitors));
-            var stop = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3.2 + seconds) };
+            var stop = new DispatcherTimer { Interval = TimeSpan.FromSeconds(Countdown + seconds) };
             stop.Tick += (_, _) =>
             {
                 stop.Stop();
@@ -101,6 +121,17 @@ internal static class RecordingTest
             stop.Start();
         };
         start.Start();
+    }
+
+    // How much of the page is scrolled at a share of the recording: still, down to its middle, still, down to its end.
+    private static double ScrolledShare(double progress)
+    {
+        double Ease(double from, double to)
+        {
+            double x = Math.Clamp((progress - from) / (to - from), 0, 1);
+            return x * x * (3 - 2 * x);
+        }
+        return 0.58 * Ease(0.18, 0.34) + 0.42 * Ease(0.62, 0.78);
     }
 }
 #endif

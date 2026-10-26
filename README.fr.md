@@ -24,6 +24,10 @@
 
 ## Fonctionnalités
 
+<p align="center">
+  <img src=".github/demo.gif" width="800" alt="Une démo de 20 secondes (en anglais) : Impr. écran fige l'écran et encadre l'élément sous le pointeur ; la capture est mise en forme (marge, coins arrondis, ombre, fond, fenêtre macOS, inclinaison 3D) ; les annotations arrivent l'une après l'autre (un cadre, un surlignage, un flou, une flèche courbe, une bulle, un pointeur) ; puis l'éditeur vidéo avec sa timeline et ses pistes">
+</p>
+
 ### Capture
 
 - **Impr. écran** capture une zone, **Alt + Impr. écran** une fenêtre, **Ctrl + Impr. écran** l'écran entier,
@@ -135,6 +139,10 @@ et mise en forme comprises.
 - Avec le pointeur filmé avec l'écran, la vidéo est enregistrée automatiquement quand les captures le sont, dans
   **Vidéos\Enregistrements d'écran** (modifiable), et copiée. Avec le pointeur à part, c'est l'éditeur qui fait la
   vidéo : **Exporter ▾ → Enregistrer…** (ScreenClip demande avant qu'un enregistrement non sauvé quitte l'éditeur).
+
+<p align="center">
+  <img src=".github/video.fr.png" width="800" alt="L'éditeur vidéo : une page web enregistrée avec un cadre rouge autour d'une carte et une bulle « Dix cartes par page », et un pointeur de souris qui va de A à B sur une courbe en pointillés ; sous la vidéo, la timeline avec ses images et ses poignées jaunes, puis les pistes : le pointeur filmé (masqué) avec ses clics, le pointeur A → B avec ses deux losanges et les barres des annotations à leurs moments ; à droite, les options du pointeur A → B (trajet, mouvement, clic à l'arrivée) et la liste des annotations">
+</p>
 
 ### La touche Impr. écran de Windows
 

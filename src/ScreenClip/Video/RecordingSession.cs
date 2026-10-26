@@ -44,6 +44,9 @@ internal sealed class RecordingSession
     /// <summary>The recording under way, if any: the video shortcut and the notification icon stop it.</summary>
     public static RecordingSession? Current { get; private set; }
 
+    /// <summary>The time recorded so far: nothing during the countdown.</summary>
+    public TimeSpan Recorded => _recorder?.Elapsed ?? TimeSpan.Zero;
+
     /// <summary>Where the recordings are written before they are saved or edited (emptied at each start of the app).</summary>
     public static string Folder => Path.Combine(ClipActions.TempFolder, "Recordings");
 
