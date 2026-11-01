@@ -10,7 +10,7 @@ spirit of CleanShot X, ScreenSnap and shots.so: capture with one key, then (to c
 layout (background, rounded corners, shadow, fake macOS-style browser or window). UI in English and French,
 light/dark/system theme. The name “ScreenClip” is never translated. Author: [QuentinPerou](https://github.com/quentinperou).
 Repository: https://github.com/quentinperou/ScreenClip (public; the author pushes and publishes himself, unless he
-asks: he asked Claude to tag and release v0.1.0, v0.2.0, v0.3.0, v0.4.0 and v0.4.1).
+asks: he asked Claude to tag and release v0.1.0 to v0.4.2).
 Sister projects with the same stack and conventions: CropPdf, PageCompose, FolderTools (their CLAUDE.md files hold
 the history of the shared pieces: updater, installer, Fluent theme, localization). Credits wording: “Developed by
 QuentinPerou, with Claude Code (Anthropic)”.
@@ -24,7 +24,8 @@ resident (Task Manager, private working set) before and after it.
 
 ## Project status (November 1, 2026)
 
-**v0.4.1 released** (November 1, 2026, stable, tag `v0.4.1`: the color picker; release notes in English; 0.4.1, the
+**v0.4.2 released** (November 1, 2026, stable, tag `v0.4.2`: updates shown without looking for them, issue #3).
+**v0.4.1** (November 1, 2026, stable, tag `v0.4.1`: the color picker; release notes in English; 0.4.1, the
 author's choice). **v0.4.0** (October 26, 2026, stable, tag `v0.4.0`: video step 3, the sounds apart and the pieces; the
 animated picture and the pointer ways with steps; several editors; the microphone chosen; release notes in English;
 0.4.0 rather than 0.3.5, the author's question: new features, the middle number). **v0.3.0** (October 26, 2026,
@@ -33,8 +34,9 @@ the Export window, Copy as PNG, the in-app dialogs, Open ScreenClip in the menu;
 asked by the author). **v0.2.0** (October 25, 2026, stable, tag `v0.2.0`: the Edit tab and its annotations, the zoom,
 the notification after saving; bilingual release notes, as for 0.1.0). **v0.1.0** (October 19, 2026, stable, tag
 `v0.1.0`; release notes bilingual like CropPdf 1.0.0). Commits in
-the author's name (`QuentinPerou`, his GitHub noreply address, no Co-Authored-By line, as he asked); **the author
-pushes and publishes himself** unless he asks (he asked for the 0.1.0, 0.2.0, 0.3.0, 0.4.0 and 0.4.1 tags and releases). The annotation tools came
+the author's name (`QuentinPerou`, his GitHub noreply address; the Co-Authored-By line allowed since November 1, 2026,
+left out before as he asked); **the author
+pushes and publishes himself** unless he asks (he asked for the tags and releases from 0.1.0 to 0.4.2). The annotation tools came
 after 0.1.0 (proposal B of the mock-up, see below). Framing done with the
 author on October 19, 2026 (questions, then an HTML mock-up validated by him: editor, area selection, thumbnail, tray
 menu, settings, icon):
@@ -261,6 +263,7 @@ Then **issue #3** (the author's: updates shown without looking for them in Setti
 and a check again when the editor opens): see Technical choices › Updates shown. Checked in the test instance
 pretending to be 0.4.0 (`SCREENCLIP_VERSION`): the bar at the top of the editor and the menu's first line found 0.4.1;
 not the Windows notification (kept off the author's screen, `UpdateNotified` set) nor an install from the menu.
+Released as 0.4.2 the same day (0.4.1 users get it as before, in Settings; the next versions show themselves).
 
 **Next**: the author's next ideas. The text extractor (OCR) is left aside (the author, November 1, 2026: Windows does it very well already).
 
