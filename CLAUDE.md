@@ -10,7 +10,7 @@ spirit of CleanShot X, ScreenSnap and shots.so: capture with one key, then (to c
 layout (background, rounded corners, shadow, fake macOS-style browser or window). UI in English and French,
 light/dark/system theme. The name “ScreenClip” is never translated. Author: [QuentinPerou](https://github.com/quentinperou).
 Repository: https://github.com/quentinperou/ScreenClip (public; the author pushes and publishes himself, unless he
-asks: he asked Claude to tag and release v0.1.0, v0.2.0, v0.3.0 and v0.4.0).
+asks: he asked Claude to tag and release v0.1.0, v0.2.0, v0.3.0, v0.4.0 and v0.4.1).
 Sister projects with the same stack and conventions: CropPdf, PageCompose, FolderTools (their CLAUDE.md files hold
 the history of the shared pieces: updater, installer, Fluent theme, localization). Credits wording: “Developed by
 QuentinPerou, with Claude Code (Anthropic)”.
@@ -22,9 +22,10 @@ No window, no timer, no polling while waiting; the Fluent theme and every window
 bitmaps are dropped and the working set trimmed after each capture (`MemoryTrim`). Measure a feature that stays
 resident (Task Manager, private working set) before and after it.
 
-## Project status (October 26, 2026)
+## Project status (November 1, 2026)
 
-**v0.4.0 released** (October 26, 2026, stable, tag `v0.4.0`: video step 3, the sounds apart and the pieces; the
+**v0.4.1 released** (November 1, 2026, stable, tag `v0.4.1`: the color picker; release notes in English; 0.4.1, the
+author's choice). **v0.4.0** (October 26, 2026, stable, tag `v0.4.0`: video step 3, the sounds apart and the pieces; the
 animated picture and the pointer ways with steps; several editors; the microphone chosen; release notes in English;
 0.4.0 rather than 0.3.5, the author's question: new features, the middle number). **v0.3.0** (October 26, 2026,
 stable, tag `v0.3.0`: video recording and editing, issue #2, steps 1 and 2;
@@ -33,7 +34,7 @@ asked by the author). **v0.2.0** (October 25, 2026, stable, tag `v0.2.0`: the Ed
 the notification after saving; bilingual release notes, as for 0.1.0). **v0.1.0** (October 19, 2026, stable, tag
 `v0.1.0`; release notes bilingual like CropPdf 1.0.0). Commits in
 the author's name (`QuentinPerou`, his GitHub noreply address, no Co-Authored-By line, as he asked); **the author
-pushes and publishes himself** unless he asks (he asked for the 0.1.0, 0.2.0, 0.3.0 and 0.4.0 tags and releases). The annotation tools came
+pushes and publishes himself** unless he asks (he asked for the 0.1.0, 0.2.0, 0.3.0, 0.4.0 and 0.4.1 tags and releases). The annotation tools came
 after 0.1.0 (proposal B of the mock-up, see below). Framing done with the
 author on October 19, 2026 (questions, then an HTML mock-up validated by him: editor, area selection, thumbnail, tray
 menu, settings, icon):
@@ -254,7 +255,9 @@ desktop: the picker's overlay (posted `WM_HOTKEY` 7 and `WM_MOUSEMOVE`), then Ar
 `#59A4A6` to a file in place of the clipboard (`SCREENCLIP_CLIPBOARD_FILE`), the bubble, Settings › Capture; not
 the click itself (WPF ignores posted buttons). 255 tests.
 
-**Next**: the author tries the color picker. The text extractor (OCR) is left aside (the author, November 1, 2026: Windows does it very well already).
+Released as 0.4.1 the same day.
+
+**Next**: the author's next ideas. The text extractor (OCR) is left aside (the author, November 1, 2026: Windows does it very well already).
 
 ## Commands
 
