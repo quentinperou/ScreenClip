@@ -6,8 +6,8 @@ using ScreenClip.Services;
 namespace ScreenClip;
 
 /// <summary>
-/// “ScreenClip x.y.z is available” with What's new / Update / close, shown at the top of the settings as soon as
-/// the startup check finds a newer version. Update installs from here, like in CropPdf and FolderTools.
+/// “ScreenClip x.y.z is available” with What's new / Update / close, shown at the top of the settings and of the
+/// editor as soon as a check finds a newer version. Update installs from here, like in CropPdf and FolderTools.
 /// </summary>
 public partial class UpdateBar : UserControl
 {
@@ -57,10 +57,15 @@ public partial class UpdateBar : UserControl
         Visibility = Visibility.Visible;
     }
 
-    private async void Install_Click(object sender, RoutedEventArgs e)
+    private void Install_Click(object sender, RoutedEventArgs e) => Install();
+
+    /// <summary>Downloads and runs the installer of the new version, its progress shown in this bar.</summary>
+    public async void Install()
     {
         if (Updater.Available is not { } release || s_installing)
             return;
+        // Asked from the menu: the bar shows, even closed before.
+        Visibility = Visibility.Visible;
 
         Actions.Visibility = Visibility.Collapsed;
         CloseButton.Visibility = Visibility.Collapsed;

@@ -18,6 +18,7 @@ internal static class NativeMethods
     public const int WM_APP = 0x8000;
     public const int NIN_SELECT = 0x0400;
     public const int NIN_KEYSELECT = 0x0401;
+    public const int NIN_BALLOONUSERCLICK = 0x0405;
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern int RegisterWindowMessage(string message);
@@ -38,6 +39,8 @@ internal static class NativeMethods
     public const int NIF_ICON = 0x02;
     public const int NIF_TIP = 0x04;
     public const int NIF_SHOWTIP = 0x80;
+    public const int NIF_INFO = 0x10;
+    public const int NIIF_USER = 0x04;
     public const int NOTIFYICON_VERSION_4 = 4;
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

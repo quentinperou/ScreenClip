@@ -170,6 +170,9 @@ public sealed class AppSettings
     /// <summary>The recording takes the microphone (to comment). Chosen on the capture bar.</summary>
     public bool RecordMicrophone { get; set; }
 
+    /// <summary>The last version a Windows notification was shown for (once per version).</summary>
+    public string? UpdateNotified { get; set; }
+
     /// <summary>How the color picker (and the C key while choosing an area) writes the color it copies.</summary>
     [JsonConverter(typeof(JsonStringEnumConverter<ColorFormat>))]
     public ColorFormat ColorFormat { get; set; } = ColorFormat.Hex;

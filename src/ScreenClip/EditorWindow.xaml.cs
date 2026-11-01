@@ -275,6 +275,9 @@ public partial class EditorWindow : Window
 
     private void Import_Click(object sender, RoutedEventArgs e) => Import();
 
+    /// <summary>Installs the new version from this editor's bar (asked from the notification menu).</summary>
+    internal void StartUpdate() => UpdateBanner.Install();
+
     internal void Import()
     {
         var dialog = new OpenFileDialog

@@ -257,6 +257,11 @@ the click itself (WPF ignores posted buttons). 255 tests.
 
 Released as 0.4.1 the same day.
 
+Then **issue #3** (the author's: updates shown without looking for them in Settings; his choices: all three places
+and a check again when the editor opens): see Technical choices › Updates shown. Checked in the test instance
+pretending to be 0.4.0 (`SCREENCLIP_VERSION`): the bar at the top of the editor and the menu's first line found 0.4.1;
+not the Windows notification (kept off the author's screen, `UpdateNotified` set) nor an install from the menu.
+
 **Next**: the author's next ideas. The text extractor (OCR) is left aside (the author, November 1, 2026: Windows does it very well already).
 
 ## Commands
@@ -281,6 +286,7 @@ it in the editor; `SCREENCLIP_RECORD_STILL=1`: the window stops after a second; 
 `SCREENCLIP_RECORD_FAKESOUND=1`: two tones, 440 Hz for the computer and 660 Hz for the microphone, in place of the
 devices, for the recording and the meters: tests record no one's sound),
 `SCREENCLIP_CLIPBOARD_FILE=<file>` (Debug builds only: a color's code written there instead of the clipboard),
+`SCREENCLIP_VERSION=<x.y.z>` (Debug builds only: an older version pretended, so that the update check finds one),
 `SCREENCLIP_INSTANCE=<name>` and `SCREENCLIP_SETTINGS=<file>` (Debug builds only: a second ScreenClip beside the one in
 use, with its own single-instance names, temp folder and settings file: tests never touch the author's app nor his
 settings; build it apart with `dotnet build src\ScreenClip -o <folder>`, since his dev build locks `bin`). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
@@ -606,6 +612,13 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
   menu's own check mark did not show). The right-click
   menu on the picture (`PictureMenu`, also played by the script: `menu`, `menupick`). **The tracks' handle** (a
   `Thumb` above the timeline): `_tracksExtra` added to the tracks' height, up to what leaves the picture 180 px.
+- **Updates shown** (issue #3, November 1, 2026: the bar was only in Settings, and the check only at startup while
+  the app stays resident for days): the same `UpdateBar` at the top of the editor too (a row under the command
+  bar); a Windows notification from the icon once per version (`TrayHost.Notify`: `NIF_INFO`, the app's icon;
+  `AppSettings.UpdateNotified`), a click on it opens the editor (`NIN_BALLOONUSERCLICK`); the icon's menu starts with
+  “Install version x.y.z” (`App.InstallUpdate`: the editor's bar installs, with its progress). Checked again when an
+  editor opens if the last check is more than a day old, at most once an hour while offline (`Updater.CheckIfDueAsync`;
+  no timer), as long as *Check for updates at startup* is on.
 - **Color picker** (November 1, 2026): `ShortcutAction.ColorPicker` (appended last, so that the hotkey ids of the
   others stay; **Win+Shift+C** by default: Alt+Shift+Print Screen is Windows' High Contrast toggle; PowerToys' own
   picker takes Win+Shift+C when it is on, and the shortcut then shows refused), also in the tray menu. The capture

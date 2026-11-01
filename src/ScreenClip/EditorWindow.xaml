@@ -282,8 +282,12 @@
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
+
+    <!-- A new version: the same bar as in Settings, here too (issue #3: seen without looking for it). -->
+    <local:UpdateBar x:Name="UpdateBanner" Grid.Row="1" Margin="12,0,12,8" />
 
     <!-- Command bar: capture and import on the left, the two tabs in the middle, save and copy on the right. In a
          narrow window, the buttons show their icons alone (FitCommandBar). -->
@@ -406,7 +410,7 @@
       </StackPanel>
     </Grid>
 
-    <Grid Grid.Row="1" Margin="12,0,12,12">
+    <Grid Grid.Row="2" Margin="12,0,12,12">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="*" />
@@ -1023,7 +1027,7 @@
     <!-- An export under way: how far, and a way to stop it; in the middle of the window, the rest greyed (asked by
          the author: it showed at the bottom of the picture, over the video). -->
     <!-- A question or a message, in the look of Windows 11's dialogs (EditorWindow.Dialog.cs). -->
-    <Grid x:Name="DialogOverlay" Grid.RowSpan="2" Background="#80000000" Visibility="Collapsed" Panel.ZIndex="2">
+    <Grid x:Name="DialogOverlay" Grid.RowSpan="3" Background="#80000000" Visibility="Collapsed" Panel.ZIndex="2">
       <Border MinWidth="460" MaxWidth="600" HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="8" BorderThickness="1"
               Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
         <Border.Effect>
@@ -1042,7 +1046,7 @@
       </Border>
     </Grid>
 
-    <Grid x:Name="ExportOverlay" Grid.RowSpan="2" Background="#80000000" Visibility="Collapsed">
+    <Grid x:Name="ExportOverlay" Grid.RowSpan="3" Background="#80000000" Visibility="Collapsed">
       <Border x:Name="ExportCard" HorizontalAlignment="Center" VerticalAlignment="Center" Width="380"
               Padding="20,16" CornerRadius="8" BorderThickness="1"
               Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}" BorderBrush="{DynamicResource FlyoutBorderBrush}">

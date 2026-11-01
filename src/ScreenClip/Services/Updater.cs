@@ -48,17 +48,42 @@ public static class Updater
         var releases = await UpdateFeed.FetchAsync(Http, timeout.Token);
         Available = UpdateFeed.FindUpdate(releases, CurrentVersion, channel);
         HasChecked = true;
+        s_lastChecked = DateTime.UtcNow;
         Checked?.Invoke(null, EventArgs.Empty);
         return Available;
     }
+
+    // When the last check was tried and when one last succeeded, during this run.
+    private static DateTime? s_lastTried, s_lastChecked;
 
     /// <summary>Background check when the app starts: a failure (offline, rate limit) only means no offer.</summary>
     public static async Task CheckAtStartupAsync()
     {
         DeleteOldDownloads();
+        await CheckInBackgroundAsync();
+    }
+
+    /// <summary>
+    /// Checked again when an editor opens, if the last check is more than a day old (asked by the author, issue #3:
+    /// the app stays resident for days, and a version published meanwhile went unseen); never more than once an hour
+    /// while offline. No timer: nothing runs at rest.
+    /// </summary>
+    public static Task CheckIfDueAsync()
+    {
+        var now = DateTime.UtcNow;
+        if (s_lastChecked is { } done && now - done < TimeSpan.FromDays(1))
+            return Task.CompletedTask;
+        if (s_lastTried is { } tried && now - tried < TimeSpan.FromHours(1))
+            return Task.CompletedTask;
+        return CheckInBackgroundAsync();
+    }
+
+    private static async Task CheckInBackgroundAsync()
+    {
         var settings = App.Settings;
         if (!settings.CheckForUpdatesAtStartup)
             return;
+        s_lastTried = DateTime.UtcNow;
         try
         {
             await CheckAsync(settings.UpdateChannel);
@@ -140,6 +165,11 @@ public static class Updater
     private static SemanticVersion ReadCurrentVersion()
     {
         string? version = typeof(Updater).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+#if DEBUG
+        // SCREENCLIP_VERSION=0.4.0 (Debug only): an older version pretended, so that a test finds the latest as new.
+        if (Environment.GetEnvironmentVariable("SCREENCLIP_VERSION") is { Length: > 0 } pretended)
+            version = pretended;
+#endif
         return SemanticVersion.TryParse(version, out var parsed) ? parsed : SemanticVersion.Parse("0.0.0");
     }
 

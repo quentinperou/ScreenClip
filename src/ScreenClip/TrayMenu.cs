@@ -82,6 +82,12 @@ internal static class TrayMenu
         var settings = App.Settings;
         var menu = new ContextMenu { MinWidth = 300 };
         // The app itself, plainly (asked by the author): the editor, as it is.
+        // A new version first (issue #3): it is installed from the editor, whose bar shows the progress.
+        if (Services.Updater.Available is { } release)
+        {
+            menu.Items.Add(Item(Strings.Format("MenuUpdate", release.Version), GlyphIcon("\uE896"), Hotkey.None, App.InstallUpdate));
+            menu.Items.Add(new Separator());
+        }
         menu.Items.Add(Item(Strings.Get("OpenApp"), AppIcon(), Hotkey.None, () => App.OpenEditor()));
         menu.Items.Add(new Separator());
 

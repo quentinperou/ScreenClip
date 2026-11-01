@@ -601,6 +601,9 @@
   <data name="MenuUnsilencePiece" xml:space="preserve">
     <value>Remettre ce son dans ce morceau</value>
   </data>
+  <data name="MenuUpdate" xml:space="preserve">
+    <value>Installer la version {0}</value>
+  </data>
   <data name="MenuWayCurved" xml:space="preserve">
     <value>Trajet en courbe</value>
   </data>
@@ -1385,13 +1388,19 @@
     <value>Rechercher les mises à jour au démarrage</value>
   </data>
   <data name="UpdateCheckAtStartupDescription" xml:space="preserve">
-    <value>Interroge GitHub à chaque lancement de l'application pour connaître la dernière version.</value>
+    <value>Interroge GitHub à chaque lancement de l'application, puis une fois par jour à l'ouverture de l'éditeur, pour connaître la dernière version.</value>
   </data>
   <data name="UpdateDownloading" xml:space="preserve">
     <value>Téléchargement de la mise à jour…</value>
   </data>
   <data name="UpdateInstall" xml:space="preserve">
     <value>Mettre à jour</value>
+  </data>
+  <data name="UpdateNotifyText" xml:space="preserve">
+    <value>Cliquez pour voir les nouveautés et mettre à jour.</value>
+  </data>
+  <data name="UpdateNotifyTitle" xml:space="preserve">
+    <value>ScreenClip {0} est disponible</value>
   </data>
   <data name="UpdateStarting" xml:space="preserve">
     <value>Installation… acceptez la demande de Windows pour continuer.</value>

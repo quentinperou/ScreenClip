@@ -187,8 +187,9 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
   light or dark in **Settings**.
 - **English and French**, following the Windows display language or chosen in **Settings**.
 - **Starts with Windows** (can be turned off in Settings).
-- **Updates in one click**: at startup the app checks the GitHub Releases and offers the new version in Settings,
-  which installs itself and restarts the app. **Beta** channel available.
+- **Updates in one click**: at startup (then once a day when the editor opens) the app checks the GitHub Releases;
+  a new version is told by a Windows notification, a bar at the top of the editor and of Settings, and the first
+  line of the icon's menu. It installs itself and restarts the app. **Beta** channel available.
 - **Developer mode** (Settings → About): the thumbnail and the recording's bar stay visible in screenshots, and a
   log notes what ScreenClip does (never what the captures show), to send when something does not work.
 
@@ -238,7 +239,8 @@ The installer:
 At its first start the app turns on *Start with Windows* (Settings → General), asks about the Print Screen key, then
 opens the editor.
 
-To update: the app offers new versions itself (**Settings → Updates**, and a bar at the top of Settings). The new
+To update: the app offers new versions itself (a notification, a bar at the top of the editor and of Settings, the
+first line of the icon's menu, and **Settings → Updates**). The new
 installer is downloaded from GitHub, checked against the SHA-256 published by GitHub, installed silently, and
 ScreenClip starts again.
 
@@ -336,8 +338,8 @@ offer it.
 
 Your captures never leave your computer unless you copy, save or drag them somewhere yourself.
 
-The only network access is the **update check**: when the app starts (if *Check for updates at startup* is on, the
-default) and when you click *Check for updates*, it sends one HTTPS request to the GitHub API (`api.github.com`) to
+The only network access is the **update check**: when the app starts and then once a day when the editor opens (if
+*Check for updates at startup* is on, the default), and when you click *Check for updates*, it sends one HTTPS request to the GitHub API (`api.github.com`) to
 read the list of ScreenClip releases. No capture or personal data is sent; like any web request, GitHub sees your IP
 address, and the app version in the User-Agent. When you accept an update, its installer is downloaded from GitHub.
 Turn off the check at startup in **Settings → Updates** and the app makes no request unless you ask for one.

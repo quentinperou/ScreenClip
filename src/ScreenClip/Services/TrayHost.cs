@@ -52,6 +52,9 @@ internal sealed class TrayHost : IDisposable
     /// <summary>A capture shortcut was pressed.</summary>
     public event EventHandler<ShortcutAction>? ShortcutPressed;
 
+    /// <summary>The notification shown by <see cref="Notify"/> was clicked.</summary>
+    public event EventHandler? NotificationClicked;
+
     // ---------------------------------------------------------------- Shortcuts
 
     /// <summary>
@@ -120,6 +123,20 @@ internal sealed class TrayHost : IDisposable
         Shell_NotifyIcon(NIM_SETVERSION, ref data);
     }
 
+    /// <summary>A Windows notification from the icon (a new version found), with the app's icon.</summary>
+    public void Notify(string title, string text)
+    {
+        if (!_iconAdded)
+            return;
+        var data = NewIconData();
+        data.uFlags = NIF_INFO;
+        data.szInfoTitle = title;
+        data.szInfo = text;
+        data.dwInfoFlags = NIIF_USER;
+        data.hBalloonIcon = _icon;
+        Shell_NotifyIcon(NIM_MODIFY, ref data);
+    }
+
     private NOTIFYICONDATA NewIconData() => new()
     {
         cbSize = Marshal.SizeOf<NOTIFYICONDATA>(),
@@ -161,6 +178,8 @@ internal sealed class TrayHost : IDisposable
                     IconClicked?.Invoke(this, EventArgs.Empty);
                 else if (iconEvent == WM_CONTEXTMENU)
                     MenuRequested?.Invoke(this, EventArgs.Empty);
+                else if (iconEvent == NIN_BALLOONUSERCLICK)
+                    NotificationClicked?.Invoke(this, EventArgs.Empty);
                 handled = true;
                 break;
 

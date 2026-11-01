@@ -202,8 +202,10 @@ parfois le changement qu'à la prochaine ouverture de session.
   dans les **Paramètres**.
 - **Anglais et français**, selon la langue d'affichage de Windows ou au choix dans les **Paramètres**.
 - **Démarre avec Windows** (désactivable dans les paramètres).
-- **Mises à jour en un clic** : au démarrage, l'application consulte les Releases GitHub et propose la nouvelle
-  version dans les paramètres, qui s'installe et relance l'application. Canal **Bêta** disponible.
+- **Mises à jour en un clic** : au démarrage (puis une fois par jour à l'ouverture de l'éditeur), l'application
+  consulte les Releases GitHub ; une nouvelle version est signalée par une notification Windows, un bandeau en haut de
+  l'éditeur et des paramètres, et la première ligne du menu de l'icône. Elle s'installe et relance l'application.
+  Canal **Bêta** disponible.
 - **Mode développeur** (Paramètres → À propos) : la vignette et la barre d'enregistrement restent visibles dans les
   captures d'écran, et un journal note ce que fait ScreenClip (jamais ce que montrent les captures), à envoyer quand
   quelque chose ne marche pas.
@@ -256,8 +258,8 @@ L'installeur :
 À son premier lancement, l'application active *Démarrer avec Windows* (Paramètres → Général), pose la question de la
 touche Impr. écran, puis ouvre l'éditeur.
 
-Mettre à jour : l'application propose elle-même les nouvelles versions (**Paramètres → Mises à jour**, et un bandeau
-en haut des paramètres). Le nouvel installeur est téléchargé depuis GitHub, vérifié avec le SHA-256 publié par GitHub,
+Mettre à jour : l'application propose elle-même les nouvelles versions (une notification, un bandeau en haut de
+l'éditeur et des paramètres, la première ligne du menu de l'icône, et **Paramètres → Mises à jour**). Le nouvel installeur est téléchargé depuis GitHub, vérifié avec le SHA-256 publié par GitHub,
 installé sans fenêtre, puis ScreenClip redémarre.
 
 Désinstaller : **Paramètres → Applications → Applications installées → ScreenClip**. La désinstallation ferme
@@ -357,8 +359,9 @@ Un tag avec un suffixe (`v0.2.0-beta.1`) est publié en *pré-version* : seules 
 
 Vos captures ne quittent jamais votre ordinateur, sauf si vous les copiez, enregistrez ou glissez vous-même ailleurs.
 
-Le seul accès réseau est la **recherche de mises à jour** : au démarrage (si *Rechercher les mises à jour au
-démarrage* est activé, par défaut) et quand vous cliquez sur *Rechercher des mises à jour*, l'application envoie une
+Le seul accès réseau est la **recherche de mises à jour** : au démarrage puis une fois par jour à l'ouverture de
+l'éditeur (si *Rechercher les mises à jour au démarrage* est activé, par défaut) et quand vous cliquez sur
+*Rechercher des mises à jour*, l'application envoie une
 requête HTTPS à l'API GitHub (`api.github.com`) pour lire la liste des versions de ScreenClip. Aucune capture ni donnée
 personnelle n'est envoyée ; comme pour toute requête web, GitHub voit votre adresse IP, et la version de l'application
 dans le User-Agent. Quand vous acceptez une mise à jour, son installeur est téléchargé depuis GitHub. Désactivez la

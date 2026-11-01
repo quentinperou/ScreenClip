@@ -80,6 +80,10 @@ public partial class App : Application
         else
             then?.Invoke();
 
+        // A new version found: a Windows notification, once per version (asked by the author, issue #3); a click
+        // opens the editor, where its bar offers to update.
+        Updater.Checked += (_, _) => NotifyUpdate();
+        Tray.NotificationClicked += (_, _) => OpenEditor();
         _ = Updater.CheckAtStartupAsync();
         MemoryTrim.Soon();
 #if DEBUG
@@ -229,6 +233,25 @@ public partial class App : Application
         // “Lay out a picture…” in the menu: the file to open is asked once the menu is gone.
         if (import)
             editor.Dispatcher.BeginInvoke(editor.Import);
+        // The app may have been resident for days: a version published meanwhile is looked for now.
+        _ = Updater.CheckIfDueAsync();
+    }
+
+    private static void NotifyUpdate()
+    {
+        if (Updater.Available is not { } release || Settings.UpdateNotified == release.Version.ToString())
+            return;
+        Settings.UpdateNotified = release.Version.ToString();
+        Settings.Save();
+        Tray.Notify(Strings.Format("UpdateNotifyTitle", release.Version), Strings.Get("UpdateNotifyText"));
+    }
+
+    /// <summary>The new version installed from the notification menu: in the editor, whose bar shows its progress.</summary>
+    internal static void InstallUpdate()
+    {
+        OpenEditor();
+        if (LatestEditor() is { } editor)
+            editor.Dispatcher.BeginInvoke(editor.StartUpdate, System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     /// <summary>
