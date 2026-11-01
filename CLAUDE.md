@@ -254,7 +254,7 @@ desktop: the picker's overlay (posted `WM_HOTKEY` 7 and `WM_MOUSEMOVE`), then Ar
 `#59A4A6` to a file in place of the clipboard (`SCREENCLIP_CLIPBOARD_FILE`), the bubble, Settings › Capture; not
 the click itself (WPF ignores posted buttons). 255 tests.
 
-**Next**: the author tries the color picker; the text extractor (OCR) is the idea kept.
+**Next**: the author tries the color picker. The text extractor (OCR) is left aside (the author, November 1, 2026: Windows does it very well already).
 
 ## Commands
 
