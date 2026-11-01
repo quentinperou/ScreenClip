@@ -184,6 +184,9 @@
   <data name="ColorBlue" xml:space="preserve">
     <value>Blue</value>
   </data>
+  <data name="ColorCopied" xml:space="preserve">
+    <value>{0} copied</value>
+  </data>
   <data name="ColorGreen" xml:space="preserve">
     <value>Green</value>
   </data>
@@ -460,11 +463,23 @@
   <data name="HintClickScreen" xml:space="preserve">
     <value>Click a screen</value>
   </data>
+  <data name="HintCopyColor" xml:space="preserve">
+    <value>copy the color</value>
+  </data>
   <data name="HintDrag" xml:space="preserve">
     <value>Drag: a free area</value>
   </data>
   <data name="HintMove" xml:space="preserve">
     <value>move</value>
+  </data>
+  <data name="HintPickClick" xml:space="preserve">
+    <value>Click: copy the color</value>
+  </data>
+  <data name="HintPickKeep" xml:space="preserve">
+    <value>+ click: copy and go on</value>
+  </data>
+  <data name="HintPixel" xml:space="preserve">
+    <value>one pixel</value>
   </data>
   <data name="HintSquare" xml:space="preserve">
     <value>square</value>
@@ -672,6 +687,9 @@
   </data>
   <data name="OpenFolder" xml:space="preserve">
     <value>Open</value>
+  </data>
+  <data name="PickColor" xml:space="preserve">
+    <value>Pick a color from the screen</value>
   </data>
   <data name="PieceHelp" xml:space="preserve">
     <value>Drag the frame on the picture to choose what this piece shows; its corners zoom. The Crop tool sets the size of the whole video.</value>
@@ -895,6 +913,15 @@
   <data name="SettingsCapture" xml:space="preserve">
     <value>Capture</value>
   </data>
+  <data name="SettingsColorFormat" xml:space="preserve">
+    <value>Format of the color copied</value>
+  </data>
+  <data name="SettingsColorFormatDescription" xml:space="preserve">
+    <value>What the color picker copies, and the C key while choosing an area.</value>
+  </data>
+  <data name="SettingsColorPicker" xml:space="preserve">
+    <value>Color picker</value>
+  </data>
   <data name="SettingsCopy" xml:space="preserve">
     <value>Copy to the clipboard</value>
   </data>
@@ -1053,6 +1080,9 @@
   </data>
   <data name="ShortcutChangeTitle" xml:space="preserve">
     <value>Change the shortcut</value>
+  </data>
+  <data name="ShortcutColorPicker" xml:space="preserve">
+    <value>Pick a color</value>
   </data>
   <data name="ShortcutNeedsModifier" xml:space="preserve">
     <value>Add Ctrl, Alt or Win: this key alone would get in the way of typing.</value>

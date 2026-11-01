@@ -104,6 +104,9 @@ internal static class NativeMethods
     [DllImport("user32.dll")]
     public static extern bool GetCursorPos(out POINT point);
 
+    [DllImport("user32.dll")]
+    public static extern bool SetCursorPos(int x, int y);
+
     // ---------------------------------------------------------------- Monitors and DPI
 
     public const int SM_CXSMICON = 49;

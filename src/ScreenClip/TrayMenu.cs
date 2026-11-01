@@ -102,6 +102,9 @@ internal static class TrayMenu
             ? Item(Strings.Get("StopRecording"), GlyphIcon("\uE71A"), settings.GetShortcut(ShortcutAction.Video), () => Video.RecordingSession.Current?.Stop())
             : Item(Strings.Get("CaptureVideo"), PathIcon("IconVideo"), settings.GetShortcut(ShortcutAction.Video),
                 () => App.Capture.RunAfterMenu(ShortcutAction.Video)));
+        if (!App.Capture.IsRecording)
+            menu.Items.Add(Item(Strings.Get("PickColor"), PathIcon("IconPicker"), settings.GetShortcut(ShortcutAction.ColorPicker),
+                () => App.Capture.RunAfterMenu(ShortcutAction.ColorPicker)));
 
         menu.Items.Add(new Separator());
         menu.Items.Add(Item(Strings.Get("OpenEditor"), GlyphIcon(""), Hotkey.None, () => App.OpenEditor(import: true)));

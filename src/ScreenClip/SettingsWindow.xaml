@@ -267,6 +267,21 @@
           </DockPanel>
         </Border>
 
+        <TextBlock Style="{StaticResource SectionTitle}" Text="{local:Tr SettingsColorPicker}" />
+        <!-- What the color picker copies (and the C key while choosing an area). -->
+        <Border Style="{StaticResource Card}">
+          <DockPanel>
+            <Path DockPanel.Dock="Left" Style="{StaticResource IconPath}" Data="{StaticResource IconPicker}" Margin="2,0,18,0" />
+            <ComboBox x:Name="ColorFormatBox" DockPanel.Dock="Right" MinWidth="220" VerticalAlignment="Center"
+                      Margin="16,0,0,0" SelectionChanged="ColorFormatBox_SelectionChanged"
+                      AutomationProperties.Name="{local:Tr SettingsColorFormat}" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{local:Tr SettingsColorFormat}" />
+              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsColorFormatDescription}" />
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
         <TextBlock Style="{StaticResource SectionTitle}" Text="{local:Tr SettingsShortcuts}" />
         <!-- All the shortcuts on or off; off, ScreenClip takes no key (the notification menu still captures). -->
         <Border Style="{StaticResource Card}">

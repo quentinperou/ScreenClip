@@ -184,6 +184,9 @@
   <data name="ColorBlue" xml:space="preserve">
     <value>Bleu</value>
   </data>
+  <data name="ColorCopied" xml:space="preserve">
+    <value>{0} copié</value>
+  </data>
   <data name="ColorGreen" xml:space="preserve">
     <value>Vert</value>
   </data>
@@ -460,11 +463,23 @@
   <data name="HintClickScreen" xml:space="preserve">
     <value>Cliquer sur un écran</value>
   </data>
+  <data name="HintCopyColor" xml:space="preserve">
+    <value>copier la couleur</value>
+  </data>
   <data name="HintDrag" xml:space="preserve">
     <value>Glisser : une zone libre</value>
   </data>
   <data name="HintMove" xml:space="preserve">
     <value>déplacer</value>
+  </data>
+  <data name="HintPickClick" xml:space="preserve">
+    <value>Clic : copier la couleur</value>
+  </data>
+  <data name="HintPickKeep" xml:space="preserve">
+    <value>+ clic : copier et continuer</value>
+  </data>
+  <data name="HintPixel" xml:space="preserve">
+    <value>un pixel</value>
   </data>
   <data name="HintSquare" xml:space="preserve">
     <value>carré</value>
@@ -672,6 +687,9 @@
   </data>
   <data name="OpenFolder" xml:space="preserve">
     <value>Ouvrir</value>
+  </data>
+  <data name="PickColor" xml:space="preserve">
+    <value>Prendre une couleur à l'écran</value>
   </data>
   <data name="PieceHelp" xml:space="preserve">
     <value>Faites glisser le cadre sur l'image pour choisir ce que montre ce morceau ; ses coins zooment. L'outil Recadrer règle le format de toute la vidéo.</value>
@@ -895,6 +913,15 @@
   <data name="SettingsCapture" xml:space="preserve">
     <value>Capture</value>
   </data>
+  <data name="SettingsColorFormat" xml:space="preserve">
+    <value>Format de la couleur copiée</value>
+  </data>
+  <data name="SettingsColorFormatDescription" xml:space="preserve">
+    <value>Ce que copie la pipette, et la touche C pendant le choix d'une zone.</value>
+  </data>
+  <data name="SettingsColorPicker" xml:space="preserve">
+    <value>Pipette</value>
+  </data>
   <data name="SettingsCopy" xml:space="preserve">
     <value>Copier dans le presse-papiers</value>
   </data>
@@ -1053,6 +1080,9 @@
   </data>
   <data name="ShortcutChangeTitle" xml:space="preserve">
     <value>Modifier le raccourci</value>
+  </data>
+  <data name="ShortcutColorPicker" xml:space="preserve">
+    <value>Prendre une couleur</value>
   </data>
   <data name="ShortcutNeedsModifier" xml:space="preserve">
     <value>Ajoutez Ctrl, Alt ou Win : cette touche seule gênerait la saisie.</value>

@@ -55,7 +55,8 @@ public enum ShortcutAction
     Screen,
     RepeatArea,
     AllScreens,
-    Video, // last: the hotkey ids are the values + 1
+    Video,
+    ColorPicker, // last: the hotkey ids are the values + 1
 }
 
 /// <summary>
@@ -79,6 +80,8 @@ public sealed class AppSettings
         [ShortcutAction.RepeatArea] = new(HotkeyModifiers.Shift, Hotkey.PrintScreen),
         [ShortcutAction.AllScreens] = new(HotkeyModifiers.Control | HotkeyModifiers.Shift, Hotkey.PrintScreen),
         [ShortcutAction.Video] = new(HotkeyModifiers.Control | HotkeyModifiers.Alt, Hotkey.PrintScreen),
+        // Not Alt+Shift+Print Screen: Windows turns High Contrast on and off with it. C for color.
+        [ShortcutAction.ColorPicker] = new(HotkeyModifiers.Windows | HotkeyModifiers.Shift, 0x43),
     };
 
     private static readonly string FilePath = TestInstance.SettingsFile ?? Path.Combine(
@@ -166,6 +169,10 @@ public sealed class AppSettings
 
     /// <summary>The recording takes the microphone (to comment). Chosen on the capture bar.</summary>
     public bool RecordMicrophone { get; set; }
+
+    /// <summary>How the color picker (and the C key while choosing an area) writes the color it copies.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<ColorFormat>))]
+    public ColorFormat ColorFormat { get; set; } = ColorFormat.Hex;
 
     /// <summary>
     /// The microphone recorded (Settings › Capture, or a right click on the capture bar's microphone; asked by the

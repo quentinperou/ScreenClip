@@ -247,7 +247,14 @@ Step 3 and all these changes committed together (not released).
 
 Released as 0.4.0 the same evening, with the README pictures retaken.
 
-**Next**: the author's next ideas (kept: a color picker that copies the hex code, a text extractor).
+Then (November 1, 2026) the **color picker** (the author's idea from Windows' Snipping Tool; his choices: a mode
+with its own shortcut and the C key while choosing an area, a click copies and closes, the hex code by default and
+other formats in Settings): see Technical choices › Color picker. Checked on the README instance over the made-up
+desktop: the picker's overlay (posted `WM_HOTKEY` 7 and `WM_MOUSEMOVE`), then Area mode and a posted C copying
+`#59A4A6` to a file in place of the clipboard (`SCREENCLIP_CLIPBOARD_FILE`), the bubble, Settings › Capture; not
+the click itself (WPF ignores posted buttons). 255 tests.
+
+**Next**: the author tries the color picker; the text extractor (OCR) is the idea kept.
 
 ## Commands
 
@@ -270,6 +277,7 @@ it in the editor; `SCREENCLIP_RECORD_STILL=1`: the window stops after a second; 
 `SCREENCLIP_RECORD_SCROLL=<file>`: a page that scrolls, for the README picture of the video editor;
 `SCREENCLIP_RECORD_FAKESOUND=1`: two tones, 440 Hz for the computer and 660 Hz for the microphone, in place of the
 devices, for the recording and the meters: tests record no one's sound),
+`SCREENCLIP_CLIPBOARD_FILE=<file>` (Debug builds only: a color's code written there instead of the clipboard),
 `SCREENCLIP_INSTANCE=<name>` and `SCREENCLIP_SETTINGS=<file>` (Debug builds only: a second ScreenClip beside the one in
 use, with its own single-instance names, temp folder and settings file: tests never touch the author's app nor his
 settings; build it apart with `dotnet build src\ScreenClip -o <folder>`, since his dev build locks `bin`). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
@@ -365,8 +373,8 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
 
 | Folder | Role |
 |--------|------|
-| `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `BoxDetector` (blocks drawn on a picture), `ElementChain` (elements and blocks under the pointer as wheel levels), `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). `Video/`: `GifEncoder` (+ median cut, LZW), `Timecode`, `TrimRange`, `GifPacer`, `PointerTrack` (the pointer recorded apart: positions, shapes, clicks, smoothed way), `VideoEdit` (splits, pieces removed, what is kept and its times; `SoundOptions`), `Mp4Tracks` (an MP4's tracks, the sound tracks named and made alternates). `Annotations/`: `Annotation` (+ kinds and styles, `Palette`, `AnnotationOptions`, `AnnotationDefaults`, `AnnotationLayer`, `AnnotationHistory`), `AnnotationGeometry` (sizes, bounds, hit tests, handles), `AnnotationRenderer` (SkiaSharp drawing, `Flatten`, pixelation, the recorded pointer and click effects), `VideoTiming` (annotations in time: shown at a moment, the A → B pointer posed, bars moved and stretched, `Fingerprint`). `Typefaces` (Segoe UI for both). |
-| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow` (+ `EditorWindow.Annotate.cs`: the Edit tab; `EditorWindow.Video.cs`: a video, its timeline and export; `EditorWindow.Tracks.cs`: the tracks under the timeline and the recorded pointer's options; `EditorWindow.Export.cs`: the Export window and Copy; `EditorWindow.Sound.cs`: the pieces and the sounds of a video; `EditorWindow.Dialog.cs`: its questions and messages; `EditorWindow.Script.cs`: the Debug script player), `RecordingBar`, `RecordingFrame`, `Video/` (`RecordingSession`, `ScreenRecorder`, `PointerRecorder`, `AudioRecorder`, `SoundMeter`, `SoundTracks`, `SoundComposer`, `VideoReader`, `VideoPlayer`, `VideoExporter`, `Direct3D`, `RecordingTest` in Debug), `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `NativeMethods`. |
+| `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `ColorCode` (a color as the picker copies it), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `BoxDetector` (blocks drawn on a picture), `ElementChain` (elements and blocks under the pointer as wheel levels), `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). `Video/`: `GifEncoder` (+ median cut, LZW), `Timecode`, `TrimRange`, `GifPacer`, `PointerTrack` (the pointer recorded apart: positions, shapes, clicks, smoothed way), `VideoEdit` (splits, pieces removed, what is kept and its times; `SoundOptions`), `Mp4Tracks` (an MP4's tracks, the sound tracks named and made alternates). `Annotations/`: `Annotation` (+ kinds and styles, `Palette`, `AnnotationOptions`, `AnnotationDefaults`, `AnnotationLayer`, `AnnotationHistory`), `AnnotationGeometry` (sizes, bounds, hit tests, handles), `AnnotationRenderer` (SkiaSharp drawing, `Flatten`, pixelation, the recorded pointer and click effects), `VideoTiming` (annotations in time: shown at a moment, the A → B pointer posed, bars moved and stretched, `Fingerprint`). `Typefaces` (Segoe UI for both). |
+| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow` (+ `EditorWindow.Annotate.cs`: the Edit tab; `EditorWindow.Video.cs`: a video, its timeline and export; `EditorWindow.Tracks.cs`: the tracks under the timeline and the recorded pointer's options; `EditorWindow.Export.cs`: the Export window and Copy; `EditorWindow.Sound.cs`: the pieces and the sounds of a video; `EditorWindow.Dialog.cs`: its questions and messages; `EditorWindow.Script.cs`: the Debug script player), `RecordingBar`, `RecordingFrame`, `Video/` (`RecordingSession`, `ScreenRecorder`, `PointerRecorder`, `AudioRecorder`, `SoundMeter`, `SoundTracks`, `SoundComposer`, `VideoReader`, `VideoPlayer`, `VideoExporter`, `Direct3D`, `RecordingTest` in Debug), `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `ColorToast` (the color picker's bubble), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `NativeMethods`. |
 | `installer/ScreenClip.iss` | Inno Setup (English/French): Program Files, Start menu, .NET 10 runtime check, closes the running app, gives Print Screen back, cleans HKCU and temp on uninstall. |
 | `scripts/` | `build.ps1`, `make-icons.ps1` (icon; generated files are committed). |
 | `.github/workflows/build.yml` | CI: build + tests on every push; on a `v*` tag, publishes the installer in a Release (pre-release when the tag has a `-`). |
@@ -595,6 +603,17 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
   menu's own check mark did not show). The right-click
   menu on the picture (`PictureMenu`, also played by the script: `menu`, `menupick`). **The tracks' handle** (a
   `Thumb` above the timeline): `_tracksExtra` added to the tracks' height, up to what leaves the picture 180 px.
+- **Color picker** (November 1, 2026): `ShortcutAction.ColorPicker` (appended last, so that the hotkey ids of the
+  others stay; **Win+Shift+C** by default: Alt+Shift+Print Screen is Windows' High Contrast toggle; PowerToys' own
+  picker takes Win+Shift+C when it is on, and the shortcut then shows refused), also in the tray menu. The capture
+  session with `IsColorPicker`: the frozen screen of Area mode without its bar, its shade, its outlines and its
+  element lookups; the crosshair and the magnifier, which shows the color as it will be copied; a click copies and
+  closes (`Cancel`: nothing is captured), Shift + click copies and stays; the arrows move the real pointer a pixel
+  (`SetCursorPos`; Ctrl: ten), in Area mode too. In Area mode, **C** copies the color under the pointer and the
+  choice goes on. `ColorCode` (Core, tested): `#3A7BD5`, `3A7BD5`, `rgb(…)`, `hsl(…)` (`AppSettings.ColorFormat`,
+  Settings › Capture › Color picker, each format shown by an example); `ClipActions.CopyText`; `ColorToast`, a small
+  bubble by the pointer with the color's swatch (never activated, excluded from captures, 1.4 s; it outlives the
+  overlay). The DevLog says a color was copied, never which.
 - **Microphone** (asked by the author, October 26, 2026; `Video/Microphones.cs`): Windows' default input
   (`Role.Console`, Settings › Sound; it was the “communications” one, which a headset may take), or the one chosen
   in Settings › Capture › Video or by a right click on the capture bar's microphone (nothing more on the bar, his

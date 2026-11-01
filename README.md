@@ -46,6 +46,10 @@
 - **Full screen**: a click takes the screen under the pointer.
 - **All screens** (with several screens): taken at once, as one picture, from its button, its shortcut or the menu;
   where no screen is (screens of different sizes), the PNG is transparent.
+- **Color picker** (**Win + Shift + C**, or the menu of the icon): the screen as it is, a magnifier; a click copies
+  the code of the color under the pointer (**#3A7BD5**, or `rgb()`, `hsl()` as chosen in **Settings → Capture**),
+  **Shift** + click copies it and goes on, the arrows move a pixel. While choosing an area, **C** copies the color
+  under the pointer too.
 - Several monitors, each at its own scale (100 %, 150 %…): every pixel stays sharp.
 
 <p align="center">
@@ -198,7 +202,9 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
 | Capture all the screens | `Ctrl` + `Shift` + `Print Screen` |
 | Capture the last area again | `Shift` + `Print Screen` |
 | Record a video / stop it | `Ctrl` + `Alt` + `Print Screen` |
+| Pick a color (its code copied) | `Win` + `Shift` + `C` |
 | While selecting: square / move / cancel | `Shift` / `Space` / `Esc` or right click |
+| While selecting: copy the color under the pointer / move a pixel | `C` / arrows |
 | Editor: import / paste / copy / save | `Ctrl+O` / `Ctrl+V` / `Ctrl+C` / `Ctrl+S` |
 | Editor: Edit tab / Layout tab | `Ctrl+1` / `Ctrl+2` |
 | Editor: undo / redo | `Ctrl+Z` / `Ctrl+Y` |

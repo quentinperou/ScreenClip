@@ -64,7 +64,6 @@ public partial class CaptureOverlay : Window
             FillRule = FillRule.EvenOdd,
             Children = { new RectangleGeometry(new Rect(0, 0, 100_000, 100_000)), _hole },
         };
-        Toolbar.Visibility = showBars ? Visibility.Visible : Visibility.Collapsed;
         Hints.Visibility = showBars ? Visibility.Visible : Visibility.Collapsed;
 
         SourceInitialized += (_, _) => Place();
@@ -132,6 +131,10 @@ public partial class CaptureOverlay : Window
     internal void ModeChanged()
     {
         _syncingMode = true;
+        // The color picker: no bar, and the screen not darkened, so that its colors are seen as they are.
+        bool picker = _session.IsColorPicker;
+        Toolbar.Visibility = _showBars && !picker ? Visibility.Visible : Visibility.Collapsed;
+        Shade.Visibility = picker ? Visibility.Collapsed : Visibility.Visible;
         AreaButton.IsChecked = _session.Mode == CaptureMode.Area;
         WindowButton.IsChecked = _session.Mode == CaptureMode.Window;
         ScreenButton.IsChecked = _session.Mode == CaptureMode.Screen;
@@ -301,6 +304,14 @@ public partial class CaptureOverlay : Window
     private void FillHints()
     {
         HintsPanel.Children.Clear();
+        if (_session.IsColorPicker)
+        {
+            AddHint(null, Strings.Get("HintPickClick"));
+            AddHint(Strings.Find("KeyShift") ?? "Shift", Strings.Get("HintPickKeep"));
+            AddHint("← ↑ → ↓", Strings.Get("HintPixel"));
+            AddHint(Strings.Find("KeyEscape") ?? "Esc", Strings.Get("HintCancel"));
+            return;
+        }
         switch (_session.Mode)
         {
             case CaptureMode.Area:
@@ -309,6 +320,7 @@ public partial class CaptureOverlay : Window
                 AddHint(null, Strings.Get("HintWheel"));
                 AddHint(Strings.Find("KeyShift") ?? "Shift", Strings.Get("HintSquare"));
                 AddHint(Strings.Find("KeySpace") ?? "Space", Strings.Get("HintMove"));
+                AddHint("C", Strings.Get("HintCopyColor"));
                 break;
             case CaptureMode.Window:
                 AddHint(null, Strings.Get("HintClickAWindow"));
@@ -349,7 +361,7 @@ public partial class CaptureOverlay : Window
         (_pointerX, _pointerY) = ToPixel(e.GetPosition(Root));
         _pointerInside = !IsOverBars(e);
 
-        if (_pressed && _session.Mode == CaptureMode.Area)
+        if (_pressed && _session.Mode == CaptureMode.Area && !_session.IsColorPicker)
         {
             if (!_dragging && Selection.IsDrag(_anchorX, _anchorY, _pointerX, _pointerY))
                 _dragging = true;
@@ -368,7 +380,7 @@ public partial class CaptureOverlay : Window
                     UpdateSelection();
             }
         }
-        if (_session.Mode == CaptureMode.Area && !_dragging && _pointerInside)
+        if (_session.Mode == CaptureMode.Area && !_session.IsColorPicker && !_dragging && _pointerInside)
             UpdateHover();
         Refresh();
     }
@@ -418,7 +430,7 @@ public partial class CaptureOverlay : Window
     // Wheel up: the larger element around; down: back to the smaller one.
     private void Root_MouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (_session.Mode != CaptureMode.Area || _dragging || _elements.Count < 2)
+        if (_session.Mode != CaptureMode.Area || _session.IsColorPicker || _dragging || _elements.Count < 2)
             return;
         _elementLevel = ElementChain.Clamp(_elements, _elementLevel + (e.Delta > 0 ? 1 : -1));
         e.Handled = true;
@@ -454,6 +466,14 @@ public partial class CaptureOverlay : Window
         Root.ReleaseMouseCapture();
         (_pointerX, _pointerY) = ToPixel(e.GetPosition(Root));
 
+        // The color picker: the color copied, then gone (Shift: one more).
+        if (_session.IsColorPicker)
+        {
+            CopyColor();
+            if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+                _session.Cancel();
+            return;
+        }
         if (_session.Mode == CaptureMode.Area && _dragging)
         {
             _session.Finish(new CaptureResult(_selection, _monitor, IsDraggedArea: true));
@@ -503,7 +523,39 @@ public partial class CaptureOverlay : Window
                 UpdateSelection();
                 Refresh();
                 break;
+            // C, while choosing an area: the color under the pointer copied, the choice goes on (asked by the author).
+            case Key.C when _session.Mode == CaptureMode.Area && !_session.IsColorPicker && _pointerInside && Keyboard.Modifiers == ModifierKeys.None:
+                CopyColor();
+                e.Handled = true;
+                break;
+            case Key.Left or Key.Right or Key.Up or Key.Down when _pointerInside:
+                NudgePointer(e.Key);
+                e.Handled = true;
+                break;
         }
+    }
+
+    // ---------------------------------------------------------------- Colors
+
+    // The color under the pointer, as the settings write it, on the clipboard; said in a small bubble by the pointer.
+    private void CopyColor()
+    {
+        int localX = _pointerX - _monitor.Bounds.X, localY = _pointerY - _monitor.Bounds.Y;
+        _image.CopyPixels(new Int32Rect(localX, localY, 1, 1), _pixel, 4, 0);
+        string code = ColorCode.Format(_pixel[2], _pixel[1], _pixel[0], App.Settings.ColorFormat);
+        bool copied = ClipActions.CopyText(code);
+        DevLog.Write($"color: {(copied ? "copied" : "not copied")} ({App.Settings.ColorFormat})");
+        ColorToast.Pop(copied ? Strings.Format("ColorCopied", code) : Strings.Get("CopyFailed"),
+            Color.FromRgb(_pixel[2], _pixel[1], _pixel[0]), _pointerX, _pointerY);
+    }
+
+    // The arrows move the pointer a pixel (Ctrl: ten), to aim at one: the real pointer moves, the overlay follows it.
+    private static void NudgePointer(Key key)
+    {
+        if (!GetCursorPos(out var at))
+            return;
+        int step = Keyboard.Modifiers.HasFlag(ModifierKeys.Control) ? 10 : 1;
+        SetCursorPos(at.X + (key == Key.Left ? -step : key == Key.Right ? step : 0), at.Y + (key == Key.Up ? -step : key == Key.Down ? step : 0));
     }
 
     private void Overlay_KeyUp(object sender, KeyEventArgs e)
@@ -554,8 +606,13 @@ public partial class CaptureOverlay : Window
             return;
 
         var mode = _session.Mode;
+        bool picker = _session.IsColorPicker;
         PixelRect? hole = null, outline = null;
-        if (mode == CaptureMode.Area && _dragging)
+        if (picker)
+        {
+            // Nothing to capture: no hole, no outline.
+        }
+        else if (mode == CaptureMode.Area && _dragging)
             hole = outline = _selection;
         else if (_pointerInside && mode == CaptureMode.Area)
         {
@@ -609,7 +666,7 @@ public partial class CaptureOverlay : Window
             SizeLabel.Visibility = Visibility.Collapsed;
 
         // Crosshair and magnifier, to place the corners of an area to the pixel.
-        bool precise = mode == CaptureMode.Area && _pointerInside && !_moving;
+        bool precise = (mode == CaptureMode.Area || picker) && _pointerInside && !_moving;
         var pointer = new Point((_pointerX - _monitor.Bounds.X + 0.5) / _scaleX, (_pointerY - _monitor.Bounds.Y + 0.5) / _scaleY);
         CrossH.Visibility = CrossV.Visibility = Magnifier.Visibility = precise ? Visibility.Visible : Visibility.Collapsed;
         if (!precise)
@@ -623,7 +680,10 @@ public partial class CaptureOverlay : Window
         int localX = _pointerX - _monitor.Bounds.X, localY = _pointerY - _monitor.Bounds.Y;
         LensBrush.Viewbox = new Rect(localX - LensPixels / 2, localY - LensPixels / 2, LensPixels, LensPixels);
         _image.CopyPixels(new Int32Rect(localX, localY, 1, 1), _pixel, 4, 0);
-        LensText.Text = $"{localX} · {localY} · #{_pixel[2]:X2}{_pixel[1]:X2}{_pixel[0]:X2}";
+        // The picker shows the color as it will be copied; an area, where the pixel is and its color.
+        LensText.Text = picker
+            ? ColorCode.Format(_pixel[2], _pixel[1], _pixel[0], App.Settings.ColorFormat)
+            : $"{localX} · {localY} · #{_pixel[2]:X2}{_pixel[1]:X2}{_pixel[0]:X2}";
 
         // Below right of the pointer, or on the other side near the edges.
         const double offset = 24, width = 132, height = 160;

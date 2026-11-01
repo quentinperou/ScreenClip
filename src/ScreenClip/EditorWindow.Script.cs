@@ -630,7 +630,7 @@ public partial class EditorWindow
                     case "settingsshot":
                     {
                         // Settings › Saving (or the page named after the file), its own window as a picture, then closed;
-                        // on the Capture page, scrolled to the microphone.
+                        // on the Capture page, scrolled down to the color picker.
                         string[] words = rest.Split(' ');
                         var page = words.Length > 1 ? Enum.Parse<SettingsPage>(words[1]) : SettingsPage.Saving;
                         rest = words[0];
@@ -639,7 +639,7 @@ public partial class EditorWindow
                         var settings = Application.Current.Windows.OfType<SettingsWindow>().First();
                         if (page == SettingsPage.Capture)
                         {
-                            settings.MicrophoneBox.BringIntoView();
+                            settings.ColorFormatBox.BringIntoView();
                             await Task.Delay(400);
                         }
                         var content = (FrameworkElement)settings.Content;

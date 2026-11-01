@@ -19,9 +19,10 @@ internal sealed class CaptureSession
     private ElementFinder? _finder;
 
     public CaptureSession(BitmapSource image, PixelRect screen, IReadOnlyList<MonitorInfo> monitors,
-        IReadOnlyList<VisibleWindow> windows, CaptureMode mode, bool video = false)
+        IReadOnlyList<VisibleWindow> windows, CaptureMode mode, bool video = false, bool colorPicker = false)
     {
         IsVideo = video;
+        IsColorPicker = colorPicker;
         Image = image;
         Screen = screen;
         Monitors = monitors;
@@ -85,9 +86,26 @@ internal sealed class CaptureSession
     /// <summary>The choice starts a video recording instead of taking a picture.</summary>
     public bool IsVideo { get; private set; }
 
+    /// <summary>
+    /// The color picker (asked by the author): the screen as it is, the magnifier, and a click that copies the color
+    /// under the pointer; nothing is captured.
+    /// </summary>
+    public bool IsColorPicker { get; private set; }
+
+    /// <summary>The color picker's shortcut pressed while choosing: the picker takes over.</summary>
+    public void SetColorPicker()
+    {
+        IsColorPicker = true;
+        IsVideo = false;
+        Mode = CaptureMode.Area;
+        foreach (var overlay in _overlays)
+            overlay.ModeChanged();
+    }
+
     public void SetVideo(bool video)
     {
         IsVideo = video;
+        IsColorPicker = false;
         foreach (var overlay in _overlays)
             overlay.ModeChanged();
     }
@@ -116,13 +134,14 @@ internal sealed class CaptureSession
 
         // Area: a first look under the pointer at once, so that the apps that build their tree on demand (Chrome, Edge,
         // Electron apps) start building it, and the blocks of that window are read, by the time the pointer moves.
-        if (Mode == CaptureMode.Area && NativeMethods.GetCursorPos(out var pointer) && WindowUnder(pointer.X, pointer.Y) is { } window)
+        if (Mode == CaptureMode.Area && !IsColorPicker && NativeMethods.GetCursorPos(out var pointer) && WindowUnder(pointer.X, pointer.Y) is { } window)
             FindElements(window, pointer.X, pointer.Y);
     }
 
     public void SetMode(CaptureMode mode)
     {
         Mode = mode;
+        IsColorPicker = false;
         foreach (var overlay in _overlays)
             overlay.ModeChanged();
     }

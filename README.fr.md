@@ -48,6 +48,10 @@
 - **Plein écran** : un clic prend l'écran sous le pointeur.
 - **Tous les écrans** (avec plusieurs écrans) : pris tout de suite, en une image, depuis son bouton, son raccourci ou
   le menu ; là où il n'y a pas d'écran (écrans de tailles différentes), le PNG est transparent.
+- **Pipette** (**Win + Maj + C**, ou le menu de l'icône) : l'écran tel quel, une loupe ; un clic copie le code de la
+  couleur sous le pointeur (**#3A7BD5**, ou `rgb()`, `hsl()` au choix dans **Paramètres → Capture**), **Maj** + clic
+  la copie et continue, les flèches déplacent d'un pixel. Pendant le choix d'une zone, **C** copie aussi la couleur
+  sous le pointeur.
 - Plusieurs écrans, chacun à sa propre échelle (100 %, 150 %…) : chaque pixel reste net.
 
 <p align="center">
@@ -214,7 +218,9 @@ parfois le changement qu'à la prochaine ouverture de session.
 | Capturer tous les écrans | `Ctrl` + `Maj` + `Impr. écran` |
 | Refaire la dernière zone | `Maj` + `Impr. écran` |
 | Enregistrer une vidéo / l'arrêter | `Ctrl` + `Alt` + `Impr. écran` |
+| Prendre une couleur (son code copié) | `Win` + `Maj` + `C` |
 | Pendant la sélection : carré / déplacer / annuler | `Maj` / `Espace` / `Échap` ou clic droit |
+| Pendant la sélection : copier la couleur sous le pointeur / déplacer d'un pixel | `C` / flèches |
 | Éditeur : importer / coller / copier / enregistrer | `Ctrl+O` / `Ctrl+V` / `Ctrl+C` / `Ctrl+S` |
 | Éditeur : onglet Édition / Mise en forme | `Ctrl+1` / `Ctrl+2` |
 | Éditeur : annuler / rétablir | `Ctrl+Z` / `Ctrl+Y` |

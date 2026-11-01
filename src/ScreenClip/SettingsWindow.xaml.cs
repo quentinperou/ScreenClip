@@ -54,6 +54,10 @@ public partial class SettingsWindow : Window
         CopyFormatBox.Items.Add(new Option<ExportFormat>(ExportFormat.Webp, "WebP"));
         CopyFormatBox.SelectedItem = CopyFormatBox.Items.Cast<Option<ExportFormat>>().FirstOrDefault(o => o.Value == _settings.CopyFormat)
             ?? CopyFormatBox.Items[0];
+        // Each format shown by an example of what it copies.
+        foreach (var format in Enum.GetValues<ColorFormat>())
+            ColorFormatBox.Items.Add(new Option<ColorFormat>(format, ColorCode.Format(58, 123, 213, format)));
+        ColorFormatBox.SelectedItem = ColorFormatBox.Items.Cast<Option<ColorFormat>>().First(o => o.Value == _settings.ColorFormat);
 
         OpenEditorBox.IsChecked = _settings.OpenEditorAfterCapture;
         ShowThumbnailBox.IsChecked = _settings.ShowThumbnail;
@@ -148,6 +152,14 @@ public partial class SettingsWindow : Window
         if (!_initialized || TrayClickBox.SelectedItem is not Option<TrayClick> option)
             return;
         _settings.TrayClick = option.Value;
+        _settings.Save();
+    }
+
+    private void ColorFormatBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_initialized || ColorFormatBox.SelectedItem is not Option<ColorFormat> option)
+            return;
+        _settings.ColorFormat = option.Value;
         _settings.Save();
     }
 
@@ -269,6 +281,7 @@ public partial class SettingsWindow : Window
                     ShortcutAction.RepeatArea => "IconRepeat",
                     ShortcutAction.AllScreens => "IconAllScreens",
                     ShortcutAction.Video => "IconVideo",
+                    ShortcutAction.ColorPicker => "IconPicker",
                     _ => "IconArea",
                 }),
                 Margin = new Thickness(2, 0, 18, 0),

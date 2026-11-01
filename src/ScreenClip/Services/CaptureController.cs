@@ -71,7 +71,22 @@ internal sealed class CaptureController
             case ShortcutAction.Video:
                 RunVideo();
                 break;
+            case ShortcutAction.ColorPicker:
+                PickColor();
+                break;
         }
+    }
+
+    // The color picker: the screen frozen, a click copies the color under the pointer. Not while a video is recorded
+    // (the frozen screen would be filmed); pressed while choosing, the choice becomes the picker.
+    private void PickColor()
+    {
+        if (RecordingSession.Current is not null)
+            return;
+        if (_session is not null)
+            _session.SetColorPicker();
+        else
+            Start(CaptureMode.Area, colorPicker: true);
     }
 
     public bool IsRecording => RecordingSession.Current is not null;
@@ -99,7 +114,7 @@ internal sealed class CaptureController
         timer.Start();
     }
 
-    private void Start(CaptureMode mode, bool video = false)
+    private void Start(CaptureMode mode, bool video = false, bool colorPicker = false)
     {
         // A shortcut pressed again while choosing switches the mode.
         if (_session is not null)
@@ -119,8 +134,8 @@ internal sealed class CaptureController
         var monitors = ScreenGrabber.Monitors();
         var image = DemoScreen.IsOn ? DemoScreen.Grab(screen, monitors) : ScreenGrabber.Grab(screen);
         var windows = DemoScreen.IsOn ? DemoScreen.Windows(monitors) : ScreenGrabber.VisibleWindows();
-        _session = new CaptureSession(image, screen, monitors, windows, mode, video);
-        DevLog.Write($"capture: {mode}{(video ? ", video" : "")}, screen {screen}");
+        _session = new CaptureSession(image, screen, monitors, windows, mode, video, colorPicker);
+        DevLog.Write($"capture: {(colorPicker ? "color picker" : mode)}{(video ? ", video" : "")}, screen {screen}");
         _session.Finished += Session_Finished;
         _session.Show();
     }

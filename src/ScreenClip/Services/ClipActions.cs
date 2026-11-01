@@ -34,6 +34,22 @@ internal static class ClipActions
         return Copy(data);
     }
 
+    /// <summary>Puts a text on the clipboard (the code of a color).</summary>
+    public static bool CopyText(string text)
+    {
+#if DEBUG
+        // SCREENCLIP_CLIPBOARD_FILE (Debug only): the text written there instead, so that tests leave the clipboard alone.
+        if (Environment.GetEnvironmentVariable("SCREENCLIP_CLIPBOARD_FILE") is { Length: > 0 } file)
+        {
+            File.WriteAllText(file, text);
+            return true;
+        }
+#endif
+        var data = new DataObject();
+        data.SetText(text);
+        return Copy(data);
+    }
+
     /// <summary>Puts <paramref name="data"/> on the clipboard, trying again while another app holds it.</summary>
     public static bool Copy(DataObject data)
     {
