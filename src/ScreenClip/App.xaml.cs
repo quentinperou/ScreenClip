@@ -15,6 +15,7 @@ public partial class App : Application
     private static readonly CultureInfo SystemUICulture = CultureInfo.CurrentUICulture;
 
     private static bool s_themeApplied;
+    private static bool s_showingError;
     private SingleInstance? _instance;
 
     /// <summary>The settings, loaded once at startup; the settings window changes and saves this instance.</summary>
@@ -27,14 +28,24 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-
-        _instance = SingleInstance.TryStart(e.Args, args => Dispatcher.BeginInvoke(() => OpenEditor(PictureArgument(args))));
-        if (_instance is null)
+        WatchErrors();
+        try
         {
-            Shutdown(); // already running: it has been told to open its editor
-            return;
+            Start(e);
         }
+        catch (Exception ex)
+        {
+            // Nothing works without what failed: say so, offer to report it, and quit (a user's ScreenClip once just
+            // did not start, and nothing told why).
+            ErrorLog.Record(ex, "startup");
+            BugReporter.Ask(Strings.Format("StartupFailedAskReport", ErrorLog.Clean(ex.Message)), ex);
+            Shutdown(1);
+        }
+    }
 
+    private void Start(StartupEventArgs e)
+    {
+        // The settings and the language first: a start that finds ScreenClip hanging asks in the user's language.
         Settings = AppSettings.Load();
 
         // UI language: the one chosen in the settings, else the Windows one (French, otherwise English).
@@ -44,13 +55,30 @@ public partial class App : Application
         else
             ApplyLanguage(Settings.Language);
 
-        DevLog.Enabled = Settings.DeveloperMode;
-        DispatcherUnhandledException += (_, args) =>
+        _instance = SingleInstance.TryStart(e.Args, args => Dispatcher.BeginInvoke(() =>
         {
-            DevLog.Write($"error: {args.Exception}");
-            MessageBox.Show(args.Exception.Message, "ScreenClip", MessageBoxButton.OK, MessageBoxImage.Error);
-            args.Handled = true;
-        };
+            _instance?.Answer(); // the interface is alive: the new start can quit
+            OpenEditor(PictureArgument(args));
+        }));
+        if (_instance is null)
+        {
+            Shutdown(); // already running: it has been told to open its editor
+            return;
+        }
+
+        DevLog.Enabled = Settings.DeveloperMode;
+#if DEBUG
+        // SCREENCLIP_THROW=startup|interface|hang (Debug only): a made-up error, or an interface that hangs, to see
+        // what a user then sees.
+        string? madeUp = Environment.GetEnvironmentVariable("SCREENCLIP_THROW");
+        if (madeUp == "startup")
+            throw new InvalidOperationException("A made-up error at startup (SCREENCLIP_THROW).");
+        if (madeUp == "hang")
+            Dispatcher.BeginInvoke(() => Thread.Sleep(Timeout.Infinite), DispatcherPriority.ApplicationIdle);
+        if (madeUp == "interface")
+            Dispatcher.BeginInvoke(() => throw new InvalidOperationException("A made-up error in the interface (SCREENCLIP_THROW)."),
+                DispatcherPriority.ApplicationIdle);
+#endif
 
         ClipActions.CleanTempFolder();
         Capture = new CaptureController();
@@ -90,6 +118,48 @@ public partial class App : Application
         if (double.TryParse(Environment.GetEnvironmentVariable("SCREENCLIP_RECORD_TEST"), NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds))
             Dispatcher.BeginInvoke(() => RecordingTest.Run(seconds), DispatcherPriority.ApplicationIdle);
 #endif
+    }
+
+    /// <summary>
+    /// Every error nobody caught is kept (<see cref="ErrorLog"/>, for a bug report). One in the interface: the app goes
+    /// on, and a window offers to report it. One elsewhere ends the app: the plain Windows message box offers it.
+    /// </summary>
+    private void WatchErrors()
+    {
+        DispatcherUnhandledException += (_, args) =>
+        {
+            args.Handled = true;
+            ErrorLog.Record(args.Exception, "interface");
+            if (s_showingError)
+                return;
+            s_showingError = true;
+            try
+            {
+                ReportWindow.Open(args.Exception);
+            }
+            catch (Exception ex)
+            {
+                // The window itself fails (the theme, WPF): the plain message box.
+                ErrorLog.Record(ex, "report window");
+                BugReporter.Ask(Strings.Format("ErrorAskReport", ErrorLog.Clean(args.Exception.Message)), args.Exception);
+            }
+            finally
+            {
+                s_showingError = false;
+            }
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            if (args.ExceptionObject is not Exception error)
+                return;
+            ErrorLog.Record(error, "crash");
+            BugReporter.Ask(Strings.Format("CrashAskReport", ErrorLog.Clean(error.Message)), error);
+        };
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            ErrorLog.Record(args.Exception.InnerException ?? args.Exception, "task");
+            args.SetObserved();
+        };
     }
 
     protected override void OnExit(ExitEventArgs e)

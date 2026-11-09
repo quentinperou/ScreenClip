@@ -157,6 +157,23 @@ internal static class NativeMethods
     [DllImport("user32.dll")]
     public static extern IntPtr MonitorFromPoint(POINT point, int flags);
 
+    // The scale of a monitor, for a bug report (96 = 100 %).
+    [DllImport("shcore.dll")]
+    public static extern int GetDpiForMonitor(IntPtr monitor, int type, out uint dpiX, out uint dpiY);
+
+    public const int MDT_EFFECTIVE_DPI = 0;
+
+    // The plain Windows message box: for an error at startup, before (or instead of) the theme and the windows.
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern int MessageBoxW(IntPtr owner, string text, string caption, int type);
+
+    public const int MB_YESNO = 0x4;
+    public const int MB_ICONERROR = 0x10;
+    public const int MB_ICONWARNING = 0x30;
+    public const int MB_DEFBUTTON2 = 0x100;
+    public const int MB_TOPMOST = 0x40000;
+    public const int IDYES = 6;
+
     // ---------------------------------------------------------------- Screen capture (GDI)
 
     public const int SRCCOPY = 0x00CC0020;

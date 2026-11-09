@@ -118,6 +118,7 @@ internal static class TrayMenu
             () => ClipActions.OpenFolder(settings.EffectiveSaveFolder)));
 
         menu.Items.Add(new Separator());
+        menu.Items.Add(Item(Strings.Get("ReportBug"), GlyphIcon("\uEBE8"), Hotkey.None, () => ReportWindow.Open()));
         menu.Items.Add(Item(Strings.Get("Settings"), GlyphIcon(""), Hotkey.None, () => App.OpenSettings()));
         menu.Items.Add(Item(Strings.Get("Quit"), GlyphIcon(""), Hotkey.None, App.Quit));
         return menu;

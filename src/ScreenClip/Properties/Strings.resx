@@ -229,6 +229,13 @@
   <data name="CopyTheGif" xml:space="preserve">
     <value>Copy the GIF</value>
   </data>
+  <data name="CrashAskReport" xml:space="preserve">
+    <value>ScreenClip has to close after an error:
+
+{0}
+
+Report it on GitHub? A new issue opens in your browser, filled in with technical details and no personal data: you send it, or not.</value>
+  </data>
   <data name="CropAll" xml:space="preserve">
     <value>Whole capture</value>
   </data>
@@ -345,6 +352,13 @@
   </data>
   <data name="EditorWindowTitle" xml:space="preserve">
     <value>Title</value>
+  </data>
+  <data name="ErrorAskReport" xml:space="preserve">
+    <value>ScreenClip ran into an error:
+
+{0}
+
+Report it on GitHub? A new issue opens in your browser, filled in with technical details and no personal data: you send it, or not.</value>
   </data>
   <data name="ErrorExport" xml:space="preserve">
     <value>The video could not be exported: {0}</value>
@@ -495,6 +509,14 @@
   </data>
   <data name="ImageModeToolTip" xml:space="preserve">
     <value>Take a picture of the area, the window or the screen you choose</value>
+  </data>
+  <data name="InstanceNotAnswering" xml:space="preserve">
+    <value>ScreenClip is already running but does not answer.
+
+Close it and start a new one? What is open in its editors will be lost. You can then report the problem from the icon's menu (Report a problem…).</value>
+  </data>
+  <data name="InstanceNotClosed" xml:space="preserve">
+    <value>The ScreenClip that does not answer could not be closed. Close it in the Task Manager, then start ScreenClip again.</value>
   </data>
   <data name="KeyAlt" xml:space="preserve">
     <value>Alt</value>
@@ -886,6 +908,48 @@
   <data name="RemovePieceToolTip" xml:space="preserve">
     <value>Remove the piece at the playhead (Delete)</value>
   </data>
+  <data name="ReportBug" xml:space="preserve">
+    <value>Report a problem…</value>
+  </data>
+  <data name="ReportButton" xml:space="preserve">
+    <value>Report…</value>
+  </data>
+  <data name="ReportCopied" xml:space="preserve">
+    <value>Copied: paste it in an issue or a message.</value>
+  </data>
+  <data name="ReportCut" xml:space="preserve">
+    <value>… (cut here: the full details are on your clipboard, paste them under this block)</value>
+  </data>
+  <data name="ReportErrorTitle" xml:space="preserve">
+    <value>ScreenClip ran into an error</value>
+  </data>
+  <data name="ReportIntro" xml:space="preserve">
+    <value>“Open on GitHub” opens a new issue filled in with the details below: say what happened above them, then send it. Nothing leaves your PC until you send it there (a GitHub account is needed). No capture and no file go with it; your user and computer names are hidden.</value>
+  </data>
+  <data name="ReportIssueErrorTitle" xml:space="preserve">
+    <value>Error: {0}</value>
+  </data>
+  <data name="ReportIssueTitle" xml:space="preserve">
+    <value>Problem: </value>
+  </data>
+  <data name="ReportOpen" xml:space="preserve">
+    <value>Open on GitHub</value>
+  </data>
+  <data name="ReportTechnical" xml:space="preserve">
+    <value>Technical details</value>
+  </data>
+  <data name="ReportTitle" xml:space="preserve">
+    <value>Report a problem</value>
+  </data>
+  <data name="ReportTooLong" xml:space="preserve">
+    <value>The details were too long for the address: they are on the clipboard in full, paste them in the issue.</value>
+  </data>
+  <data name="ReportWhatHappened" xml:space="preserve">
+    <value>What happened?</value>
+  </data>
+  <data name="ReportWhatHappenedHint" xml:space="preserve">
+    <value>What did you do, what did you expect, what happened instead?</value>
+  </data>
   <data name="RestorePieceToolTip" xml:space="preserve">
     <value>Put this piece back</value>
   </data>
@@ -987,6 +1051,9 @@
   </data>
   <data name="SettingsQuitDescription" xml:space="preserve">
     <value>The shortcuts stop working until ScreenClip is started again (Start menu).</value>
+  </data>
+  <data name="SettingsReportDescription" xml:space="preserve">
+    <value>Opens an issue on GitHub with the technical details of ScreenClip (version, Windows, screens, settings, last errors), which you read before sending. No personal data.</value>
   </data>
   <data name="SettingsSaveAutomatically" xml:space="preserve">
     <value>Save automatically</value>
@@ -1191,6 +1258,13 @@
   </data>
   <data name="SplitToolTip" xml:space="preserve">
     <value>Split at the playhead (Ctrl+B)</value>
+  </data>
+  <data name="StartupFailedAskReport" xml:space="preserve">
+    <value>ScreenClip could not start:
+
+{0}
+
+Report it on GitHub? A new issue opens in your browser, filled in with technical details and no personal data: you send it, or not.</value>
   </data>
   <data name="StopRecording" xml:space="preserve">
     <value>Stop the recording</value>

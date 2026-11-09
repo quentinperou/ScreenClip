@@ -579,6 +579,8 @@ public partial class SettingsWindow : Window
         OpenLogButton.IsEnabled = on;
     }
 
+    private void Report_Click(object sender, RoutedEventArgs e) => ReportWindow.Open(owner: this);
+
     // The log in the app that opens text files (Notepad), created empty if there is none yet.
     private void OpenLog_Click(object sender, RoutedEventArgs e)
     {

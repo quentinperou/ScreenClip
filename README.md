@@ -192,6 +192,11 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
   line of the icon's menu. It installs itself and restarts the app. **Beta** channel available.
 - **Developer mode** (Settings → About): the thumbnail and the recording's bar stay visible in screenshots, and a
   log notes what ScreenClip does (never what the captures show), to send when something does not work.
+- **Report a problem** (Settings → About, or the icon's menu): opens a new issue on GitHub filled in with the
+  technical details of ScreenClip (version, Windows, screens, settings, its last errors), shown to you first and
+  without personal data; you say what happened and send it, or not. After an error, even at startup, ScreenClip
+  offers it. When a ScreenClip already running does not answer, starting it again offers to close it and start a
+  new one.
 
 ### Shortcuts
 
@@ -343,6 +348,10 @@ The only network access is the **update check**: when the app starts and then on
 read the list of ScreenClip releases. No capture or personal data is sent; like any web request, GitHub sees your IP
 address, and the app version in the User-Agent. When you accept an update, its installer is downloaded from GitHub.
 Turn off the check at startup in **Settings → Updates** and the app makes no request unless you ask for one.
+
+ScreenClip keeps its last five errors in `%LOCALAPPDATA%\ScreenClip\errors.log` (your user folder, user name and
+computer name hidden), for a bug report. **Report a problem** sends nothing itself: it opens a new GitHub issue in your
+browser, with the details you saw first, and you send it there, or not.
 
 ## License
 

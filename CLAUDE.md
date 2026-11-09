@@ -265,6 +265,21 @@ pretending to be 0.4.0 (`SCREENCLIP_VERSION`): the bar at the top of the editor 
 not the Windows notification (kept off the author's screen, `UpdateNotified` set) nor an install from the menu.
 Released as 0.4.2 the same day (0.4.1 users get it as before, in Settings; the next versions show themselves).
 
+Then (November 9, 2026) a **bug report** (the author: a user's ScreenClip did not start, and nothing told why; his
+choices: Settings › About and the icon's menu, the last errors kept even without developer mode, a preview before
+GitHub): see Technical choices › Bug report. Checked on the README instance: the window from Settings › About, Copy
+and Open on GitHub (the address written to a file, `SCREENCLIP_URL_FILE`, the copy to `SCREENCLIP_CLIPBOARD_FILE`),
+an error made up in the interface and at startup (`SCREENCLIP_THROW`: the window, the message box, the issue's title
+and body decoded, the process gone after the startup one); not the browser nor GitHub's page. The first tries showed
+the test's error windows taking the author's keys (both were answered before the script could): the error window no
+longer takes the focus and has no default button, the message box's default is No. 259 tests.
+
+The same day, asked by the author: **“ScreenClip is already running but does not answer”** (a second start found a
+hung ScreenClip and quit without a word: the likely “did not start”); see Technical choices › Single instance.
+Checked on the README instance: a second start answered in 0.3 s (the first one opened its editor); the first one
+hanging (`SCREENCLIP_THROW=hang`), the question after 8.4 s, Yes (the hung one closed, the new one running with its
+icon) and No (nothing changed), the timeout in the errors kept.
+
 **Next**: the author's next ideas. The text extractor (OCR) is left aside (the author, November 1, 2026: Windows does it very well already).
 
 ## Commands
@@ -288,7 +303,10 @@ it in the editor; `SCREENCLIP_RECORD_STILL=1`: the window stops after a second; 
 `SCREENCLIP_RECORD_SCROLL=<file>`: a page that scrolls, for the README picture of the video editor;
 `SCREENCLIP_RECORD_FAKESOUND=1`: two tones, 440 Hz for the computer and 660 Hz for the microphone, in place of the
 devices, for the recording and the meters: tests record no one's sound),
-`SCREENCLIP_CLIPBOARD_FILE=<file>` (Debug builds only: a color's code written there instead of the clipboard),
+`SCREENCLIP_CLIPBOARD_FILE=<file>` (Debug builds only: a color's code or a bug report written there instead of the
+clipboard), `SCREENCLIP_URL_FILE=<file>` (Debug builds only: the address of a bug report written there instead of
+opening the browser), `SCREENCLIP_THROW=startup|interface|hang` (Debug builds only: a made-up error, at startup or in
+the interface, or an interface that hangs, to see what a user then sees),
 `SCREENCLIP_VERSION=<x.y.z>` (Debug builds only: an older version pretended, so that the update check finds one),
 `SCREENCLIP_INSTANCE=<name>` and `SCREENCLIP_SETTINGS=<file>` (Debug builds only: a second ScreenClip beside the one in
 use, with its own single-instance names, temp folder and settings file: tests never touch the author's app nor his
@@ -310,6 +328,8 @@ again (and the `HKCU\Software\ScreenClip` key).
   unless `SCREENCLIP_CAPTURABLE=1`.
 - Clean up after a test on the author's PC: quit the app, delete a test `settings.json`, never leave the Print Screen
   setting changed.
+- A window of the test instance that takes the focus takes the author's keys too (two test dialogs were answered by
+  his typing, November 9, 2026): prefer windows that do not activate, and a dialog whose default does nothing.
 - **Claude Code's sandbox**: registry writes made from its shell (and by processes it starts) are not seen by
   processes started outside it. Test the Print Screen takeover and the Run key through the installed app, or ask the
   author.
@@ -385,8 +405,8 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
 
 | Folder | Role |
 |--------|------|
-| `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `ColorCode` (a color as the picker copies it), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `BoxDetector` (blocks drawn on a picture), `ElementChain` (elements and blocks under the pointer as wheel levels), `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). `Video/`: `GifEncoder` (+ median cut, LZW), `Timecode`, `TrimRange`, `GifPacer`, `PointerTrack` (the pointer recorded apart: positions, shapes, clicks, smoothed way), `VideoEdit` (splits, pieces removed, what is kept and its times; `SoundOptions`), `Mp4Tracks` (an MP4's tracks, the sound tracks named and made alternates). `Annotations/`: `Annotation` (+ kinds and styles, `Palette`, `AnnotationOptions`, `AnnotationDefaults`, `AnnotationLayer`, `AnnotationHistory`), `AnnotationGeometry` (sizes, bounds, hit tests, handles), `AnnotationRenderer` (SkiaSharp drawing, `Flatten`, pixelation, the recorded pointer and click effects), `VideoTiming` (annotations in time: shown at a moment, the A → B pointer posed, bars moved and stretched, `Fingerprint`). `Typefaces` (Segoe UI for both). |
-| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow` (+ `EditorWindow.Annotate.cs`: the Edit tab; `EditorWindow.Video.cs`: a video, its timeline and export; `EditorWindow.Tracks.cs`: the tracks under the timeline and the recorded pointer's options; `EditorWindow.Export.cs`: the Export window and Copy; `EditorWindow.Sound.cs`: the pieces and the sounds of a video; `EditorWindow.Dialog.cs`: its questions and messages; `EditorWindow.Script.cs`: the Debug script player), `RecordingBar`, `RecordingFrame`, `Video/` (`RecordingSession`, `ScreenRecorder`, `PointerRecorder`, `AudioRecorder`, `SoundMeter`, `SoundTracks`, `SoundComposer`, `VideoReader`, `VideoPlayer`, `VideoExporter`, `Direct3D`, `RecordingTest` in Debug), `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `ColorToast` (the color picker's bubble), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `NativeMethods`. |
+| `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `ColorCode` (a color as the picker copies it), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `BoxDetector` (blocks drawn on a picture), `ElementChain` (elements and blocks under the pointer as wheel levels), `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). `Video/`: `GifEncoder` (+ median cut, LZW), `Timecode`, `TrimRange`, `GifPacer`, `PointerTrack` (the pointer recorded apart: positions, shapes, clicks, smoothed way), `VideoEdit` (splits, pieces removed, what is kept and its times; `SoundOptions`), `Mp4Tracks` (an MP4's tracks, the sound tracks named and made alternates). `Annotations/`: `Annotation` (+ kinds and styles, `Palette`, `AnnotationOptions`, `AnnotationDefaults`, `AnnotationLayer`, `AnnotationHistory`), `AnnotationGeometry` (sizes, bounds, hit tests, handles), `AnnotationRenderer` (SkiaSharp drawing, `Flatten`, pixelation, the recorded pointer and click effects), `VideoTiming` (annotations in time: shown at a moment, the A → B pointer posed, bars moved and stretched, `Fingerprint`). `Typefaces` (Segoe UI for both). `BugReport` (a report's text cleaned of the user's names, the new issue's address). |
+| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow` (+ `EditorWindow.Annotate.cs`: the Edit tab; `EditorWindow.Video.cs`: a video, its timeline and export; `EditorWindow.Tracks.cs`: the tracks under the timeline and the recorded pointer's options; `EditorWindow.Export.cs`: the Export window and Copy; `EditorWindow.Sound.cs`: the pieces and the sounds of a video; `EditorWindow.Dialog.cs`: its questions and messages; `EditorWindow.Script.cs`: the Debug script player), `RecordingBar`, `RecordingFrame`, `Video/` (`RecordingSession`, `ScreenRecorder`, `PointerRecorder`, `AudioRecorder`, `SoundMeter`, `SoundTracks`, `SoundComposer`, `VideoReader`, `VideoPlayer`, `VideoExporter`, `Direct3D`, `RecordingTest` in Debug), `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `ColorToast` (the color picker's bubble), `ReportWindow` (a bug report, read before it goes), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `ErrorLog` (the last errors), `BugReporter` (a report's details, the issue opened), `NativeMethods`. |
 | `installer/ScreenClip.iss` | Inno Setup (English/French): Program Files, Start menu, .NET 10 runtime check, closes the running app, gives Print Screen back, cleans HKCU and temp on uninstall. |
 | `scripts/` | `build.ps1`, `make-icons.ps1` (icon; generated files are committed). |
 | `.github/workflows/build.yml` | CI: build + tests on every push; on a `v*` tag, publishes the installer in a Release (pre-release when the tag has a `-`). |
@@ -622,6 +642,25 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
   “Install version x.y.z” (`App.InstallUpdate`: the editor's bar installs, with its progress). Checked again when an
   editor opens if the last check is more than a day old, at most once an hour while offline (`Updater.CheckIfDueAsync`;
   no timer), as long as *Check for updates at startup* is on.
+- **Bug report** (November 9, 2026; the author: a user's ScreenClip did not start, and nothing told why).
+  `ErrorLog` keeps the last five errors in `%LOCALAPPDATA%\ScreenClip\errors.log`, even with developer mode off
+  (where, version, the exception with its stack; the same error again within 10 s kept once), cleaned by
+  `BugReport.Anonymize` (Core, tested: the user's folder written %USERPROFILE%, the user's and computer's names
+  replaced where they stand alone). `BugReporter.Details` is in English whatever the language (the author reads it):
+  version, installed or not, update channel, Windows, .NET, language, theme, screens with their scale, uptime, memory,
+  the shortcuts (refused ones marked), the settings that change behavior, folders only as default or changed, the
+  microphone only as chosen or default, the number of user presets, the last errors (the latest first), the end of the
+  developer log when it is on; each part in its own try (a report is asked for when something is broken).
+  `BugReport.NewIssueUrl`: `github.com/…/issues/new?labels=bug&title=…&body=…`, the body a “What happened?” heading
+  in the app's language, an HTML comment as a hint, then the details in a `<details>` block; over 7000 characters,
+  the details lose lines from their end (the log first), a note says so and they go to the clipboard whole.
+  `ReportWindow`: the details in a read-only box, Copy, Open on GitHub (closes, unless the details were cut), Cancel;
+  from Settings › About (a card) and the icon's menu (before Settings). **Errors**: `App.WatchErrors`, set first in
+  `OnStartup`: one in the interface (`DispatcherUnhandledException`, handled as before) opens the same window with the
+  error's message (shown without taking the focus, no default button: it may appear while one types elsewhere);
+  one on another thread (`AppDomain.UnhandledException`, the app ends) and a failed startup (`OnStartup` runs `Start`
+  in a try; the app then quits) ask with the plain Windows message box (`MessageBoxW`, default No) and open the issue
+  on Yes; an unobserved task's is only kept.
 - **Color picker** (November 1, 2026): `ShortcutAction.ColorPicker` (appended last, so that the hotkey ids of the
   others stay; **Win+Shift+C** by default: Alt+Shift+Print Screen is Windows' High Contrast toggle; PowerToys' own
   picker takes Win+Shift+C when it is on, and the shortcut then shows refused), also in the tray menu. The capture
@@ -754,7 +793,14 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
   only for the installed exe in Program Files: a dev build never registers itself).
 - **Single instance**: named mutex + event (`Local\ScreenClip.*`), waited on by the thread pool (no thread); a second
   start writes its arguments to `%TEMP%\ScreenClip-activate.txt` and wakes the first one, which opens its editor
-  (with the picture given, if any).
+  (with the picture given, if any). The first one answers from its interface thread (`SingleInstance.Answer`, an
+  event `Local\ScreenClip.Answer`, set before the editor opens): with no answer within 8 s (a start while Windows
+  signs in stays under it; an answer takes milliseconds), it hangs, and the new start asks (the plain message box,
+  default No; asked by the author: a user's ScreenClip once “did not start”) whether to close it: Yes kills the
+  process named in `%TEMP%\ScreenClip-process.txt` (written by the first one, only a ScreenClip of the same
+  session), takes the abandoned mutex and starts as usual (its arguments dropped). The timeout goes to the errors
+  kept, for a report. An older version, which has no answer event, is woken as before. The settings and the
+  language are read before, so that the question is in the user's language.
 - **Memory**: `ConcurrentGarbageCollection=false`, `PublishReadyToRun=true`; `MemoryTrim.Soon()` (2 s after the app is
   idle with no window) collects and calls `SetProcessWorkingSetSize(-1, -1)`. Measured on 0.1.0 (ReadyToRun build):
   91.8 MB working set just started, 5.3 MB at rest, 88 MB with a thumbnail, 4.7 MB at rest again; with the editor

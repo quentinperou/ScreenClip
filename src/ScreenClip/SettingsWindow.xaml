@@ -498,6 +498,18 @@
             </DockPanel>
           </StackPanel>
         </Border>
+        <!-- A bug report: a new issue on GitHub, filled in with the technical details, read before it is sent. -->
+        <Border Style="{StaticResource Card}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource CardIcon}" Text="&#xEBE8;" />
+            <Button DockPanel.Dock="Right" Content="{local:Tr ReportButton}" MinWidth="160" VerticalAlignment="Center"
+                    Margin="16,0,0,0" Click="Report_Click" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{local:Tr ReportTitle}" />
+              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsReportDescription}" />
+            </StackPanel>
+          </DockPanel>
+        </Border>
       </StackPanel>
     </ScrollViewer>
   </Grid>

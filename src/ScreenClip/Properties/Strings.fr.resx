@@ -229,6 +229,13 @@
   <data name="CopyTheGif" xml:space="preserve">
     <value>Copier le GIF</value>
   </data>
+  <data name="CrashAskReport" xml:space="preserve">
+    <value>ScreenClip doit se fermer après une erreur :
+
+{0}
+
+La signaler sur GitHub ? Un nouveau signalement s'ouvre dans votre navigateur, rempli avec des détails techniques et aucune donnée personnelle : vous l'envoyez, ou non.</value>
+  </data>
   <data name="CropAll" xml:space="preserve">
     <value>Toute la capture</value>
   </data>
@@ -345,6 +352,13 @@
   </data>
   <data name="EditorWindowTitle" xml:space="preserve">
     <value>Titre</value>
+  </data>
+  <data name="ErrorAskReport" xml:space="preserve">
+    <value>ScreenClip a rencontré une erreur :
+
+{0}
+
+La signaler sur GitHub ? Un nouveau signalement s'ouvre dans votre navigateur, rempli avec des détails techniques et aucune donnée personnelle : vous l'envoyez, ou non.</value>
   </data>
   <data name="ErrorExport" xml:space="preserve">
     <value>Impossible d'exporter la vidéo : {0}</value>
@@ -495,6 +509,14 @@
   </data>
   <data name="ImageModeToolTip" xml:space="preserve">
     <value>Prendre une image de la zone, de la fenêtre ou de l'écran choisi</value>
+  </data>
+  <data name="InstanceNotAnswering" xml:space="preserve">
+    <value>ScreenClip est déjà lancé mais ne répond pas.
+
+Le fermer et en lancer un nouveau ? Ce qui est ouvert dans ses éditeurs sera perdu. Vous pourrez ensuite signaler le problème depuis le menu de l'icône (Signaler un problème…).</value>
+  </data>
+  <data name="InstanceNotClosed" xml:space="preserve">
+    <value>Le ScreenClip qui ne répond pas n'a pas pu être fermé. Fermez-le dans le Gestionnaire des tâches, puis relancez ScreenClip.</value>
   </data>
   <data name="KeyAlt" xml:space="preserve">
     <value>Alt</value>
@@ -886,6 +908,48 @@
   <data name="RemovePieceToolTip" xml:space="preserve">
     <value>Supprimer le morceau sous la tête de lecture (Suppr)</value>
   </data>
+  <data name="ReportBug" xml:space="preserve">
+    <value>Signaler un problème…</value>
+  </data>
+  <data name="ReportButton" xml:space="preserve">
+    <value>Signaler…</value>
+  </data>
+  <data name="ReportCopied" xml:space="preserve">
+    <value>Copié : collez-le dans un signalement ou un message.</value>
+  </data>
+  <data name="ReportCut" xml:space="preserve">
+    <value>… (coupé ici : les détails complets sont dans votre presse-papiers, collez-les sous ce bloc)</value>
+  </data>
+  <data name="ReportErrorTitle" xml:space="preserve">
+    <value>ScreenClip a rencontré une erreur</value>
+  </data>
+  <data name="ReportIntro" xml:space="preserve">
+    <value>« Ouvrir sur GitHub » ouvre un nouveau signalement rempli avec les détails ci-dessous : dites ce qui s'est passé au-dessus, puis envoyez-le. Rien ne quitte votre PC tant que vous ne l'envoyez pas là-bas (un compte GitHub est nécessaire). Aucune capture ni aucun fichier n'y est joint ; vos noms d'utilisateur et d'ordinateur sont masqués.</value>
+  </data>
+  <data name="ReportIssueErrorTitle" xml:space="preserve">
+    <value>Erreur : {0}</value>
+  </data>
+  <data name="ReportIssueTitle" xml:space="preserve">
+    <value>Problème : </value>
+  </data>
+  <data name="ReportOpen" xml:space="preserve">
+    <value>Ouvrir sur GitHub</value>
+  </data>
+  <data name="ReportTechnical" xml:space="preserve">
+    <value>Détails techniques</value>
+  </data>
+  <data name="ReportTitle" xml:space="preserve">
+    <value>Signaler un problème</value>
+  </data>
+  <data name="ReportTooLong" xml:space="preserve">
+    <value>Les détails étaient trop longs pour l'adresse : ils sont dans le presse-papiers en entier, collez-les dans le signalement.</value>
+  </data>
+  <data name="ReportWhatHappened" xml:space="preserve">
+    <value>Que s'est-il passé ?</value>
+  </data>
+  <data name="ReportWhatHappenedHint" xml:space="preserve">
+    <value>Qu'avez-vous fait, qu'attendiez-vous, que s'est-il passé à la place ?</value>
+  </data>
   <data name="RestorePieceToolTip" xml:space="preserve">
     <value>Remettre ce morceau</value>
   </data>
@@ -987,6 +1051,9 @@
   </data>
   <data name="SettingsQuitDescription" xml:space="preserve">
     <value>Les raccourcis ne marchent plus jusqu'au prochain lancement de ScreenClip (menu Démarrer).</value>
+  </data>
+  <data name="SettingsReportDescription" xml:space="preserve">
+    <value>Ouvre un signalement sur GitHub avec les détails techniques de ScreenClip (version, Windows, écrans, réglages, dernières erreurs), que vous relisez avant de l'envoyer. Aucune donnée personnelle.</value>
   </data>
   <data name="SettingsSaveAutomatically" xml:space="preserve">
     <value>Enregistrer automatiquement</value>
@@ -1191,6 +1258,13 @@
   </data>
   <data name="SplitToolTip" xml:space="preserve">
     <value>Couper à la tête de lecture (Ctrl+B)</value>
+  </data>
+  <data name="StartupFailedAskReport" xml:space="preserve">
+    <value>ScreenClip n'a pas pu démarrer :
+
+{0}
+
+Le signaler sur GitHub ? Un nouveau signalement s'ouvre dans votre navigateur, rempli avec des détails techniques et aucune donnée personnelle : vous l'envoyez, ou non.</value>
   </data>
   <data name="StopRecording" xml:space="preserve">
     <value>Arrêter l'enregistrement</value>

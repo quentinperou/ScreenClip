@@ -1,0 +1,42 @@
+<Window x:Class="ScreenClip.ReportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ScreenClip"
+        Title="{local:Tr ReportTitle}"
+        Width="640" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" Icon="Assets/ScreenClip.ico">
+
+  <StackPanel Margin="24,20,24,24">
+    <DockPanel Margin="0,0,0,16">
+      <Image Source="Assets/ScreenClip.png" Width="40" Height="40" Margin="0,0,16,0" VerticalAlignment="Top"
+             RenderOptions.BitmapScalingMode="HighQuality" />
+      <TextBlock x:Name="Heading" Text="{local:Tr ReportTitle}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap"
+                 VerticalAlignment="Center" />
+    </DockPanel>
+
+    <!-- The error met, when the window opens for one. -->
+    <Border x:Name="ErrorBar" Style="{StaticResource WarningBar}" Margin="0,0,0,12" Visibility="Collapsed">
+      <TextBlock x:Name="ErrorText" TextWrapping="Wrap" />
+    </Border>
+
+    <TextBlock Text="{local:Tr ReportIntro}" TextWrapping="Wrap" />
+
+    <!-- What the issue will hold, to read before it goes anywhere. -->
+    <TextBox x:Name="DetailsBox" Margin="0,12,0,0" Height="260" IsReadOnly="True" IsReadOnlyCaretVisible="False"
+             FontFamily="Cascadia Mono, Consolas" FontSize="12" TextWrapping="NoWrap"
+             HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+             AutomationProperties.Name="{local:Tr ReportTechnical}" />
+
+    <TextBlock x:Name="Status" Margin="0,8,0,0" TextWrapping="Wrap" Visibility="Collapsed"
+               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+    <!-- No default button: Enter must not open the browser (an error window may appear while one types elsewhere). -->
+    <DockPanel Margin="0,20,0,0" LastChildFill="False">
+      <Button DockPanel.Dock="Left" Content="{local:Tr Copy}" MinWidth="96" Click="Copy_Click" />
+      <Button x:Name="CloseButton" DockPanel.Dock="Right" Content="{local:Tr Cancel}" MinWidth="96" IsCancel="True"
+              Click="Close_Click" />
+      <Button DockPanel.Dock="Right" Content="{local:Tr ReportOpen}" Style="{DynamicResource AccentButtonStyle}"
+              MinWidth="96" Margin="0,0,8,0" Click="Open_Click" />
+    </DockPanel>
+  </StackPanel>
+</Window>

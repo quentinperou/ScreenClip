@@ -209,6 +209,11 @@ parfois le changement qu'à la prochaine ouverture de session.
 - **Mode développeur** (Paramètres → À propos) : la vignette et la barre d'enregistrement restent visibles dans les
   captures d'écran, et un journal note ce que fait ScreenClip (jamais ce que montrent les captures), à envoyer quand
   quelque chose ne marche pas.
+- **Signaler un problème** (Paramètres → À propos, ou le menu de l'icône) : ouvre un nouveau signalement sur GitHub
+  rempli avec les détails techniques de ScreenClip (version, Windows, écrans, réglages, ses dernières erreurs), qui
+  vous sont montrés d'abord et sans donnée personnelle ; vous dites ce qui s'est passé et l'envoyez, ou non. Après une
+  erreur, même au démarrage, ScreenClip le propose. Quand un ScreenClip déjà lancé ne répond pas, le relancer propose
+  de le fermer et d'en lancer un nouveau.
 
 ### Raccourcis
 
@@ -367,6 +372,11 @@ personnelle n'est envoyée ; comme pour toute requête web, GitHub voit votre ad
 dans le User-Agent. Quand vous acceptez une mise à jour, son installeur est téléchargé depuis GitHub. Désactivez la
 recherche au démarrage dans **Paramètres → Mises à jour** et l'application ne fait plus aucune requête sans votre
 demande.
+
+ScreenClip garde ses cinq dernières erreurs dans `%LOCALAPPDATA%\ScreenClip\errors.log` (votre dossier, votre nom
+d'utilisateur et celui de l'ordinateur masqués), pour un signalement de bug. **Signaler un problème** n'envoie rien
+lui-même : il ouvre un nouveau signalement GitHub dans votre navigateur, avec les détails que vous avez vus d'abord, et
+vous l'envoyez là-bas, ou non.
 
 ## Licence
 
