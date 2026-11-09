@@ -10,7 +10,7 @@ spirit of CleanShot X, ScreenSnap and shots.so: capture with one key, then (to c
 layout (background, rounded corners, shadow, fake macOS-style browser or window). UI in English and French,
 light/dark/system theme. The name “ScreenClip” is never translated. Author: [QuentinPerou](https://github.com/quentinperou).
 Repository: https://github.com/quentinperou/ScreenClip (public; the author pushes and publishes himself, unless he
-asks: he asked Claude to tag and release v0.1.0 to v0.4.2).
+asks: he asked Claude to tag and release v0.1.0 to v0.4.3).
 Sister projects with the same stack and conventions: CropPdf, PageCompose, FolderTools (their CLAUDE.md files hold
 the history of the shared pieces: updater, installer, Fluent theme, localization). Credits wording: “Developed by
 QuentinPerou, with Claude Code (Anthropic)”.
@@ -24,7 +24,8 @@ resident (Task Manager, private working set) before and after it.
 
 ## Project status (November 1, 2026)
 
-**v0.4.2 released** (November 1, 2026, stable, tag `v0.4.2`: updates shown without looking for them, issue #3).
+**v0.4.3 released** (November 9, 2026, stable, tag `v0.4.3`: report a problem on GitHub, a ScreenClip that does
+not answer). **v0.4.2** (November 1, 2026, stable, tag `v0.4.2`: updates shown without looking for them, issue #3).
 **v0.4.1** (November 1, 2026, stable, tag `v0.4.1`: the color picker; release notes in English; 0.4.1, the
 author's choice). **v0.4.0** (October 26, 2026, stable, tag `v0.4.0`: video step 3, the sounds apart and the pieces; the
 animated picture and the pointer ways with steps; several editors; the microphone chosen; release notes in English;
@@ -36,7 +37,7 @@ the notification after saving; bilingual release notes, as for 0.1.0). **v0.1.0*
 `v0.1.0`; release notes bilingual like CropPdf 1.0.0). Commits in
 the author's name (`QuentinPerou`, his GitHub noreply address; the Co-Authored-By line allowed since November 1, 2026,
 left out before as he asked); **the author
-pushes and publishes himself** unless he asks (he asked for the tags and releases from 0.1.0 to 0.4.2). The annotation tools came
+pushes and publishes himself** unless he asks (he asked for the tags and releases from 0.1.0 to 0.4.3). The annotation tools came
 after 0.1.0 (proposal B of the mock-up, see below). Framing done with the
 author on October 19, 2026 (questions, then an HTML mock-up validated by him: editor, area selection, thumbnail, tray
 menu, settings, icon):
@@ -278,7 +279,7 @@ The same day, asked by the author: **“ScreenClip is already running but does n
 hung ScreenClip and quit without a word: the likely “did not start”); see Technical choices › Single instance.
 Checked on the README instance: a second start answered in 0.3 s (the first one opened its editor); the first one
 hanging (`SCREENCLIP_THROW=hang`), the question after 8.4 s, Yes (the hung one closed, the new one running with its
-icon) and No (nothing changed), the timeout in the errors kept.
+icon) and No (nothing changed), the timeout in the errors kept. Both released as 0.4.3 the same day.
 
 **Next**: the author's next ideas. The text extractor (OCR) is left aside (the author, November 1, 2026: Windows does it very well already).
 
