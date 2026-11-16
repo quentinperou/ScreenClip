@@ -169,6 +169,7 @@ internal static class NativeMethods
 
     public const int MB_YESNO = 0x4;
     public const int MB_ICONERROR = 0x10;
+    public const int MB_ICONQUESTION = 0x20;
     public const int MB_ICONWARNING = 0x30;
     public const int MB_DEFBUTTON2 = 0x100;
     public const int MB_TOPMOST = 0x40000;

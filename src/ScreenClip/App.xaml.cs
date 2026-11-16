@@ -55,6 +55,13 @@ public partial class App : Application
         else
             ApplyLanguage(Settings.Language);
 
+        // The Store version, before the single instance: the version from GitHub may be the one running.
+        if (OfferClassicRemoval())
+        {
+            Shutdown();
+            return;
+        }
+
         _instance = SingleInstance.TryStart(e.Args, args => Dispatcher.BeginInvoke(() =>
         {
             _instance?.Answer(); // the interface is alive: the new start can quit
@@ -91,16 +98,18 @@ public partial class App : Application
             + $"screens {string.Join(" ", ScreenGrabber.Monitors().Select(m => m.Bounds + (m.IsPrimary ? " (primary)" : "")))}"
             + (refused.Count > 0 ? $", shortcuts refused: {string.Join(", ", refused)}" : ""));
 
-        // Start with Windows: on by default for the installed app, once; the user can turn it off in Settings.
-        if (!Settings.StartupConfigured && WindowsSettings.IsInstalled)
+        // Start with Windows: on by default for the installed app, once; the user can turn it off in Settings. The
+        // Store version has its startup task instead, on from the first launch (store\AppxManifest.xml).
+        if (!Settings.StartupConfigured && WindowsSettings.IsInstalled && !AppPackage.IsPackaged)
         {
             WindowsSettings.StartWithWindows = true;
             Settings.StartupConfigured = true;
             Settings.Save();
         }
 
-        // Started by hand (or with a picture): the editor. Started with Windows: nothing, the app waits.
-        bool background = e.Args.Contains(BackgroundArgument);
+        // Started by hand (or with a picture): the editor. Started with Windows (the Run key's --background, or the
+        // Store version's startup task): nothing, the app waits.
+        bool background = e.Args.Contains(BackgroundArgument) || AppPackage.LaunchedAtStartup();
         string? picture = PictureArgument(e.Args);
         Action? then = background ? null : () => OpenEditor(picture);
         if (PrintScreenWindow.ShouldAsk(Settings))
@@ -118,6 +127,24 @@ public partial class App : Application
         if (double.TryParse(Environment.GetEnvironmentVariable("SCREENCLIP_RECORD_TEST"), NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds))
             Dispatcher.BeginInvoke(() => RecordingTest.Run(seconds), DispatcherPriority.ApplicationIdle);
 #endif
+    }
+
+    /// <summary>
+    /// The Store version, the first time it finds the version installed from GitHub on the PC: two ScreenClip would
+    /// fight over the shortcuts, so it offers to uninstall that one (asked once, as TextCase does). True when the
+    /// uninstaller has been started: it closes every ScreenClip, so this one quits.
+    /// </summary>
+    private static bool OfferClassicRemoval()
+    {
+        if (!AppPackage.IsPackaged || Settings.ClassicRemovalOffered || AppPackage.ClassicUninstaller() is not { } uninstaller)
+            return false;
+        Settings.ClassicRemovalOffered = true;
+        Settings.Save();
+        if (NativeMethods.MessageBoxW(IntPtr.Zero, Strings.Get("ClassicRemovalText"), "ScreenClip",
+                NativeMethods.MB_YESNO | NativeMethods.MB_ICONQUESTION) != NativeMethods.IDYES)
+            return false;
+        AppPackage.StartClassicUninstall(uninstaller);
+        return true;
     }
 
     /// <summary>

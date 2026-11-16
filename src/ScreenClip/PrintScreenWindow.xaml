@@ -14,8 +14,8 @@
                  VerticalAlignment="Center" />
     </DockPanel>
 
-    <TextBlock Text="{local:Tr PrintScreenAskText}" TextWrapping="Wrap" />
-    <TextBlock Text="{local:Tr PrintScreenAskRestore}" TextWrapping="Wrap" Margin="0,8,0,0"
+    <TextBlock x:Name="AskText" Text="{local:Tr PrintScreenAskText}" TextWrapping="Wrap" />
+    <TextBlock x:Name="RestoreText" Text="{local:Tr PrintScreenAskRestore}" TextWrapping="Wrap" Margin="0,8,0,0"
                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
     <!-- What happened after "Yes". -->
@@ -30,7 +30,7 @@
 
     <StackPanel x:Name="AskButtons" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
       <Button Content="{local:Tr PrintScreenAskNo}" Margin="0,0,8,0" Click="No_Click" />
-      <Button Content="{local:Tr PrintScreenAskYes}" Style="{DynamicResource AccentButtonStyle}" Click="Yes_Click"
+      <Button x:Name="YesButton" Content="{local:Tr PrintScreenAskYes}" Style="{DynamicResource AccentButtonStyle}" Click="Yes_Click"
               IsDefault="True" />
     </StackPanel>
     <Button x:Name="CloseButton" Content="{local:Tr Close}" HorizontalAlignment="Right" MinWidth="96" Margin="0,24,0,0"

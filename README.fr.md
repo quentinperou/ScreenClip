@@ -285,6 +285,7 @@ Tout s'installe avec `winget` (intégré à Windows 11), depuis un terminal :
 | **Git** | Récupérer le code | `winget install Git.Git` |
 | **.NET 10 SDK** | Compiler l'application (C# / WPF) et lancer les tests | `winget install Microsoft.DotNet.SDK.10` |
 | **Inno Setup 6** | Construire l'installeur | `winget install JRSoftware.InnoSetup` |
+| **Windows SDK** | `makeappx` et `makepri`, pour empaqueter la version du Store | `winget install Microsoft.WindowsSDK.10.0.26100` |
 
 N'importe quel éditeur (Visual Studio, VS Code, Rider) convient pour le code C#.
 
@@ -302,6 +303,17 @@ Le script lance les tests, puis produit dans `dist\` :
 | `ScreenClip-Setup-<version>.exe` | l'installeur |
 
 Options : `-SkipTests`, `-NoInstaller`.
+
+```powershell
+.\scriptsuild-store.ps1
+```
+
+La version du Microsoft Store : `dist\store\ScreenClip_<version>.0_x64.msix`, la même application avec .NET dedans,
+non signée (le Store la signe). Le démarrage avec Windows y est une tâche de démarrage, le Store installe les mises à
+jour, l'interrupteur Impr. écran de Windows se désactive par vous dans les Paramètres de Windows (ScreenClip ouvre la
+page), et les fichiers donnés aux autres applications passent par le dossier temporaire du paquet (ce qu'un paquet
+écrit dans le registre et dans `AppData` reste dans sa propre copie). `store/listing.md` contient les textes de sa page
+du Store.
 
 ### Pendant le développement
 
@@ -330,7 +342,8 @@ src/
                       (GDI), écran de sélection (avec les éléments sous le pointeur, par UI Automation), vignette,
                       éditeur (onglets Édition et Mise en forme), paramètres, mises à jour, textes de l'interface
 installer/            Script Inno Setup de l'installeur
-scripts/              build.ps1 (compilation complète), make-icons.ps1 (régénère les icônes)
+store/                Manifeste, logos et fiche du paquet du Microsoft Store
+scripts/              build.ps1 (compilation complète), build-store.ps1 (le paquet du Store), make-icons.ps1 (régénère les icônes)
 tests/                Tests unitaires (xUnit)
 docs/                 Icône du README, icône SVG (docs/icons)
 .github/workflows/    Compilation automatique sur GitHub (et publication des releases)
@@ -347,7 +360,7 @@ docs/                 Icône du README, icône SVG (docs/icons)
 ### Icônes
 
 `scripts\make-icons.ps1` dessine l'icône (`src/ScreenClip/Assets/ScreenClip.ico`, son image de 256 px pour
-l'application, et `docs/icon-256.png`) et une copie SVG (`docs/icons/ScreenClip.svg`) ; les petites tailles du `.ico`
+l'application, et `docs/icon-256.png`), une copie SVG (`docs/icons/ScreenClip.svg`) et les logos de `store/Assets` ; les petites tailles du `.ico`
 sont ajustées au pixel près par le script. Les fichiers générés sont commités : ne relancez le script que pour changer
 le dessin.
 
@@ -363,15 +376,18 @@ Un tag avec un suffixe (`v0.2.0-beta.1`) est publié en *pré-version* : seules 
 ## Confidentialité
 
 Vos captures ne quittent jamais votre ordinateur, sauf si vous les copiez, enregistrez ou glissez vous-même ailleurs.
+ScreenClip ne lit l'écran que quand vous le capturez ou l'enregistrez, et le micro que pendant l'enregistrement d'une
+vidéo avec le micro activé : ce qu'il enregistre reste dans les fichiers sur votre PC. Il n'a ni compte, ni mesure
+d'audience, ni publicité.
 
-Le seul accès réseau est la **recherche de mises à jour** : au démarrage puis une fois par jour à l'ouverture de
+Le seul accès réseau de la version de GitHub est la **recherche de mises à jour** : au démarrage puis une fois par jour à l'ouverture de
 l'éditeur (si *Rechercher les mises à jour au démarrage* est activé, par défaut) et quand vous cliquez sur
 *Rechercher des mises à jour*, l'application envoie une
 requête HTTPS à l'API GitHub (`api.github.com`) pour lire la liste des versions de ScreenClip. Aucune capture ni donnée
 personnelle n'est envoyée ; comme pour toute requête web, GitHub voit votre adresse IP, et la version de l'application
 dans le User-Agent. Quand vous acceptez une mise à jour, son installeur est téléchargé depuis GitHub. Désactivez la
 recherche au démarrage dans **Paramètres → Mises à jour** et l'application ne fait plus aucune requête sans votre
-demande.
+demande. La version du **Microsoft Store** ne fait aucune requête : le Store la met à jour.
 
 ScreenClip garde ses cinq dernières erreurs dans `%LOCALAPPDATA%\ScreenClip\errors.log` (votre dossier, votre nom
 d'utilisateur et celui de l'ordinateur masqués), pour un signalement de bug. **Signaler un problème** n'envoie rien

@@ -85,6 +85,28 @@ internal static class Direct3D
         return new ID3D11Texture2D(access.GetInterface(ref iid));
     }
 
+    private static bool s_borderlessAsked;
+
+    /// <summary>
+    /// The Store version asks Windows once for captures without its yellow border (the graphicsCaptureWithoutBorder
+    /// capability of store\AppxManifest.xml): a packaged app gets it only after this request, else the border shows.
+    /// </summary>
+    public static void AllowBorderless()
+    {
+        if (s_borderlessAsked)
+            return;
+        s_borderlessAsked = true;
+        try
+        {
+            GraphicsCaptureAccess.RequestAccessAsync(GraphicsCaptureAccessKind.Borderless).AsTask().Wait(TimeSpan.FromSeconds(30));
+        }
+        catch (Exception ex)
+        {
+            // An older Windows, or no answer: the recording goes on, with the border.
+            Services.DevLog.Write($"recording: borderless capture not granted: {ex.Message}");
+        }
+    }
+
     /// <summary>What Windows.Graphics.Capture films for a monitor (its HMONITOR).</summary>
     public static GraphicsCaptureItem ForMonitor(IntPtr monitor)
     {

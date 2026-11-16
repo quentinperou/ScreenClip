@@ -236,6 +236,9 @@ public sealed class AppSettings
     /// </summary>
     public bool StartupConfigured { get; set; }
 
+    /// <summary>The Store version offered once to uninstall the version installed from GitHub.</summary>
+    public bool ClassicRemovalOffered { get; set; }
+
     /// <summary>
     /// Developer mode (About, as in TextCase; off by default): the thumbnail and the recording's bar and line stay in
     /// screenshots, the thumbnail stays until closed, and <see cref="DevLog"/> writes what ScreenClip does.

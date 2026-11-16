@@ -6,7 +6,9 @@ namespace ScreenClip;
 
 /// <summary>
 /// Asked once, at the first start: Windows keeps Print Screen for its Snipping Tool, may ScreenClip take it? “Yes”
-/// turns the Windows setting off for the user (Settings › Capture can give it back).
+/// turns the Windows setting off for the user (Settings › Capture can give it back). The Store version cannot change it
+/// (a package's registry writes stay in its own copy, and the Store asks for Windows' own way): “Yes” opens the page of
+/// Windows Settings, and the key is taken once the user turned the switch off there.
 /// </summary>
 public partial class PrintScreenWindow : Window
 {
@@ -14,10 +16,28 @@ public partial class PrintScreenWindow : Window
     {
         InitializeComponent();
         MicaBackdrop.Apply(this);
+        if (AppPackage.IsPackaged)
+        {
+            AskText.Text = Strings.Get("PrintScreenAskTextStore");
+            RestoreText.Text = Strings.Get("PrintScreenAskRestoreStore");
+            YesButton.Content = Strings.Get("PrintScreenAskYesStore");
+            // Back from Windows Settings: the switch turned off, the key is ScreenClip's.
+            Activated += (_, _) =>
+            {
+                if (ResultBar.Visibility != Visibility.Visible || WindowsSettings.PrintScreenUsedByWindows)
+                    return;
+                App.Tray.RegisterShortcuts(App.Settings);
+                ResultText.Text = Strings.Get("PrintScreenDone");
+                ResultBar.SetResourceReference(StyleProperty, "SuccessBar");
+            };
+        }
         Closed += (_, _) =>
         {
             App.Settings.PrintScreenAsked = true;
             App.Settings.Save();
+            // Started with Windows, nothing follows the question: the memory of the first start is given back (the
+            // trim asked at startup found this window open and did nothing).
+            MemoryTrim.Soon();
         };
     }
 
@@ -53,6 +73,16 @@ public partial class PrintScreenWindow : Window
 
     private void Yes_Click(object sender, RoutedEventArgs e)
     {
+        if (AppPackage.IsPackaged)
+        {
+            WindowsSettings.OpenKeyboardSettings();
+            ResultText.Text = Strings.Get("PrintScreenTurnOffThere");
+            ResultBar.SetResourceReference(StyleProperty, "InfoBar");
+            ResultBar.Visibility = Visibility.Visible;
+            AskButtons.Visibility = Visibility.Collapsed;
+            CloseButton.Visibility = Visibility.Visible;
+            return;
+        }
         bool done = TakeOver();
         ResultText.Text = Strings.Get(done ? "PrintScreenDone" : "PrintScreenAfterSignIn");
         if (!done)

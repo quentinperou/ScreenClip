@@ -36,7 +36,10 @@ public partial class SettingsWindow : Window
         MicaBackdrop.Apply(this);
         ShowPage(page);
 
-        StartWithWindowsBox.IsChecked = WindowsSettings.StartWithWindows;
+        if (AppPackage.IsPackaged)
+            _ = ShowStartupAsync(AppPackage.GetStartupAsync());
+        else
+            StartWithWindowsBox.IsChecked = WindowsSettings.StartWithWindows;
         LanguageBox.Items.Add(new Option<string>(AppSettings.SystemLanguage, Strings.Get("LanguageSystem")));
         foreach (string code in AppSettings.SupportedLanguages)
             LanguageBox.Items.Add(new Option<string>(code, NativeName(code)));
@@ -73,11 +76,19 @@ public partial class SettingsWindow : Window
         ShowMicrophone();
         FillShortcuts();
         ShowPrintScreenState();
-        // Back from Windows Settings (Print Screen switch): show what changed.
+        // Back from Windows Settings (Print Screen switch): show what changed. The Store version cannot change the
+        // switch itself: once the user turned it off there, its shortcuts on Print Screen are registered again.
         Activated += (_, _) =>
         {
-            if (_initialized)
-                ShowPrintScreenState();
+            if (!_initialized)
+                return;
+            if (AppPackage.IsPackaged && !WindowsSettings.PrintScreenUsedByWindows
+                && App.Tray.Refused.Any(a => _settings.GetShortcut(a).Key == Hotkey.PrintScreen))
+            {
+                App.Tray.RegisterShortcuts(_settings);
+                FillShortcuts();
+            }
+            ShowPrintScreenState();
         };
 
         ShowSaveFolder();
@@ -87,6 +98,7 @@ public partial class SettingsWindow : Window
         ChannelBox.Items.Add(new Option<UpdateChannel>(UpdateChannel.Beta, Strings.Get("UpdateChannelBeta")));
         ChannelBox.SelectedItem = ChannelBox.Items.Cast<Option<UpdateChannel>>().First(o => o.Value == _settings.UpdateChannel);
         CheckAtStartupBox.IsChecked = _settings.CheckForUpdatesAtStartup;
+        UpdateOptions.Visibility = AppPackage.IsPackaged ? Visibility.Collapsed : Visibility.Visible;
         ShowUpdateState();
         Updater.Checked += Updater_Checked;
         Closed += (_, _) => Updater.Checked -= Updater_Checked;
@@ -122,9 +134,37 @@ public partial class SettingsWindow : Window
 
     private void StartWithWindows_Changed(object sender, RoutedEventArgs e)
     {
-        if (_initialized)
-            WindowsSettings.StartWithWindows = StartWithWindowsBox.IsChecked == true;
+        if (!_initialized || _syncingStartup)
+            return;
+        bool on = StartWithWindowsBox.IsChecked == true;
+        if (AppPackage.IsPackaged)
+            _ = ShowStartupAsync(AppPackage.SetStartupAsync(on));
+        else
+            WindowsSettings.StartWithWindows = on;
     }
+
+    private bool _syncingStartup;
+
+    // The Store version's startup task, read or set a moment later. Turned off by the user in Windows (Task Manager,
+    // startup apps), only Windows can turn it on again: the switch is greyed and the page of Windows offered.
+    private async Task ShowStartupAsync(Task<StartupState> reading)
+    {
+        var state = await reading;
+        _syncingStartup = true;
+        StartWithWindowsBox.IsChecked = state == StartupState.On;
+        _syncingStartup = false;
+        StartWithWindowsBox.IsEnabled = state is StartupState.On or StartupState.Off;
+        StartupDescription.Text = Strings.Get(state switch
+        {
+            StartupState.OffByUser => "StartWithWindowsOffByUser",
+            StartupState.ByPolicy => "StartWithWindowsByPolicy",
+            _ => "SettingsStartWithWindowsDescription",
+        });
+        StartupAppsLink.Visibility = state == StartupState.OffByUser ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void StartupApps_Click(object sender, RoutedEventArgs e) =>
+        Process.Start(new ProcessStartInfo("ms-settings:startupapps") { UseShellExecute = true });
 
     private void LanguageBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -350,7 +390,11 @@ public partial class SettingsWindow : Window
         PrintScreenStatus.Text = Strings.Get(windowsKeepsIt
             ? (needed ? "PrintScreenStatusWindowsNeeded" : "PrintScreenStatusWindows")
             : refused ? "PrintScreenStatusAfterSignIn" : "PrintScreenStatusApps");
-        PrintScreenButton.Content = Strings.Get(windowsKeepsIt ? "PrintScreenTakeOver" : "PrintScreenRestore");
+        // The Store version: Windows' switch is changed in Windows Settings, by the user (a package's registry writes
+        // stay in its own copy).
+        PrintScreenButton.Content = Strings.Get(AppPackage.IsPackaged ? "PrintScreenOpenWindowsSettings"
+            : windowsKeepsIt ? "PrintScreenTakeOver" : "PrintScreenRestore");
+        PrintScreenSettingsLink.Visibility = AppPackage.IsPackaged ? Visibility.Collapsed : Visibility.Visible;
         if (windowsKeepsIt)
             PrintScreenButton.SetResourceReference(StyleProperty, "AccentButtonStyle");
         else
@@ -360,7 +404,9 @@ public partial class SettingsWindow : Window
 
     private void PrintScreenButton_Click(object sender, RoutedEventArgs e)
     {
-        if (WindowsSettings.PrintScreenUsedByWindows)
+        if (AppPackage.IsPackaged)
+            WindowsSettings.OpenKeyboardSettings();
+        else if (WindowsSettings.PrintScreenUsedByWindows)
             PrintScreenWindow.TakeOver();
         else
         {
@@ -468,6 +514,13 @@ public partial class SettingsWindow : Window
     /// <summary>Shows what the last check found, or <paramref name="status"/> (progress, error) instead.</summary>
     private void ShowUpdateState(string? status = null)
     {
+        // The Store version: the Store updates it; its page shows "Update" when there is one.
+        if (AppPackage.IsPackaged)
+        {
+            UpdateStatusText.Text = Strings.Format("UpdatesByStoreHint", Updater.CurrentVersion);
+            UpdateButton.Content = Strings.Get("OpenStore");
+            return;
+        }
         var available = Updater.Available;
         UpdateStatusText.Text = status
             ?? (available is not null ? Strings.Format("UpdateStatusAvailable", Updater.CurrentVersion, available.Version)
@@ -485,7 +538,9 @@ public partial class SettingsWindow : Window
 
     private async void UpdateButton_Click(object sender, RoutedEventArgs e)
     {
-        if (Updater.Available is { } release)
+        if (AppPackage.IsPackaged)
+            Process.Start(new ProcessStartInfo(AppPackage.StorePage) { UseShellExecute = true });
+        else if (Updater.Available is { } release)
             await InstallUpdateAsync(release);
         else
             await CheckForUpdatesAsync();
@@ -589,7 +644,8 @@ public partial class SettingsWindow : Window
             Directory.CreateDirectory(Path.GetDirectoryName(DevLog.FilePath)!);
             if (!File.Exists(DevLog.FilePath))
                 File.WriteAllText(DevLog.FilePath, "");
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(DevLog.FilePath) { UseShellExecute = true });
+            // Notepad, not in the package, needs the file where the Store version really wrote it.
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(AppPackage.RealPath(DevLog.FilePath)) { UseShellExecute = true });
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
         {

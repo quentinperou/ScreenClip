@@ -266,6 +266,7 @@ Everything installs with `winget` (built into Windows 11), from a terminal:
 | **Git** | Get the code | `winget install Git.Git` |
 | **.NET 10 SDK** | Build the app (C# / WPF) and run the tests | `winget install Microsoft.DotNet.SDK.10` |
 | **Inno Setup 6** | Build the installer | `winget install JRSoftware.InnoSetup` |
+| **Windows SDK** | `makeappx` and `makepri`, to pack the Store version | `winget install Microsoft.WindowsSDK.10.0.26100` |
 
 Any editor (Visual Studio, VS Code, Rider) is fine for the C# code.
 
@@ -283,6 +284,16 @@ The script runs the tests, then produces in `dist\`:
 | `ScreenClip-Setup-<version>.exe` | the installer |
 
 Options: `-SkipTests`, `-NoInstaller`.
+
+```powershell
+.\scripts\build-store.ps1
+```
+
+The Microsoft Store version: `dist\store\ScreenClip_<version>.0_x64.msix`, the same app with .NET inside, not signed
+(the Store signs it). In it, the start with Windows is a startup task, the Store installs the updates, the Print Screen
+switch of Windows is turned off by you in Windows Settings (ScreenClip opens the page), and the files handed to other
+apps go to the package's temporary folder (what a package writes to the registry and to `AppData` stays in its own
+copy). `store/listing.md` holds the texts of its Store page.
 
 ### While developing
 
@@ -310,7 +321,8 @@ src/
                       overlay (with the elements under the pointer, from UI Automation), thumbnail, editor (Edit and
                       Layout tabs), settings, updates, UI strings
 installer/            Inno Setup script of the installer
-scripts/              build.ps1 (full build), make-icons.ps1 (regenerates the icons)
+store/                Manifest, logos and listing of the Microsoft Store package
+scripts/              build.ps1 (full build), build-store.ps1 (the Store package), make-icons.ps1 (regenerates the icons)
 tests/                Unit tests (xUnit)
 docs/                 README icon, SVG icon (docs/icons)
 .github/workflows/    Automated build on GitHub (and release publishing)
@@ -327,7 +339,7 @@ docs/                 README icon, SVG icon (docs/icons)
 ### Icons
 
 `scripts\make-icons.ps1` draws the icon (`src/ScreenClip/Assets/ScreenClip.ico`, its 256 px image for the app, and
-`docs/icon-256.png`) and an SVG copy of it (`docs/icons/ScreenClip.svg`); the small sizes of the `.ico` are fitted to
+`docs/icon-256.png`), an SVG copy of it (`docs/icons/ScreenClip.svg`) and the logos of `store/Assets`; the small sizes of the `.ico` are fitted to
 whole pixels by the script. The generated files are committed: run it again only to change the design.
 
 ### Releasing a version
@@ -341,13 +353,16 @@ offer it.
 
 ## Privacy policy
 
-Your captures never leave your computer unless you copy, save or drag them somewhere yourself.
+Your captures never leave your computer unless you copy, save or drag them somewhere yourself. ScreenClip reads the
+screen only when you capture or record it, and the microphone only while a video records with the microphone turned
+on: what it records stays in the files on your PC. It has no account, no analytics and no advertising.
 
-The only network access is the **update check**: when the app starts and then once a day when the editor opens (if
+The only network access of the version from GitHub is the **update check**: when the app starts and then once a day when the editor opens (if
 *Check for updates at startup* is on, the default), and when you click *Check for updates*, it sends one HTTPS request to the GitHub API (`api.github.com`) to
 read the list of ScreenClip releases. No capture or personal data is sent; like any web request, GitHub sees your IP
 address, and the app version in the User-Agent. When you accept an update, its installer is downloaded from GitHub.
-Turn off the check at startup in **Settings → Updates** and the app makes no request unless you ask for one.
+Turn off the check at startup in **Settings → Updates** and the app makes no request unless you ask for one. The
+**Microsoft Store** version makes no request at all: the Store updates it.
 
 ScreenClip keeps its last five errors in `%LOCALAPPDATA%\ScreenClip\errors.log` (your user folder, user name and
 computer name hidden), for a bug report. **Report a problem** sends nothing itself: it opens a new GitHub issue in your

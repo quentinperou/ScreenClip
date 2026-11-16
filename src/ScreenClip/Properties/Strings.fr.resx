@@ -163,6 +163,9 @@
   <data name="CaptureWindow" xml:space="preserve">
     <value>Capturer une fenêtre</value>
   </data>
+  <data name="ClassicRemovalText" xml:space="preserve">
+    <value>ScreenClip est aussi installé depuis GitHub sur ce PC, et les deux se disputeraient les raccourcis. Désinstaller celui de GitHub ?</value>
+  </data>
   <data name="ClickHalo" xml:space="preserve">
     <value>Halo</value>
   </data>
@@ -713,6 +716,9 @@ Le fermer et en lancer un nouveau ? Ce qui est ouvert dans ses éditeurs sera p
   <data name="OpenFolder" xml:space="preserve">
     <value>Ouvrir</value>
   </data>
+  <data name="OpenStore" xml:space="preserve">
+    <value>Ouvrir le Store</value>
+  </data>
   <data name="PickColor" xml:space="preserve">
     <value>Prendre une couleur à l'écran</value>
   </data>
@@ -800,14 +806,23 @@ Le fermer et en lancer un nouveau ? Ce qui est ouvert dans ses éditeurs sera p
   <data name="PrintScreenAskRestore" xml:space="preserve">
     <value>Vous pourrez rendre la touche à Windows à tout moment dans les paramètres de ScreenClip › Capture.</value>
   </data>
+  <data name="PrintScreenAskRestoreStore" xml:space="preserve">
+    <value>Vous pourrez le réactiver là à tout moment.</value>
+  </data>
   <data name="PrintScreenAskText" xml:space="preserve">
     <value>Windows ouvre son Outil Capture avec la touche Impr. écran. Pour que cette touche lance ScreenClip, un réglage de Windows doit être désactivé : ScreenClip peut le faire pour vous.</value>
+  </data>
+  <data name="PrintScreenAskTextStore" xml:space="preserve">
+    <value>Windows ouvre son Outil Capture avec la touche Impr. écran. Pour que cette touche lance ScreenClip, désactivez l'interrupteur Impr. écran des Paramètres de Windows (Accessibilité › Clavier) : ScreenClip vous ouvre la page.</value>
   </data>
   <data name="PrintScreenAskTitle" xml:space="preserve">
     <value>Utiliser la touche Impr. écran pour ScreenClip ?</value>
   </data>
   <data name="PrintScreenAskYes" xml:space="preserve">
     <value>Oui, utiliser Impr. écran</value>
+  </data>
+  <data name="PrintScreenAskYesStore" xml:space="preserve">
+    <value>Ouvrir les Paramètres de Windows</value>
   </data>
   <data name="PrintScreenDone" xml:space="preserve">
     <value>C'est fait : Impr. écran lance maintenant ScreenClip.</value>
@@ -835,6 +850,9 @@ Le fermer et en lancer un nouveau ? Ce qui est ouvert dans ses éditeurs sera p
   </data>
   <data name="PrintScreenTitle" xml:space="preserve">
     <value>Touche Impr. écran</value>
+  </data>
+  <data name="PrintScreenTurnOffThere" xml:space="preserve">
+    <value>Dans la page ouverte, désactivez l'interrupteur Impr. écran : ScreenClip prend la touche dès que Windows la libère.</value>
   </data>
   <data name="Quit" xml:space="preserve">
     <value>Quitter ScreenClip</value>
@@ -1259,6 +1277,15 @@ Le fermer et en lancer un nouveau ? Ce qui est ouvert dans ses éditeurs sera p
   <data name="SplitToolTip" xml:space="preserve">
     <value>Couper à la tête de lecture (Ctrl+B)</value>
   </data>
+  <data name="StartWithWindowsByPolicy" xml:space="preserve">
+    <value>Réglé par l'administrateur de ce PC.</value>
+  </data>
+  <data name="StartWithWindowsOffByUser" xml:space="preserve">
+    <value>Désactivé dans les applications de démarrage de Windows : réactivez-le là.</value>
+  </data>
+  <data name="StartupApps" xml:space="preserve">
+    <value>Applications de démarrage</value>
+  </data>
   <data name="StartupFailedAskReport" xml:space="preserve">
     <value>ScreenClip n'a pas pu démarrer :
 
@@ -1496,6 +1523,9 @@ Le signaler sur GitHub ? Un nouveau signalement s'ouvre dans votre navigateur, 
   </data>
   <data name="UpdateWhatsNew" xml:space="preserve">
     <value>Nouveautés</value>
+  </data>
+  <data name="UpdatesByStoreHint" xml:space="preserve">
+    <value>Version {0} · le Microsoft Store installe les nouvelles versions tout seul.</value>
   </data>
   <data name="UpdatesTitle" xml:space="preserve">
     <value>Mises à jour</value>

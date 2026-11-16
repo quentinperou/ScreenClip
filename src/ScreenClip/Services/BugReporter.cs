@@ -35,8 +35,10 @@ internal static class BugReporter
         }
 
         var s = App.Settings;
-        Part(() => text.AppendLine($"ScreenClip {ErrorLog.Version}, {(WindowsSettings.IsInstalled ? "installed" : "not installed (run from another folder)")}, "
-            + $"updates {s.UpdateChannel}{(s.CheckForUpdatesAtStartup ? "" : " (not checked at startup)")}"));
+        Part(() => text.AppendLine(AppPackage.IsPackaged
+            ? $"ScreenClip {ErrorLog.Version}, Microsoft Store, updated by the Store"
+            : $"ScreenClip {ErrorLog.Version}, {(WindowsSettings.IsInstalled ? "installed" : "not installed (run from another folder)")}, "
+                + $"updates {s.UpdateChannel}{(s.CheckForUpdatesAtStartup ? "" : " (not checked at startup)")}"));
         Part(() => text.AppendLine($"Windows {Environment.OSVersion.Version} {RuntimeInformation.OSArchitecture}, "
             + $".NET {Environment.Version}, process {RuntimeInformation.ProcessArchitecture}"));
         Part(() => text.AppendLine($"Language {s.Language} (shown {CultureInfo.CurrentUICulture.Name}), theme {s.Theme}"));
@@ -45,7 +47,8 @@ internal static class BugReporter
         {
             using var process = Process.GetCurrentProcess();
             text.AppendLine($"Running for {Since(process.StartTime)}, {process.WorkingSet64 / (1024 * 1024)} MB in memory, "
-                + $"started with Windows {Yes(WindowsSettings.StartWithWindows)}, developer mode {Yes(s.DeveloperMode)}");
+                + $"started with Windows {(AppPackage.IsPackaged ? "(startup task)" : Yes(WindowsSettings.StartWithWindows))}, "
+                + $"developer mode {Yes(s.DeveloperMode)}");
         });
         text.AppendLine();
         Part(() =>

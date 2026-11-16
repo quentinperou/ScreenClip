@@ -1,7 +1,7 @@
 ﻿<#
 .SYNOPSIS
-    Generates the application icon (.ico), its large in-app image, the README icon (.png) and an SVG copy of the
-    design (docs\icons).
+    Generates the application icon (.ico), its large in-app image, the README icon (.png), an SVG copy of the
+    design (docs\icons) and the logos of the Store package (store\Assets).
 .DESCRIPTION
     The generated files are committed: run this script again only to change the design.
     Design (validated by the author on the mock-up, October 19, 2026): four white capture corners around a small
@@ -218,3 +218,17 @@ Save-Png 256 (Join-Path $root 'docs\icon-256.png')
 # Large image shown inside the app (About card, Settings title): an .ico would display its first, 16 px, frame.
 Save-Png 256 (Join-Path $root 'src\ScreenClip\Assets\ScreenClip.png')
 Save-Svg (Join-Path $root 'docs\icons\ScreenClip.svg') (Get-AppSvg)
+# Logos of the Store package (store\AppxManifest.xml, scriptsuild-store.ps1), as in TextCase. Windows picks the
+# size it needs: a scale for the Start menu and the Store, a target size for the taskbar and File Explorer
+# ("unplated": the icon as it is, on no colored plate).
+$store = Join-Path $root 'store\Assets'
+New-Item -ItemType Directory -Force $store | Out-Null
+foreach ($scale in 100, 200) {
+    Save-Png (50 * $scale / 100) (Join-Path $store "StoreLogo.scale-$scale.png")
+    Save-Png (44 * $scale / 100) (Join-Path $store "Square44x44Logo.scale-$scale.png")
+    Save-Png (150 * $scale / 100) (Join-Path $store "Square150x150Logo.scale-$scale.png")
+}
+foreach ($size in 16, 20, 24, 30, 32, 36, 40, 48, 64, 256) {
+    Save-Png $size (Join-Path $store "Square44x44Logo.targetsize-$size.png")
+    Save-Png $size (Join-Path $store "Square44x44Logo.targetsize-$($size)_altform-unplated.png")
+}

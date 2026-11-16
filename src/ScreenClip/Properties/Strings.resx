@@ -163,6 +163,9 @@
   <data name="CaptureWindow" xml:space="preserve">
     <value>Capture a window</value>
   </data>
+  <data name="ClassicRemovalText" xml:space="preserve">
+    <value>ScreenClip is also installed from GitHub on this PC, and two at once would fight over the shortcuts. Uninstall the GitHub version?</value>
+  </data>
   <data name="ClickHalo" xml:space="preserve">
     <value>Halo</value>
   </data>
@@ -713,6 +716,9 @@ Close it and start a new one? What is open in its editors will be lost. You can 
   <data name="OpenFolder" xml:space="preserve">
     <value>Open</value>
   </data>
+  <data name="OpenStore" xml:space="preserve">
+    <value>Open the Store</value>
+  </data>
   <data name="PickColor" xml:space="preserve">
     <value>Pick a color from the screen</value>
   </data>
@@ -800,14 +806,23 @@ Close it and start a new one? What is open in its editors will be lost. You can 
   <data name="PrintScreenAskRestore" xml:space="preserve">
     <value>You can give the key back to Windows at any time in Settings › Capture of ScreenClip.</value>
   </data>
+  <data name="PrintScreenAskRestoreStore" xml:space="preserve">
+    <value>You can turn it on again there at any time.</value>
+  </data>
   <data name="PrintScreenAskText" xml:space="preserve">
     <value>Windows opens its Snipping Tool with the Print Screen key. For this key to start ScreenClip, a setting of Windows must be turned off: ScreenClip can do it for you.</value>
+  </data>
+  <data name="PrintScreenAskTextStore" xml:space="preserve">
+    <value>Windows opens its Snipping Tool with the Print Screen key. For this key to start ScreenClip, turn off the Print Screen switch of Windows Settings (Accessibility › Keyboard): ScreenClip opens the page for you.</value>
   </data>
   <data name="PrintScreenAskTitle" xml:space="preserve">
     <value>Use the Print Screen key for ScreenClip?</value>
   </data>
   <data name="PrintScreenAskYes" xml:space="preserve">
     <value>Yes, use Print Screen</value>
+  </data>
+  <data name="PrintScreenAskYesStore" xml:space="preserve">
+    <value>Open Windows Settings</value>
   </data>
   <data name="PrintScreenDone" xml:space="preserve">
     <value>Done: Print Screen now starts ScreenClip.</value>
@@ -835,6 +850,9 @@ Close it and start a new one? What is open in its editors will be lost. You can 
   </data>
   <data name="PrintScreenTitle" xml:space="preserve">
     <value>Print Screen key</value>
+  </data>
+  <data name="PrintScreenTurnOffThere" xml:space="preserve">
+    <value>In the page that opened, turn off the Print Screen switch: ScreenClip takes the key as soon as Windows lets it go.</value>
   </data>
   <data name="Quit" xml:space="preserve">
     <value>Quit ScreenClip</value>
@@ -1259,6 +1277,15 @@ Close it and start a new one? What is open in its editors will be lost. You can 
   <data name="SplitToolTip" xml:space="preserve">
     <value>Split at the playhead (Ctrl+B)</value>
   </data>
+  <data name="StartWithWindowsByPolicy" xml:space="preserve">
+    <value>Set by the administrator of this PC.</value>
+  </data>
+  <data name="StartWithWindowsOffByUser" xml:space="preserve">
+    <value>Turned off in Windows' startup apps: turn it on again there.</value>
+  </data>
+  <data name="StartupApps" xml:space="preserve">
+    <value>Startup apps</value>
+  </data>
   <data name="StartupFailedAskReport" xml:space="preserve">
     <value>ScreenClip could not start:
 
@@ -1496,6 +1523,9 @@ Report it on GitHub? A new issue opens in your browser, filled in with technical
   </data>
   <data name="UpdateWhatsNew" xml:space="preserve">
     <value>What's new</value>
+  </data>
+  <data name="UpdatesByStoreHint" xml:space="preserve">
+    <value>Version {0} · the Microsoft Store installs new versions by itself.</value>
   </data>
   <data name="UpdatesTitle" xml:space="preserve">
     <value>Updates</value>

@@ -22,7 +22,7 @@ No window, no timer, no polling while waiting; the Fluent theme and every window
 bitmaps are dropped and the working set trimmed after each capture (`MemoryTrim`). Measure a feature that stays
 resident (Task Manager, private working set) before and after it.
 
-## Project status (November 1, 2026)
+## Project status (November 16, 2026)
 
 **v0.4.3 released** (November 9, 2026, stable, tag `v0.4.3`: report a problem on GitHub, a ScreenClip that does
 not answer). **v0.4.2** (November 1, 2026, stable, tag `v0.4.2`: updates shown without looking for them, issue #3).
@@ -281,12 +281,24 @@ Checked on the README instance: a second start answered in 0.3 s (the first one 
 hanging (`SCREENCLIP_THROW=hang`), the question after 8.4 s, Yes (the hung one closed, the new one running with its
 icon) and No (nothing changed), the timeout in the errors kept. Both released as 0.4.3 the same day.
 
+Then (November 16, 2026) the **Microsoft Store version** (the author: “prepare it for the Microsoft Store”; he had
+reserved the name in Partner Center: identity `QuentinPerou.ScreenClip`, publisher
+`CN=E4BBF1EB-8886-49FD-8647-36786CAF5AC5`, as for TextCase), made as TextCase's and NowPlaying's (both in the Store):
+see Technical choices › Store version. `store/` (manifest, logos, `listing.md` with the texts of Partner Center in
+English and French), `scripts\build-store.ps1`. Built: `dist\store\ScreenClip_0.4.3.0_x64.msix` (81 MB, validated by
+makeappx; TextCase's is 77 MB); the GitHub build checked unchanged (the WinRT parts never compiled outside the
+package). Registered on the author's PC and tried by him (“it's good, I tested it”), then removed: it starts, its
+startup task is on (state 2) after the first launch, 9.1 MB at rest; its first start showed the Print Screen question
+(its own settings: see below), whose closing now trims the memory (139 MB were kept until the next capture).
+Committed; not submitted yet (the author does it in Partner Center, from `store/listing.md`).
+
 **Next**: the author's next ideas. The text extractor (OCR) is left aside (the author, November 1, 2026: Windows does it very well already).
 
 ## Commands
 
 ```powershell
 .\scripts\build.ps1                       # tests + dist\app (ReadyToRun) + dist\ScreenClip-Setup-<version>.exe
+.\scripts\build-store.ps1                 # tests + dist\store\ScreenClip_<version>.0_x64.msix (the Store version)
 dotnet test tests\ScreenClip.Tests        # unit tests (Core + localization)
 dotnet run --project src\ScreenClip       # run (opens the editor, after the Print Screen question at first start)
 ScreenClip.exe <picture>                  # opens the picture in the editor (through the running instance if any)
@@ -313,6 +325,18 @@ the interface, or an interface that hangs, to see what a user then sees),
 use, with its own single-instance names, temp folder and settings file: tests never touch the author's app nor his
 settings; build it apart with `dotnet build src\ScreenClip -o <folder>`, since his dev build locks `bin`). Settings live in `%LOCALAPPDATA%\ScreenClip\settings.json`: delete it to see the first start
 again (and the `HKCU\Software\ScreenClip` key).
+
+The Store version in development: `Add-AppxPackage -Register dist\store\layout\AppxManifest.xml` (Developer Mode,
+on on the author's PC; no other ScreenClip running, or the package wakes it and quits), started from the Start menu
+or `shell:AppsFolder\QuentinPerou.ScreenClip_<hash>!App`; removed by `Get-AppxPackage QuentinPerou.ScreenClip |
+Remove-AppxPackage` (its data goes with it) before the Store installs its own. Started in the background as by its
+startup task: `IApplicationActivationManager.ActivateApplication("QuentinPerou.ScreenClip_fjkgknmb0dzkr!App",
+"--background", …)` (the arguments reach the exe). Its settings: the ScreenClips started from Claude's shell keep
+theirs in the Claude app's package copy (`%LOCALAPPDATA%\Packages\Claude_…\LocalCache\Local\ScreenClip`; the real
+`%LOCALAPPDATA%\ScreenClip` does not exist on the author's PC), which the package does not see: it starts from the
+defaults (the Print Screen question included, even in the background: it takes the focus) and keeps its own file in
+its `LocalCache`. Measured at rest (November 16, 2026): 9.1 MB working set, the WinRT projection loaded (4.6 MB for
+the GitHub build).
 
 ## Working on the project
 
@@ -407,9 +431,10 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
 | Folder | Role |
 |--------|------|
 | `src/ScreenClip.Core` | Pure, tested logic, no UI text: `Hotkey` (shortcut model, text form, `IsAllowed`), `ColorCode` (a color as the picker copies it), `Selection` (drag rectangle, square, move, click vs drag, window under a point) + `CaptureMode`, `BoxDetector` (blocks drawn on a picture), `ElementChain` (elements and blocks under the pointer as wheel levels), `PixelRect`, `FileNaming` (template, unique path), `PrintScreenKey` (the Windows setting's logic), `SemanticVersion`, `UpdateFeed` (GitHub Releases). `Composition/`: `ClipStyle` (+ `StylePresets`, enums), `Backgrounds`, `ClipLayout` (sizes, pure), `Perspective` (3D tilt: corners + rect-to-quad matrix), `Composer` (SkiaSharp drawing, PNG/JPG/WebP encoding). `Video/`: `GifEncoder` (+ median cut, LZW), `Timecode`, `TrimRange`, `GifPacer`, `PointerTrack` (the pointer recorded apart: positions, shapes, clicks, smoothed way), `VideoEdit` (splits, pieces removed, what is kept and its times; `SoundOptions`), `Mp4Tracks` (an MP4's tracks, the sound tracks named and made alternates). `Annotations/`: `Annotation` (+ kinds and styles, `Palette`, `AnnotationOptions`, `AnnotationDefaults`, `AnnotationLayer`, `AnnotationHistory`), `AnnotationGeometry` (sizes, bounds, hit tests, handles), `AnnotationRenderer` (SkiaSharp drawing, `Flatten`, pixelation, the recorded pointer and click effects), `VideoTiming` (annotations in time: shown at a moment, the A → B pointer posed, bars moved and stretched, `Fingerprint`). `Typefaces` (Segoe UI for both). `BugReport` (a report's text cleaned of the user's names, the new issue's address). |
-| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow` (+ `EditorWindow.Annotate.cs`: the Edit tab; `EditorWindow.Video.cs`: a video, its timeline and export; `EditorWindow.Tracks.cs`: the tracks under the timeline and the recorded pointer's options; `EditorWindow.Export.cs`: the Export window and Copy; `EditorWindow.Sound.cs`: the pieces and the sounds of a video; `EditorWindow.Dialog.cs`: its questions and messages; `EditorWindow.Script.cs`: the Debug script player), `RecordingBar`, `RecordingFrame`, `Video/` (`RecordingSession`, `ScreenRecorder`, `PointerRecorder`, `AudioRecorder`, `SoundMeter`, `SoundTracks`, `SoundComposer`, `VideoReader`, `VideoPlayer`, `VideoExporter`, `Direct3D`, `RecordingTest` in Debug), `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `ColorToast` (the color picker's bubble), `ReportWindow` (a bug report, read before it goes), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `ErrorLog` (the last errors), `BugReporter` (a report's details, the issue opened), `NativeMethods`. |
+| `src/ScreenClip` | WPF .NET 10. `App` (single instance, startup, lazy theme, language, `OpenEditor`, `OpenSettings`), `TrayMenu`, `EditorWindow` (+ `EditorWindow.Annotate.cs`: the Edit tab; `EditorWindow.Video.cs`: a video, its timeline and export; `EditorWindow.Tracks.cs`: the tracks under the timeline and the recorded pointer's options; `EditorWindow.Export.cs`: the Export window and Copy; `EditorWindow.Sound.cs`: the pieces and the sounds of a video; `EditorWindow.Dialog.cs`: its questions and messages; `EditorWindow.Script.cs`: the Debug script player), `RecordingBar`, `RecordingFrame`, `Video/` (`RecordingSession`, `ScreenRecorder`, `PointerRecorder`, `AudioRecorder`, `SoundMeter`, `SoundTracks`, `SoundComposer`, `VideoReader`, `VideoPlayer`, `VideoExporter`, `Direct3D`, `RecordingTest` in Debug), `CaptureOverlay` (one per monitor), `ClipThumbnail` (+ the stack), `ColorToast` (the color picker's bubble), `ReportWindow` (a bug report, read before it goes), `SettingsWindow`, `ShortcutWindow`, `PrintScreenWindow`, `UpdateBar`, `ShortcutText`, `Localization.cs`; `Services/`: `TrayHost` (hidden window: notification icon, `RegisterHotKey`, end of session), `CaptureController` + `CaptureSession` + `Clip`, `ScreenGrabber` (monitors, windows, GDI `BitBlt`), `ElementFinder` (UI Automation, background thread), `ClipActions` (clipboard, PNG, temp files), `Imaging` (WPF ↔ SkiaSharp pictures, files, clipboard), `WindowsSettings` (Print Screen, Run key), `AppSettings`, `SingleInstance`, `MemoryTrim`, `MicaBackdrop`, `Updater`, `AppPackage` (the Store version), `ErrorLog` (the last errors), `BugReporter` (a report's details, the issue opened), `NativeMethods`. |
+| `store/` | The Microsoft Store package: `AppxManifest.xml` (identity of Partner Center, the app, its startup task and capabilities), `Assets/` (logos, by `make-icons.ps1`) and `listing.md` (what goes into Partner Center, English and French). |
 | `installer/ScreenClip.iss` | Inno Setup (English/French): Program Files, Start menu, .NET 10 runtime check, closes the running app, gives Print Screen back, cleans HKCU and temp on uninstall. |
-| `scripts/` | `build.ps1`, `make-icons.ps1` (icon; generated files are committed). |
+| `scripts/` | `build.ps1`, `build-store.ps1` (the Store package), `make-icons.ps1` (icon and Store logos; generated files are committed). |
 | `.github/workflows/build.yml` | CI: build + tests on every push; on a `v*` tag, publishes the installer in a Release (pre-release when the tag has a `-`). |
 
 ### Technical choices (and why)
@@ -662,6 +687,30 @@ position), `PrintWindow`s it and quits; `.local\readme\frame` (a console on Core
   one on another thread (`AppDomain.UnhandledException`, the app ends) and a failed startup (`OnStartup` runs `Start`
   in a try; the app then quits) ask with the plain Windows message box (`MessageBoxW`, default No) and open the issue
   on Yes; an unobserved task's is only kept.
+- **Store version** (November 16, 2026; as TextCase's and NowPlaying's): one code, one exe, built twice.
+  `build-store.ps1` publishes it self-contained (a package cannot install .NET; ReadyToRun as the installer's) into
+  `dist\store\layout`, adds `store\AppxManifest.xml` (its version from `Directory.Build.props`, x.y.z.0) and the logos
+  (a `resources.pri` of the logos alone, every scale in one file), then `makeappx pack`; not signed (the Store signs
+  it). No `STORE` constant (the target framework already has the Windows SDK projection, for the video): at run time
+  `AppPackage.IsPackaged` (`GetCurrentPackageFullName`) decides, and each WinRT call is in a `NoInlining` method of its
+  own, so that the GitHub build never loads the projection at rest. In the package, writes to HKCU and new files
+  under `AppData` go to its own copy, which Windows and the other apps never read; so: **start with Windows** is the
+  manifest's `windows.startupTask` (on from the first launch) and the `StartupTask` API (Settings › General; turned
+  off by the user in Windows, the switch is greyed and *Startup apps* offered; launched by it,
+  `ActivationKind.StartupTask` = `--background`); the **Print Screen** switch is turned off by the user in Windows
+  Settings (policy 10.2.8: supported methods only; the question window's Yes and the Capture card open the page, and
+  ScreenClip registers its shortcuts again when it comes back to the front and finds the key free); the **files for
+  other apps** (copies as files, drags, recordings: `ClipActions.TempFolder`) go to the package's temporary folder
+  (`ApplicationData.TemporaryFolder`, a real folder the other apps read: under `%TEMP%`, a new file would be in the
+  package's copy and the path on the clipboard would lead nowhere); the **log** opens from where the package wrote it
+  (`AppPackage.RealPath`); the **updates** are the Store's (no check, no notification, no menu line; Settings ›
+  Updates shows the version and *Open the Store*). Videos ask Windows once for a capture without its yellow border
+  (`Direct3D.AllowBorderless`, `GraphicsCaptureAccess.RequestAccessAsync`, the `graphicsCaptureWithoutBorder`
+  capability: a packaged app needs both). Capabilities: `runFullTrust` (its justification in `listing.md`),
+  `graphicsCaptureWithoutBorder`, `microphone`. Windows 11 only (MinVersion 10.0.22000.0, as the README says). The
+  version installed from GitHub, found on the PC (Inno's uninstall entry), is offered for removal once, before the
+  single instance (the two would share it; its uninstaller started through Explorer, out of the package, so that it
+  gives Print Screen back for real). The bug report says “Microsoft Store”.
 - **Color picker** (November 1, 2026): `ShortcutAction.ColorPicker` (appended last, so that the hotkey ids of the
   others stay; **Win+Shift+C** by default: Alt+Shift+Print Screen is Windows' High Contrast toggle; PowerToys' own
   picker takes Win+Shift+C when it is on, and the shortcut then shows refused), also in the tray menu. The capture
@@ -824,6 +873,12 @@ while unchanged, so that it follows the language.
 - `.ps1` and `.iss` files: UTF-8 with BOM, CRLF (Windows PowerShell 5.1 and Inno Setup read BOM-less files as ANSI).
 
 ## Known pitfalls
+
+- **Claude's shell runs inside the Claude desktop app's package** (seen in TextCase): what it writes under
+  `%LOCALAPPDATA%` or HKCU, and what the processes it starts write there, may go to that package's copy. Test
+  instances use their own settings (`SCREENCLIP_SETTINGS`); the author's real files are read through Explorer.
+- `makepri` from Git Bash: its `/cf` options are turned into paths; run `build-store.ps1` from PowerShell. A package
+  is never registered from FAT or exFAT (the project drive F: is NTFS).
 
 - `CaptureMode` exists in `System.Windows.Input` too: `CaptureOverlay.xaml.cs` aliases the Core one.
 - `Path` is ambiguous (`System.IO` is a global using in WPF code): write `System.Windows.Shapes.Path`.

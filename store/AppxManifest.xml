@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Microsoft Store version of ScreenClip: a full MSIX package of the same app, built by scripts\build-store.ps1 next
+  to the installer of the GitHub version (which this package does not change), as TextCase and NowPlaying are.
+
+  Identity: the values of the product in Partner Center (Product identity page), reserved by the author on
+  November 16, 2026 as "ScreenClip". The package is not signed: the Store signs it when it publishes it.
+  Version: written by the build script from Directory.Build.props (0.4.3 gives 0.4.3.0, the Store wants the last number
+  at 0).
+
+  One application, with its startup task (start with Windows: a package's own copy of HKCU, where the Run key would go,
+  is never read at sign-in). Windows 11 only, as the README says.
+
+  Capabilities:
+  - runFullTrust: a desktop app (global shortcuts, the screen read with GDI, its windows over every app);
+  - graphicsCaptureWithoutBorder: videos without Windows' yellow border around the screen (ScreenClip draws its own line
+    around the area), asked once to Windows (Video\Direct3D.cs, AllowBorderless);
+  - microphone: the sound of a video, only when the user turns the microphone on for it.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap11="http://schemas.microsoft.com/appx/manifest/uap/windows10/11"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap11 desktop rescap">
+
+  <Identity
+    Name="QuentinPerou.ScreenClip"
+    Publisher="CN=E4BBF1EB-8886-49FD-8647-36786CAF5AC5"
+    Version="0.0.0.0"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>ScreenClip</DisplayName>
+    <PublisherDisplayName>QuentinPerou</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Resources>
+    <Resource Language="en-us" />
+    <Resource Language="fr-fr" />
+  </Resources>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <uap11:Capability Name="graphicsCaptureWithoutBorder" />
+    <DeviceCapability Name="microphone" />
+  </Capabilities>
+
+  <Applications>
+    <Application Id="App" Executable="ScreenClip.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="ScreenClip"
+        Description="Capture the screen with one key, then lay it out, annotate it or record a video"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png" />
+
+      <Extensions>
+        <!-- Start with Windows, on from the first launch as the GitHub version does; the user turns it off in
+             Settings › General, Task Manager or Windows Settings (Services\AppPackage.cs). -->
+        <desktop:Extension Category="windows.startupTask" Executable="ScreenClip.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="ScreenClipStartup" Enabled="true" DisplayName="ScreenClip" />
+        </desktop:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+</Package>

@@ -56,9 +56,14 @@ public static class Updater
     // When the last check was tried and when one last succeeded, during this run.
     private static DateTime? s_lastTried, s_lastChecked;
 
-    /// <summary>Background check when the app starts: a failure (offline, rate limit) only means no offer.</summary>
+    /// <summary>
+    /// Background check when the app starts: a failure (offline, rate limit) only means no offer. None in the Store
+    /// version: the Store updates it.
+    /// </summary>
     public static async Task CheckAtStartupAsync()
     {
+        if (AppPackage.IsPackaged)
+            return;
         DeleteOldDownloads();
         await CheckInBackgroundAsync();
     }
@@ -70,6 +75,8 @@ public static class Updater
     /// </summary>
     public static Task CheckIfDueAsync()
     {
+        if (AppPackage.IsPackaged)
+            return Task.CompletedTask;
         var now = DateTime.UtcNow;
         if (s_lastChecked is { } done && now - done < TimeSpan.FromDays(1))
             return Task.CompletedTask;

@@ -117,7 +117,13 @@
                       AutomationProperties.Name="{local:Tr SettingsStartWithWindows}" />
             <StackPanel VerticalAlignment="Center">
               <TextBlock Text="{local:Tr SettingsStartWithWindows}" />
-              <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr SettingsStartWithWindowsDescription}" />
+              <TextBlock x:Name="StartupDescription" Style="{StaticResource CardDescription}"
+                         Text="{local:Tr SettingsStartWithWindowsDescription}" />
+              <!-- The Store version, its startup task turned off in Windows: only Windows can turn it on again. -->
+              <TextBlock x:Name="StartupAppsLink" Style="{StaticResource CardDescription}" Margin="0,6,0,0"
+                         Visibility="Collapsed">
+                <Hyperlink Click="StartupApps_Click"><Run Text="{local:Tr StartupApps}" /></Hyperlink>
+              </TextBlock>
             </StackPanel>
           </DockPanel>
         </Border>
@@ -311,7 +317,7 @@
             <StackPanel VerticalAlignment="Center">
               <TextBlock Text="{local:Tr PrintScreenTitle}" />
               <TextBlock x:Name="PrintScreenStatus" Style="{StaticResource CardDescription}" />
-              <TextBlock Style="{StaticResource CardDescription}" Margin="0,6,0,0">
+              <TextBlock x:Name="PrintScreenSettingsLink" Style="{StaticResource CardDescription}" Margin="0,6,0,0">
                 <Hyperlink Click="WindowsKeyboardSettings_Click"><Run Text="{local:Tr PrintScreenOpenWindowsSettings}" /></Hyperlink>
               </TextBlock>
             </StackPanel>
@@ -426,6 +432,8 @@
             </StackPanel>
           </DockPanel>
 
+          <!-- Not in the Store version: the Store updates it. -->
+          <StackPanel x:Name="UpdateOptions">
           <Rectangle Style="{StaticResource CardDivider}" />
           <DockPanel Style="{StaticResource CardSubRow}">
             <CheckBox x:Name="CheckAtStartupBox" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
@@ -448,6 +456,7 @@
               <TextBlock Style="{StaticResource CardDescription}" Text="{local:Tr UpdateChannelDescription}" />
             </StackPanel>
           </DockPanel>
+          </StackPanel>
         </StackPanel>
       </Border>
     </ScrollViewer>

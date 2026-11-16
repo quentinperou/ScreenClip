@@ -11,8 +11,12 @@ internal static class ClipActions
 {
     private const int ClipboardBusy = unchecked((int)0x800401D0); // CLIPBRD_E_CANT_OPEN
 
-    /// <summary>Files handed to other apps by drag and drop (they need a real file); emptied at each start.</summary>
-    public static readonly string TempFolder = Path.Combine(Path.GetTempPath(), "ScreenClip" + TestInstance.Suffix);
+    /// <summary>
+    /// Files handed to other apps by drag and drop or the clipboard (they need a real file), and the recordings;
+    /// emptied at each start. In the Store version, the package's own temporary folder: a new file under %TEMP% would
+    /// go to the package's copy, which the other apps never see.
+    /// </summary>
+    public static readonly string TempFolder = Path.Combine(AppPackage.TempRoot, "ScreenClip" + TestInstance.Suffix);
 
     /// <summary>
     /// Puts the capture on the clipboard as a bitmap (for every app) and as PNG (lossless, for the apps that read it:

@@ -102,6 +102,8 @@ internal sealed class RecordingSession
         var bounds = _monitor.Bounds;
         return Task.Run(() =>
         {
+            if (AppPackage.IsPackaged)
+                Direct3D.AllowBorderless();
             Directory.CreateDirectory(Folder);
             string path = FileNaming.UniquePath(Folder, name, ".mp4");
             var center = new NativeMethods.POINT { X = area.X + area.Width / 2, Y = area.Y + area.Height / 2 };
