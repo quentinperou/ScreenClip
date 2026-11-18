@@ -1,6 +1,7 @@
 # Microsoft Store listing
 
-What goes into Partner Center for **ScreenClip** (product identity `QuentinPerou.ScreenClip`), page by page, ready to
+What goes into Partner Center for **ScreenClip** (product identity `QuentinPerou.ScreenClip`, Store ID `9PL33WLZJGF9`:
+https://apps.microsoft.com/detail/9PL33WLZJGF9?referrer=appbadge&mode=direct), page by page, ready to
 paste, as for TextCase and NowPlaying. Kept here so that the next submissions start from it. The package:
 `dist\store\ScreenClip_<version>.0_x64.msix` (`scripts\build-store.ps1`).
 

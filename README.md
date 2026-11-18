@@ -14,6 +14,10 @@
 </p>
 
 <p align="center">
+  <a href="https://apps.microsoft.com/detail/9PL33WLZJGF9?referrer=appbadge&mode=direct"><img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="Download from the Microsoft Store"></a>
+</p>
+
+<p align="center">
   <img src=".github/screenshot.png" width="900" alt="ScreenClip: the layout editor (a capture on a gradient, with its margin, rounded corners and shadow, and the presets, backgrounds and window frames on the right), the capture bar and the notification menu">
 </p>
 
@@ -231,6 +235,12 @@ uninstalling ScreenClip gives it back too. Windows sometimes only applies the ch
 
 ## Installation
 
+From the **Microsoft Store**: [ScreenClip](https://apps.microsoft.com/detail/9PL33WLZJGF9?referrer=appbadge&mode=direct), signed by Microsoft, updated by the
+Store (Windows 11). In it, Windows' Print Screen switch is turned off by you in Windows Settings (ScreenClip opens the
+page).
+
+Or from GitHub:
+
 1. Download `ScreenClip-Setup-x.y.z.exe` from the [Releases](../../releases) page.
 2. Run it. As the installer is not signed, Windows SmartScreen may show “Windows protected your PC”:
    click **More info → Run anyway**.
@@ -347,6 +357,7 @@ whole pixels by the script. The generated files are committed: run it again only
 1. Update `<Version>` in `Directory.Build.props`.
 2. Commit, then create and push a tag: `git tag v0.1.0`, then `git push origin v0.1.0`.
 3. The GitHub Actions workflow builds, tests and publishes the installer in a Release.
+4. The Store version: `.\scripts\build-store.ps1`, then a new submission in Partner Center with the new `.msix`.
 
 A tag with a suffix (`v0.2.0-beta.1`) is published as a *pre-release*: only the apps set to the **Beta** update channel
 offer it.

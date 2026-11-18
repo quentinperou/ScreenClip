@@ -14,6 +14,10 @@
 </p>
 
 <p align="center">
+  <a href="https://apps.microsoft.com/detail/9PL33WLZJGF9?referrer=appbadge&mode=direct"><img src="https://get.microsoft.com/images/fr%20dark.svg" width="200" alt="Télécharger à partir du Microsoft Store"></a>
+</p>
+
+<p align="center">
   <img src=".github/screenshot.fr.png" width="900" alt="ScreenClip : l'éditeur de mise en forme (une capture sur un dégradé, avec sa marge, ses coins arrondis et son ombre, et à droite les préréglages, fonds et cadres), la barre de capture et le menu de la zone de notification">
 </p>
 
@@ -249,6 +253,12 @@ parfois le changement qu'à la prochaine ouverture de session.
 
 ## Installation
 
+Depuis le **Microsoft Store** : [ScreenClip](https://apps.microsoft.com/detail/9PL33WLZJGF9?referrer=appbadge&mode=direct), signée par Microsoft, mise à jour
+par le Store (Windows 11). L'interrupteur Impr. écran de Windows s'y désactive par vous dans les Paramètres de Windows
+(ScreenClip ouvre la page).
+
+Ou depuis GitHub :
+
 1. Téléchargez `ScreenClip-Setup-x.y.z.exe` depuis la page [Releases](../../releases).
 2. Lancez-le. L'installeur n'étant pas signé, Windows SmartScreen peut afficher « Windows a protégé votre ordinateur » :
    cliquez sur **Informations complémentaires → Exécuter quand même**.
@@ -369,6 +379,8 @@ le dessin.
 1. Mettez à jour `<Version>` dans `Directory.Build.props`.
 2. Commitez, puis créez et poussez un tag : `git tag v0.1.0`, puis `git push origin v0.1.0`.
 3. Le workflow GitHub Actions compile, teste et publie l'installeur dans une Release.
+4. La version du Store : `.\scripts\build-store.ps1`, puis une nouvelle soumission dans Partner Center avec le nouveau
+   `.msix`.
 
 Un tag avec un suffixe (`v0.2.0-beta.1`) est publié en *pré-version* : seules les applications réglées sur le canal
 **Bêta** la proposent.

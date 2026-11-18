@@ -22,7 +22,7 @@ No window, no timer, no polling while waiting; the Fluent theme and every window
 bitmaps are dropped and the working set trimmed after each capture (`MemoryTrim`). Measure a feature that stays
 resident (Task Manager, private working set) before and after it.
 
-## Project status (November 16, 2026)
+## Project status (November 18, 2026)
 
 **v0.4.3 released** (November 9, 2026, stable, tag `v0.4.3`: report a problem on GitHub, a ScreenClip that does
 not answer). **v0.4.2** (November 1, 2026, stable, tag `v0.4.2`: updates shown without looking for them, issue #3).
@@ -290,7 +290,10 @@ makeappx; TextCase's is 77 MB); the GitHub build checked unchanged (the WinRT pa
 package). Registered on the author's PC and tried by him (“it's good, I tested it”), then removed: it starts, its
 startup task is on (state 2) after the first launch, 9.1 MB at rest; its first start showed the Print Screen question
 (its own settings: see below), whose closing now trims the memory (139 MB were kept until the next capture).
-Committed; not submitted yet (the author does it in Partner Center, from `store/listing.md`).
+Committed, and submitted by the author the same day (Store ID `9PL33WLZJGF9`); **in the Microsoft Store since
+November 18, 2026** (0.4.3.0). The READMEs have the Store's badge and link (`apps.microsoft.com/detail/9PL33WLZJGF9`),
+as TextCase's, committed once it was online. A new version: `build.ps1` and the tag for GitHub, then
+`build-store.ps1` and a new submission in Partner Center.
 
 **Next**: the author's next ideas. The text extractor (OCR) is left aside (the author, November 1, 2026: Windows does it very well already).
 
